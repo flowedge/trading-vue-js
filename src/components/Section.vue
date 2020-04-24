@@ -16,15 +16,15 @@
              v-on:cursor-locked="cursor_locked"
              v-on:layer-meta-props="emit_meta_props"
              v-on:custom-event="emit_custom_event"
-             v-on:sidebar-transform="sidebar_transform">
+             v-on:sidebar-transform="sidebar_transform"
+             v-on:chart-panned="chart_panned">
         </grid>
         <sidebar
             v-bind="sidebar_props"
             v-bind:grid_id="grid_id"
             v-bind:rerender="rerender"
             v-bind:shaders="shaders"
-            v-on:sidebar-transform="sidebar_transform"
-			v-on:chart-panned="chart_panned">
+            v-on:sidebar-transform="sidebar_transform">
         </sidebar>
     </div>
 </template>

@@ -7003,7 +7003,8 @@ var Sectionvue_type_template_id_8fbe9336_render = function() {
               "cursor-locked": _vm.cursor_locked,
               "layer-meta-props": _vm.emit_meta_props,
               "custom-event": _vm.emit_custom_event,
-              "sidebar-transform": _vm.sidebar_transform
+              "sidebar-transform": _vm.sidebar_transform,
+              "chart-panned": _vm.chart_panned
             }
           },
           "grid",
@@ -7021,10 +7022,7 @@ var Sectionvue_type_template_id_8fbe9336_render = function() {
               rerender: _vm.rerender,
               shaders: _vm.shaders
             },
-            on: {
-              "sidebar-transform": _vm.sidebar_transform,
-              "chart-panned": _vm.chart_panned
-            }
+            on: { "sidebar-transform": _vm.sidebar_transform }
           },
           "sidebar",
           _vm.sidebar_props,
@@ -7131,6 +7129,8 @@ var grid_Grid = /*#__PURE__*/function () {
         });
 
         _this.comp.$emit('cursor-locked', true);
+
+        _this.comp.$emit('chart-panned');
       });
       mc.on('panmove', function (event) {
         if (_this.drug) {
