@@ -94,7 +94,7 @@ export default class Sidebar {
         var sb = this.layout.sb
 
         this.ctx.fillStyle = this.$p.colors.colorBack
-        this.ctx.font = this.$p.font
+        this.ctx.font = "13px -apple-system,BlinkMacSystemFont, Segoe UI,Roboto,Oxygen,Ubuntu,Cantarell, Fira Sans,Droid Sans,Helvetica Neue, sans-serif"
 
         switch(side) {
             case 'left':
@@ -147,7 +147,7 @@ export default class Sidebar {
             //let d = this.layout.prec
             let d = this.layout.prec >= 3 ? 3 : this.layout.prec // Limit to 3 decimal places at most
             const yValue = Math.abs(p[1]) >= 1.0e+6 ? Utils.changeNumberFormat(p[1], d) : p[1].toFixed(d)
-            this.ctx.fillText(p[1].toFixed(d), x1 + offst, p[0] + 4)
+            this.ctx.fillText(yValue, x1 + offst, p[0] + 4)
         }
 
         this.ctx.stroke()

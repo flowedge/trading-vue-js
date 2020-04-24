@@ -5149,7 +5149,7 @@ module.exports = exports;
 var ___CSS_LOADER_API_IMPORT___ = __webpack_require__(7);
 exports = ___CSS_LOADER_API_IMPORT___(false);
 // Module
-exports.push([module.i, "\n.trading-vue-legend {\n    position: relative;\n    z-index: 100;\n    font-size: 1.25em;\n    margin-left: 10px;\n    pointer-events: none;\n}\n.trading-vue-ohlcv {\n    pointer-events: none;\n    margin-bottom: 0.5em;\n}\n.t-vue-lspan {\n    font-variant-numeric: tabular-nums;\n    font-weight: 100;\n    font-size: 0.95em;\n    color: #999999; /* TODO: move => params */\n    margin-left: 0.1em;\n    margin-right: 0.2em;\n}\n.t-vue-title {\n    margin-right: 0.25em;\n    font-size: 1.45em;\n    font-weight: 200;\n}\n.t-vue-ind {\n    margin-left: 0.2em;\n    margin-bottom: 0.5em;\n    font-weight: 200;\n    font-size: 1.0em;\n}\n.t-vue-ivalue {\n    margin-left: 0.5em;\n}\n.t-vue-unknown {\n    color: #999999; /* TODO: move => params */\n}\n", ""]);
+exports.push([module.i, "\n.trading-vue-legend {\n    position: relative;\n    z-index: 100;\n    font-size: 1.25em;\n    margin-left: 10px;\n    pointer-events: none;\n}\n.trading-vue-ohlcv {\n    pointer-events: none;\n    margin-bottom: 0.5em;\n    font-size: 1.1em;\n    color: steelblue;\n}\n.t-vue-lspan {\n    font-variant-numeric: tabular-nums;\n    font-weight: 100;\n    font-size: 1.3em;\n    color: #EEE; /* TODO: move => params */\n    margin-left: 0.1em;\n    margin-right: 0.2em;\n}\n.t-vue-title {\n    margin-right: 0.25em;\n    font-size: 2em;\n    font-weight: 200;\n}\n.t-vue-ind {\n    margin-left: 0.2em;\n    margin-bottom: 0.5em;\n    font-size: 1.2em;\n    color: steelblue;\n}\n.t-vue-ivalue {\n    margin-left: 0.5em;\n    font-size: 1.0em;\n}\n.t-vue-unknown {\n    color: #999999; /* TODO: move => params */\n}\n", ""]);
 // Exports
 module.exports = exports;
 
@@ -11197,7 +11197,7 @@ var sidebar_Sidebar = /*#__PURE__*/function () {
           side = this.side;
       var sb = this.layout.sb;
       this.ctx.fillStyle = this.$p.colors.colorBack;
-      this.ctx.font = this.$p.font;
+      this.ctx.font = "13px -apple-system,BlinkMacSystemFont, Segoe UI,Roboto,Oxygen,Ubuntu,Cantarell, Fira Sans,Droid Sans,Helvetica Neue, sans-serif";
 
       switch (side) {
         case 'left':
@@ -11247,7 +11247,7 @@ var sidebar_Sidebar = /*#__PURE__*/function () {
           var d = this.layout.prec >= 3 ? 3 : this.layout.prec; // Limit to 3 decimal places at most
 
           var yValue = Math.abs(p[1]) >= 1.0e+6 ? utils["a" /* default */].changeNumberFormat(p[1], d) : p[1].toFixed(d);
-          this.ctx.fillText(p[1].toFixed(d), x1 + offst, p[0] + 4);
+          this.ctx.fillText(yValue, x1 + offst, p[0] + 4);
         }
       } catch (err) {
         _iterator.e(err);
@@ -12196,7 +12196,7 @@ var botbar_Botbar = /*#__PURE__*/function () {
       var height = this.layout.botbar.height;
       var sb = this.layout.grids[0].sb;
       this.ctx.fillStyle = this.$p.colors.colorBack;
-      this.ctx.font = this.$p.font;
+      this.ctx.font = "13px -apple-system,BlinkMacSystemFont, Segoe UI,Roboto,Oxygen,Ubuntu,Cantarell, Fira Sans,Droid Sans,Helvetica Neue, sans-serif";
       this.ctx.fillRect(0, 0, width, height);
       this.ctx.strokeStyle = this.$p.colors.colorScale;
       this.ctx.beginPath();
@@ -14220,7 +14220,7 @@ var dc_core_DCCore = /*#__PURE__*/function (_DCEvents) {
     key: "update_overlays",
     value: function update_overlays(data, t) {
       for (var k in data) {
-        if (k === 'price' || k === 'volume' || k === 'candle') {
+        if (k === 'price' || k === 'volume' || k === 'candle' || k === 'oi') {
           continue;
         }
 

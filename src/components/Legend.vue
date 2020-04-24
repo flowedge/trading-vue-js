@@ -189,28 +189,31 @@ export default {
 .trading-vue-ohlcv {
     pointer-events: none;
     margin-bottom: 0.5em;
+    font-size: 1.1em;
+    color: steelblue;
 }
 .t-vue-lspan {
     font-variant-numeric: tabular-nums;
     font-weight: 100;
-    font-size: 0.95em;
-    color: #999999; /* TODO: move => params */
+    font-size: 1.3em;
+    color: #EEE; /* TODO: move => params */
     margin-left: 0.1em;
     margin-right: 0.2em;
 }
 .t-vue-title {
     margin-right: 0.25em;
-    font-size: 1.45em;
+    font-size: 2em;
     font-weight: 200;
 }
 .t-vue-ind {
     margin-left: 0.2em;
     margin-bottom: 0.5em;
-    font-weight: 200;
-    font-size: 1.0em;
+    font-size: 1.2em;
+    color: steelblue;
 }
 .t-vue-ivalue {
     margin-left: 0.5em;
+    font-size: 1.0em;
 }
 .t-vue-unknown {
     color: #999999; /* TODO: move => params */
