@@ -222,10 +222,9 @@ export default class Grid {
 			//if (r.pre_draw) r.pre_draw(this.ctx, scale)
             //if (r.pre_draw) r.pre_draw(this.ctx)
             r.draw(this.ctx)
-            //if (r.post_draw) r.post_draw(this.ctx)			
+            //if (r.post_draw) r.post_draw(this.ctx)	
+            this.ctx.restore()		
         })
-	
-		this.ctx.restore()
 
         if (this.crosshair) {
             this.crosshair.renderer.draw(this.ctx)
