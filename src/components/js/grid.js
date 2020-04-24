@@ -3,7 +3,8 @@
 // Think of it as an I/O system for Grid.vue
 
 import * as Hammer from 'hammerjs'
-import Hamster from 'hamsterjs'
+//hamsterjs with passive event
+import Hamster from '@kensingtontech/hamsterjs'
 import Utils from '../../stuff/utils.js'
 
 // Grid is good.
@@ -15,7 +16,7 @@ export default class Grid {
         this.MAX_ZOOM = comp.config.MAX_ZOOM
 
         this.canvas = canvas
-        this.ctx = canvas.getContext('2d')
+        this.ctx = canvas.getContext('2d', { alpha: true, desynchronized: true, preserveDrawingBuffer: false });
         this.comp = comp
         this.$p = comp.$props
         this.data = this.$p.sub
@@ -35,7 +36,7 @@ export default class Grid {
 
     listeners() {
 
-        var hamster = Hamster(this.canvas)
+        var hamster = Hamster(this.canvas, false)
         hamster.wheel((event, delta) => this.mousezoom(-delta * 50, event))
 
         var mc = new Hammer.Manager(this.canvas)
@@ -192,8 +193,19 @@ export default class Grid {
 
         if (!this.layout) return
 
-        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height)
-        this.grid()
+        //this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height)
+		//we dont need grid lines
+        //this.grid()
+		
+		let dpr = window.devicePixelRatio || 1
+		if (dpr < 1) dpr = 1
+
+		//chrome 81 not working
+		var bgcolor = this.$p.colors.colorBack
+		this.ctx.clearRect(0, 0, this.canvas.width * dpr, this.canvas.height * dpr, bgcolor)
+
+		this.ctx.fillStyle = this.$p.colors.colorBack
+		this.ctx.fillRect(0, 0, this.canvas.width * dpr, this.canvas.height * dpr)
 
         let overlays = []
         overlays.push(...this.overlays)
@@ -205,11 +217,15 @@ export default class Grid {
             if (!l.display) return
             this.ctx.save()
             let r = l.renderer
-            if (r.pre_draw) r.pre_draw(this.ctx)
+			//me: what is post_draw/pre_draw for?
+			//c4: just in case for now (for overlay devs)
+			//if (r.pre_draw) r.pre_draw(this.ctx, scale)
+            //if (r.pre_draw) r.pre_draw(this.ctx)
             r.draw(this.ctx)
-            if (r.post_draw) r.post_draw(this.ctx)
-            this.ctx.restore()
+            //if (r.post_draw) r.post_draw(this.ctx)			
         })
+	
+		this.ctx.restore()
 
         if (this.crosshair) {
             this.crosshair.renderer.draw(this.ctx)

@@ -15,6 +15,7 @@
             v-on:layer-meta-props="layer_meta_props"
             v-on:custom-event="emit_custom_event"
             v-on:legend-button-click="legend_button_click"
+			v-on:chart-panned="chart_panned"
             >
         </grid-section>
         <botbar v-bind="botbar_props" :shaders="shaders">
@@ -65,6 +66,9 @@ export default {
 
     },
     methods: {
+	chart_panned() {
+            this.haveMovedChart = true
+        },
         range_changed(r) {
             // Overwite & keep the original references
             // Quick fix for IB mode (switch 2 next lines)

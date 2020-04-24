@@ -1,5 +1,5 @@
 /*!
- * TradingVue.JS - v0.4.5 - Thu Mar 26 2020
+ * TradingVue.JS - v0.4.5 - Fri Apr 24 2020
  *     https://github.com/C451/trading-vue-js
  *     Copyright (c) 2019 c451 Code's All Right;
  *     Licensed under the MIT license
@@ -97,27 +97,238 @@ return /******/ (function(modules) { // webpackBootstrap
 /******/
 /******/
 /******/ 	// Load entry module and return exports
-/******/ 	return __webpack_require__(__webpack_require__.s = 50);
+/******/ 	return __webpack_require__(__webpack_require__.s = 61);
 /******/ })
 /************************************************************************/
 /******/ ([
 /* 0 */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+/* WEBPACK VAR INJECTION */(function(setImmediate) {/* harmony import */ var _babel_runtime_helpers_toConsumableArray__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(1);
+/* harmony import */ var _babel_runtime_helpers_toConsumableArray__WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(_babel_runtime_helpers_toConsumableArray__WEBPACK_IMPORTED_MODULE_0__);
+/* harmony import */ var arrayslicer__WEBPACK_IMPORTED_MODULE_1__ = __webpack_require__(22);
+/* harmony import */ var arrayslicer__WEBPACK_IMPORTED_MODULE_1___default = /*#__PURE__*/__webpack_require__.n(arrayslicer__WEBPACK_IMPORTED_MODULE_1__);
+
+
+/* harmony default export */ __webpack_exports__["a"] = ({
+  clamp: function clamp(num, min, max) {
+    return num <= min ? min : num >= max ? max : num;
+  },
+  add_zero: function add_zero(i) {
+    if (i < 10) {
+      i = "0" + i;
+    }
+
+    return i;
+  },
+  // Start of the day (zero millisecond)
+  day_start: function day_start(t) {
+    var start = new Date(t);
+    start.setHours(0, 0, 0, 0);
+    return start.getTime();
+  },
+  // Start of the month
+  month_start: function month_start(t) {
+    var date = new Date(t);
+    var start = new Date(date.getFullYear(), date.getMonth(), 1);
+    return start.getTime();
+  },
+  // Start of the year
+  year_start: function year_start(t) {
+    var start = new Date(new Date(t).getFullYear(), 0, 1);
+    return start.getTime();
+  },
+  // Nearest in array
+  nearest_a: function nearest_a(x, array) {
+    var dist = Infinity;
+    var val = null;
+    var index = -1;
+
+    for (var i = 0; i < array.length; i++) {
+      var xi = array[i];
+
+      if (Math.abs(xi - x) < dist) {
+        dist = Math.abs(xi - x);
+        val = xi;
+        index = i;
+      }
+    }
+
+    return [index, val];
+  },
+  round: function round(num) {
+    var decimals = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 8;
+    return parseFloat(num.toFixed(decimals));
+  },
+  // Strip? No, it's ugly floats in js
+  strip: function strip(number) {
+    return parseFloat(parseFloat(number).toPrecision(12));
+  },
+  get_day: function get_day(t) {
+    return t ? new Date(t).getDate() : null;
+  },
+  // Update array keeping the same reference
+  overwrite: function overwrite(arr, new_arr) {
+    arr.splice.apply(arr, [0, arr.length].concat(_babel_runtime_helpers_toConsumableArray__WEBPACK_IMPORTED_MODULE_0___default()(new_arr)));
+  },
+  // Copy layout in reactive way
+  copy_layout: function copy_layout(obj, new_obj) {
+    for (var k in obj) {
+      if (Array.isArray(obj[k])) {
+        // (some offchart indicators are added/removed)
+        // we need to update layout in a reactive way
+        if (obj[k].length !== new_obj[k].length) {
+          this.overwrite(obj[k], new_obj[k]);
+          continue;
+        }
+
+        for (var m in obj[k]) {
+          Object.assign(obj[k][m], new_obj[k][m]);
+        }
+      } else {
+        Object.assign(obj[k], new_obj[k]);
+      }
+    }
+  },
+  // Checks if the ohlcv data is changed (given the new
+  // and old dataset values)
+  data_changed: function data_changed(n, p) {
+    n = n.ohlcv || (n.chart ? n.chart.data : []) || [];
+    p = p.ohlcv || (p.chart ? p.chart.data : []) || [];
+    return n.length !== p.length && n[0] !== p[0];
+  },
+  // Detects candles interval
+  detect_interval: function detect_interval(ohlcv) {
+    var len = Math.min(ohlcv.length - 1, 99);
+    var min = Infinity;
+    ohlcv.slice(0, len).forEach(function (x, i) {
+      var d = ohlcv[i + 1][0] - x[0];
+      if (d === d && d < min) min = d;
+    });
+    return min;
+  },
+  // Detects candles interval. (old version, slightly slower)
+
+  /*detect_interval(ohlcv) {
+      // Initial value of accumulator
+      let a0 = [Infinity, ohlcv[0][0]]
+      return ohlcv.slice(1, 99).reduce((a,x) =>
+      [Math.min(x[0] - a[1], a[0]), x[0]], a0)[0]
+  },*/
+  // Gets numberic part of overlay id (e.g 'EMA_1' = > 1)
+  get_num_id: function get_num_id(id) {
+    return parseInt(id.split('_').pop());
+  },
+  // Fast filter. Really fast, like 10X
+  fast_filter: function fast_filter(arr, t1, t2) {
+    if (!arr.length) return arr;
+
+    try {
+      var ia = new arrayslicer__WEBPACK_IMPORTED_MODULE_1___default.a(arr, "0");
+      var res = ia.getRange(t1, t2);
+      return [res];
+    } catch (e) {
+      // Something wrong with fancy slice lib
+      // Fast fix: fallback to filter
+      return [arr.filter(function (x) {
+        return x[0] >= t1 && x[0] <= t2;
+      })];
+    }
+  },
+  // Fast filter (index-based)
+  fast_filter_i: function fast_filter_i(arr, t1, t2) {
+    if (!arr.length) return arr;
+    var i1 = Math.floor(t1);
+    if (i1 < 0) i1 = 0;
+    var i2 = Math.floor(t2 + 1);
+    var res = arr.slice(i1, i2);
+    return [res, i1];
+  },
+  // Nearest indexes (left and right)
+  fast_nearest: function fast_nearest(arr, t1) {
+    var ia = new arrayslicer__WEBPACK_IMPORTED_MODULE_1___default.a(arr, "0");
+    ia.fetch(t1);
+    return [ia.nextlow, ia.nexthigh];
+  },
+  now: function now() {
+    return new Date().getTime();
+  },
+  pause: function pause(delay) {
+    return new Promise(function (rs, rj) {
+      return setTimeout(rs, delay);
+    });
+  },
+  // Limit crazy wheel delta values
+  smart_wheel: function smart_wheel(delta) {
+    var abs = Math.abs(delta);
+
+    if (abs > 500) {
+      return (200 + Math.log(abs)) * Math.sign(delta);
+    }
+
+    return delta;
+  },
+  // Parse the original mouse event to find deltaX
+  get_deltaX: function get_deltaX(event) {
+    return event.originalEvent.deltaX / 12;
+  },
+  // Parse the original mouse event to find deltaY
+  get_deltaY: function get_deltaY(event) {
+    return event.originalEvent.deltaY / 12;
+  },
+  // Apply opacity to a hex color
+  apply_opacity: function apply_opacity(c, op) {
+    if (c.length === 7) {
+      var n = Math.floor(op * 255);
+      n = this.clamp(n, 0, 255);
+      c += n.toString(16);
+    }
+
+    return c;
+  },
+  countDecimals: function countDecimals(value) {
+    if ((value | 0) === value) return 0;
+    return value.toString().split(".")[1].length || 0;
+  },
+  changeNumberFormat: function changeNumberFormat(value, precision) {
+    // Nine Zeroes for Billions
+    return Math.abs(Number(value)) >= 1.0e+9 ? (Number(value) / 1.0e+9).toFixed(precision) + "B" // Six Zeroes for Millions 
+    : Math.abs(Number(value)) >= 1.0e+6 ? (Number(value) / 1.0e+6).toFixed(precision) + "M" : Number(value);
+  },
+  numberWithCommas: function numberWithCommas(x) {
+    return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+  },
+  setImmediatePromise: function setImmediatePromise() {
+    return new Promise(function (resolve) {
+      setImmediate(function () {
+        return resolve();
+      });
+    });
+  }
+});
+/* WEBPACK VAR INJECTION */}.call(this, __webpack_require__(27).setImmediate))
+
+/***/ }),
+/* 1 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var arrayWithoutHoles = __webpack_require__(24);
+var arrayWithoutHoles = __webpack_require__(31);
 
-var iterableToArray = __webpack_require__(25);
+var iterableToArray = __webpack_require__(32);
 
-var nonIterableSpread = __webpack_require__(26);
+var unsupportedIterableToArray = __webpack_require__(26);
+
+var nonIterableSpread = __webpack_require__(33);
 
 function _toConsumableArray(arr) {
-  return arrayWithoutHoles(arr) || iterableToArray(arr) || nonIterableSpread();
+  return arrayWithoutHoles(arr) || iterableToArray(arr) || unsupportedIterableToArray(arr) || nonIterableSpread();
 }
 
 module.exports = _toConsumableArray;
 
 /***/ }),
-/* 1 */
+/* 2 */
 /***/ (function(module, exports) {
 
 function _classCallCheck(instance, Constructor) {
@@ -129,7 +340,7 @@ function _classCallCheck(instance, Constructor) {
 module.exports = _classCallCheck;
 
 /***/ }),
-/* 2 */
+/* 3 */
 /***/ (function(module, exports) {
 
 function _defineProperties(target, props) {
@@ -151,29 +362,31 @@ function _createClass(Constructor, protoProps, staticProps) {
 module.exports = _createClass;
 
 /***/ }),
-/* 3 */
-/***/ (function(module) {
-
-module.exports = JSON.parse("{\"extended.png\":\"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABkAAAAZAQMAAAD+JxcgAAAAAXNSR0IB2cksfwAAAAlwSFlzAAALEwAACxMBAJqcGAAAAAZQTFRFAAAATU1NkJ+rOQAAAAJ0Uk5TAP9bkSK1AAAANElEQVR4nGNggABGEMEEIlhABAeI+AASF0AlHmAqA4kzKAAx8wGQuAMKwd6AoYzBAWonAwAcLwTgNfJ3RQAAAABJRU5ErkJggg==\",\"segment.png\":\"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABkAAAAZAgMAAAC5h23wAAAAAXNSR0IB2cksfwAAAAlwSFlzAAALEwAACxMBAJqcGAAAAAlQTFRFAAAATU1NJCQkCxcHIQAAAAN0Uk5TAP8SmutI5AAAACxJREFUeJxjYMACGAMgNAsLdpoVKi8AVe8A1QblQlWRKt0AoULw2w1zGxoAABdiAviQhF/mAAAAAElFTkSuQmCC\",\"add.png\":\"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACoAAAAqCAMAAADyHTlpAAAAAXNSR0IB2cksfwAAAAlwSFlzAAALEwAACxMBAJqcGAAAAH5QTFRFAAAAAAAAAAAAAAAAAAAAAAAAAAAACgoKBgYGGxsbKioqPz8/Pj4+BQUFCQkJAQEBZGRkh4eHAgICEBAQNjY2g4ODgYGBAAAAAwMDeXl5d3d3GBgYERERgICAgICANDQ0PDw8Y2NjCAgIhYWFGhoaJycnOjo6YWFhgICAdXV14Y16sQAAACp0Uk5TAAILDxIKESEnJiYoKCgTKSkpKCAnKSkFKCkpJiDl/ycpKSA2JyYpKSkpOkQ+xgAAARdJREFUeJzllNt2gyAQRTWiRsHLoDU0GpPYmMv//2BMS+sgl6Z9bM8bi73gnJkBz/sn8lcBIUHofwtG8TpJKUuTLI6cYF7QEqRKynP71VX9AkhNXVlsbMQrLLQVGyPZLsGHWgPrCxMJwHUPlXa79NBp2et5d9f3u3m1XxatQNn7SagOXCUjCjYUDuqxcWlHj4MSfw12FDJchFViRN8+1qcQoUH6lR1L1mEMEErofB6WzEUwylzomfzOQGiOJdXiWH7mQoUyMa4WXJQWOBvLFvPCGxt6FSr5kyH0qi0YddNG2/pgCsOjff4ZTizXPNwKIzl56OoGg9d9Z/+5cs6On+CFCfevFQ3ZaTycx1YMbvDdRvjkp/lHdAcPXzokxcwfDwAAAABJRU5ErkJggg==\",\"cursor.png\":\"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABkAAAAZAgMAAAC5h23wAAAAAXNSR0IB2cksfwAAAAlwSFlzAAALEwAACxMBAJqcGAAAAAxQTFRFAAAATU1NTU1NTU1NwlMHHwAAAAR0Uk5TAOvhxbpPrUkAAAAkSURBVHicY2BgYHBggAByabxg1WoGBq2pRCk9AKUbcND43AEAufYHlSuusE4AAAAASUVORK5CYII=\",\"display_off.png\":\"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACoAAAAqCAMAAADyHTlpAAAAAXNSR0IB2cksfwAAAAlwSFlzAAALEwAACxMBAJqcGAAAAU1QTFRFAAAAh4eHh4eHAAAAAAAAAAAAAwMDAAAAAAAAhoaGGBgYgYGBAAAAPz8/AgICg4ODCQkJhISEh4eHh4eHPj4+NjY2gYGBg4ODgYGBgYGBgoKCAQEBJycngoKChYWFEBAQg4ODCAgIKioqZGRkCgoKBQUFERERd3d3gYGBGxsbNDQ0hISEgYGBPDw8gYGBgYGBh4eHh4eHhYWFh4eHgoKChYWFgYGBgYGBg4ODhoaGg4ODYWFhgoKCBgYGdXV1goKCg4ODgYGBgICAgYGBAAAAg4ODhYWFhISEh4eHgoKChYWFOjo6goKCGhoah4eHh4eHh4eHgoKCh4eHeXl5hoaGgoKChISEgYGBgYGBgoKCY2NjgYGBgoKCh4eHgoKCgYGBhoaGg4ODhoaGhYWFh4eHgYGBhoaGhoaGhoaGg4ODgoKChISEgoKChYWFh4eHfKktUwAAAG90Uk5TACn/AhEFKA8SLCbxCigoVBNKUTYoJ/lh3PyAKSaTNiBtICYpISggKSkmJ0LEKef3lGxA8rn//+pcMSkpnCcptHPJKe0LUjnx5LzKKaMnX73hl64pLnhkzNSgKeLv17LQ+liIzaLe7PfTw5tFpz3K1fXR/gAAAgBJREFUeJzllNdXwjAUxknB0lIoCKVsGTIFQRAZ7r333nuv///R3LZ4mlDQZ/0ekp7b37n5bnITk+mfyDxv5Tir3fwjaElO5BIOKZFLJS1dQVfI0Y809TtEV+elo95RpFPWG+1go4fdQ5QybI8haaNBkM2ANbM09bnrwaPY7iFKrz7EMBdu7CHdVruXIt0M1hb+GKA3LTRKkp5lTA6Dg6xIkhaHhvQ1IlW/UCouQdJNJTRIpk1qO7+wUpcfpl537oBc7VNip3Gi/AmVPBAC1UrL6HXtSGVT+k2Yz0Focad07OMRf3P5BEbd63PFQx7HN+w61JoAm+uBlV48O/0jkLSMmtPCmQ8HwlYdykFV4/LJPp7e3hVyFdapHNehLk6PSjhSkBvwu/cFyJGIYvOyhoc1jjYQFGbygD4CWjoAMla/og3YoSw+KPhjPNoFcim4iFD+pFYA8zZ9WeYU5OBjZ3ORWyCfG03E+47kKpCIJTpGO4KP8XMgtw990xG/PBNTgmPEEXwf7P42oOdFIRAoBCtqTKL6Rcwq4Xsgh5xYC/mmSs6yJKk1YbnVeTq1NaEpmlHbmVn2EORkW2trF2ZzmHGTSUMGl1a9hp4ySRpdQ8yKGURpMmRIYg9pb1YPzg6kO79cLlE6bYFjEtv91bLEUxvhwbWwjY13BxUb9l8+mn9EX8x3Nki8ff5wAAAAAElFTkSuQmCC\",\"display_on.png\":\"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACoAAAAqCAMAAADyHTlpAAAAAXNSR0IB2cksfwAAAAlwSFlzAAALEwAACxMBAJqcGAAAAR1QTFRFAAAAh4eHgYGBAAAAAAAAgYGBAAAAAwMDAAAAAAAAgYGBg4ODGBgYgYGBhISEAAAAPz8/AgIChoaGCQkJhYWFPj4+NjY2goKCgYGBAQEBJycngYGBgoKCEBAQCAgIhISEKioqZGRkCgoKBQUFERERd3d3gYGBg4ODgYGBGxsbNDQ0hISEgoKCgoKChYWFPDw8gYGBgYGBhoaGgoKCg4ODgoKCgYGBgoKCgoKCgoKCg4ODgoKChoaGgoKCgYGBhoaGg4ODYWFhBgYGdXV1gYGBg4ODgoKCgICAg4ODg4ODhISEAAAAg4ODOjo6gYGBGhoaeXl5goKCgYGBgoKChYWFgoKChISEgoKCY2NjgYGBg4ODgYGBgYGBg4ODgYGBo8n54AAAAF90Uk5TACn/AhH3BSgPEuhUJvFACigoLBM2KCeA6ykm+pMgIEkmKSEoICn9XCkmJ0u6nDop4sUypGuEzLZ6vmCYLZ/dLykpJynUYa8pcllCC1Ip2ycpisl1PadFsintbsPQZdi/bTW7AAAB4UlEQVR4nOWUZ1fCMBSGSSGWFiq0UDbIkr2XbBwMxS0b1P//M0xK9XSiftX7oel585zkvfcmMRj+SRhvzRRlthm/BU3Ry3TYzofTsajpIOjw2iNAjIiddehvHXSdA0mkXEEdG0fkE1DEKXmkSVqVIA6rBmsktUgAWLWHoGp30UNclbtLmwQgoyya91wPTbFy0mQXJ5zJQO6BgXRjfH0iSkX5stHIXr5r0bB/lu8syjR8rzsFbR2SpX+5J2eMP3csLtYsEY2K8BeTFuE2jaVCBw7bHOBuxq16AXmpbui3LtIfbRLUHMY2q4lcFo2WB4KA1SUAlWumNEKCzyxBKZxVHvYGaFguCBx1vM/x0IPzoqQoj5SdP4mns2cCGhBsrgj0uaeUBtzMyxQN8w4mYROTW8+r0oANp8W5mf6WQw5aCYJ2o7ymPaKMi2uVpmWM4TW6tdImgGo1bT4nK6DbbsCc0AZSdmLEFszzHrh6riVvRrNA3/9SE8QLWQu+Gjto9+gE9NBMwr9zi83gFeeFTe11zpm1CHE3HeyVCSknf3MIDcFTbfJKdbR1L4xX49L+/BoillV5uPJqkshD3JWSgpNMXP/lcrD8+hO84MnDr5YpFHv0Fe99VjJ0GBRs2H74aP6R+ACr+TFvZNAQ1wAAAABJRU5ErkJggg==\",\"down.png\":\"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACoAAAAqCAMAAADyHTlpAAAAAXNSR0IB2cksfwAAAKVQTFRFAAAAg4ODgICAAAAAAAAAAAAACAgIAAAAAAAAAAAAAAAAOTk5hYWFEBAQfHx8ODg4dnZ2NDQ0XV1dGxsbKCgogICAFBQUIiIiZGRkgICAgICAFRUVAAAAgICAgICAgICAf39/Li4ugICAcHBwgoKCgICAgoKCgICAg4ODgYGBPj4+goKCgICAhISEgYGBgICAgoKCgICAgYGBgYGBf39/gICAgICAIdPQHAAAADd0Uk5TACn/KAIRIBMFDwooKyApKSknKSYmzCcmKfL7JRCUi2L3J7IpcLUrr0VbKXntNEnkMbxrUcG56CMpi50AAAFZSURBVHic5ZRpf4MgDIeFKFatWm/tfW091u7evv9Hm1Acoujm2y0vFPH5Jf+EEE37J6bblmlatv4jaBCI4rMfR0CMXtAEJ0fccgfM7tAkQHXzArdDxggmqGETGCnJWROkNlOwOqhIhKCtgbSicw1uK/dATSK0aRatIzytA8ik4XSiyJnLSm+VPxULgeyLI3uHRJH+qcB4WZGrKb4c20WwI7b3iUt74OS6XD+xZWrXUCtme0uKTvfcJ65CZFa9VOebqwXmft+oT8yF+/VymT4XeGB+Xx8L+j4gBcoFIDT+oMz6Qp93Y74pCeBpUXaLuW0rUk6r1iv3nP322ewYkgv2nZIvgpSPQDrY5wTjRJDNg9XAE/+uSXIVX812GdKEmtvR2rtWaw+5MAOuofJy79SXu9TgBl4d9DZdI0NjgyiswNCB/qk1J5Bmvp+lQOa9IJNhW4bxm6H5R+wLQYMSQXZNzbcAAAAASUVORK5CYII=\",\"price_range.png\":\"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABkAAAAZAQMAAAD+JxcgAAAAAXNSR0IB2cksfwAAAAlwSFlzAAALEwAACxMBAJqcGAAAAAZQTFRFAAAATU1NkJ+rOQAAAAJ0Uk5TAP9bkSK1AAAAIUlEQVR4nGNggAPm/w9gTA4QIQMitECEJ1yMEgLNDiAAADfgBMRu78GgAAAAAElFTkSuQmCC\",\"remove.png\":\"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACoAAAAqCAMAAADyHTlpAAAAAXNSR0IB2cksfwAAAAlwSFlzAAALEwAACxMBAJqcGAAAAK5QTFRFAAAAh4eHgICAAAAAAAAAh4eHAAAAAwMDAAAAAAAAgICAGBgYAAAAPz8/AgICgICACQkJhoaGhoaGgICAPj4+NjY2gYGBg4ODgYGBAQEBJycngoKCEBAQgICAgICACAgIKioqZGRkCgoKBQUFERERd3d3gYGBGxsbNDQ0gICAPDw8YWFhBgYGdXV1gICAg4ODgICAAAAAOjo6GhoaeXl5gICAhYWFY2NjhYWFgICA9O0oCgAAADp0Uk5TACn/AhErBSgPEvEmCigowxMuMcgoJ7hWrCkmdCD6vSAmKSEoICkpJie6KSknKSkp0wspJynCMik11rrLte8AAAFwSURBVHic5ZTXkoIwFIZNAAPSpKkoRQV7Wcva3v/FFiRmEwise7t7bs7MP98k/ylJq/VPQjjKiiJrwo+gON0uxro7XiRTsRHs+voE4JjoRrf+6sD7AFTMvaDGRht9glLMUJtLqmUwD5XDCohHAmBUPQSV27GHtFK7xycBWJab5uPaR+Hlmue7GfZxHwyWFHVMQghXFgD2A8IOZtfssdNJIXcyFEaSfchzp9BuMVP+Fhvr5Qh0nGfqYTGhm3BcYFUaQBKOhMWzRqHyGFRY03ppQ5lCFZ30RloVZGQTaa3QqEt0OyrQnkSkk8I1YJkvAwPCMgY0UpbzXRZhVbosIWGbZTLNQszGMCM42FJEjWDDjIAMtp+xj6x2K+/DqNDc0r4Yc8yGl3uer2aIyT1iyd8sYSuY8cldZbVrH4zPebTvP8OMNSoedj6XzDyk3pwG98u0/ufqGu7tBW5c1PxriXFyHq5PQxXFzeDThvbmp/lH4gt6WxfZ03H8DwAAAABJRU5ErkJggg==\",\"settings.png\":\"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACoAAAAqCAMAAADyHTlpAAAAAXNSR0IB2cksfwAAAAlwSFlzAAALEwAACxMBAJqcGAAAAW5QTFRFAAAAAAAAAAAAAAAAAAAAAAAAAAAACgoKBgYGGxsbKioqQEBAPj4+BQUFCAgIAQEBPz8/ZWVlh4eHZGRkAgICCQkJDw8PNjY2g4ODgoKCNTU1EBAQAAAAAwMDeXl5d3d3AAAAGBgYAAAAERERioqKgoKCgoKCgoKCgYGBgoKChISEhoaGNDQ0g4ODgICAgICAgICAgYGBgYGBhYWFgICAgICAPT09AAAAgYGBgICAgICAgICAgICAY2NjCAgIgICAgICAhYWFhYWFgYGBHBwcgICAhYWFGhoagYGBgYGBg4ODhoaGJycnAAAAhISEgICAg4ODPDw8AAAAgoKCgICAhISEOjo6h4eHgoKCgYGBgICAf39/gYGBgoKCgICAGBgYgYGBg4ODg4ODgICACwsLgYGBgICAgYGBgYGBgYGBgICAgYGBYWFhf39/g4ODPj4+gYGBg4ODgICAhYWFgoKCgYGBgICAgYGBgoKCdXV1T0kC9QAAAHp0Uk5TAAILDxMKESEnJiYpKSgTKSgpKSkoEyAnKSknIAYoKSkFJQEgKl94jYVvVC4nU9f/+K8pOu71KBCi3NPq/ikg0e01Nokm1UUnsZVqQSYOT9lrKRJz5lIpK12jyu+sesgnhGVLxCG55a6Um+GaKfJCKKRgKUt8ocergymDQ9knAAABsElEQVR4nOWUV1vCMBSGg1AQpBZrcVdE3KJxo4LgnuCoe4F7orjHv7doTk3bgF7rd5OnX94nZ+SkCP0TWQqsNpuVs/wI2h2FTleR2+XkHfa8YLHgKRGJSj2SN3fosvIKkVJlVXWONGrkWtEgn1zHJP1GMCs/g7XILFIUpXoTWmaKTnIImGovh72Gxqbmlta2dvgOGpsmQO0dnfhTXd3E6JH0pN1DNnr7MFE/HDsQ0qEO6Pxg9sCh4XDkGx2J6sovBD+G8eiYuo5PxLTKeLoJBZNgT2EcnjY0YYajUKsL7Fk1gcjU3PwChcYTFGorAnsRqlpa1tAVhUbdmr+6RtjIOlgbCjMBUdzc2t7ZzbJ7zAQ4p6GSfRVNwkeKLsvCg31w2JBdjlT0GDxZNzEnpcQ+xWfnFxeXVyp6Tay07gq+L/YUOoBvbomV0V8skiq//DutWfeEfJD1JPLCED4+Pb8kX986tApNQ4iqfSJT76bRzvlgBPODQXW/foYqK5lyeBeYJEL1gaoeGnwIBhjRoQ9SZgTAdEbO/9cKRfmZ+MpGPCVHQ3nBzzS4hKIkuNyh/5g+ALiAXSSas9hwAAAAAElFTkSuQmCC\",\"trash.png\":\"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABkAAAAZAQMAAAD+JxcgAAAAAXNSR0IB2cksfwAAAAlwSFlzAAALEwAACxMBAJqcGAAAAAZQTFRFAAAATU1NkJ+rOQAAAAJ0Uk5TAP9bkSK1AAAALUlEQVR4nGNgAIN6ENHQACX4//9gYBBgYIESYC4LkA0lPEkmGFAI5v8PILYCAHygDJxlK0RUAAAAAElFTkSuQmCC\",\"up.png\":\"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACoAAAAqCAMAAADyHTlpAAAAAXNSR0IB2cksfwAAAAlwSFlzAAALEwAACxMBAJqcGAAAAMZQTFRFAAAAh4eHgICAAAAAAAAAAAAAAwMDAAAAAAAAGBgYAAAAPz8/AgICCQkJgICAh4eHPj4+NjY2AQEBJycnEBAQgICAgICACAgIKioqZGRkCgoKBQUFgYGBERERd3d3gYGBGxsbNDQ0gICAgYGBPDw8gYGBh4eHgICAYWFhBgYGgYGBdXV1goKCg4ODhYWFgICAgoKCAAAAhISEOjo6gICAGhoagYGBeXl5hoaGgICAY2Njg4ODgoKCgoKCgYGBgoKCg4ODgoKC64uw1gAAAEJ0Uk5TACn/AhEFKA8SJgooKBP7KignKSYg9c0gJikhKLQgKSkmJ7ywKY8s5SknlClxKTMpXwtFKe0neiku8ClKWmSbbFFjM5GHSgAAAW5JREFUeJzllGd/gjAQxk3AMFWWOHDvVa2rVbu//5cqhJWQQO3b9nkVjv/v7rnLKJX+iYS9JMuSKvwIiu3loKkZzYHXFgvBiqW1QKSWplfySzvmAyDUN50cG2X0DDLqoTKXVLJgIIXDCohHAqCzHhymeuShy/Ru8kkAhtmhWUTvW9fdEnPQaVLU0n8XF0L3kn5P6LTtZPKgNoK+RrUkcGtQ7S9TsgOxxinrkUPYD+LwLCIh7CTsWSVQqRmTuPqpitlZFLQlApXjrsYBc335wOw47ksmUSMMrgKi/gnAE/awCqNHmTUwDf5X34LlBuedsgbUsK15kPMxTIXzzvFSIdsSPBw7nGD1K+7bL3F9xStEnZhoCw71TbpL71GBBbUF1MZmZWTOi97PI3eIJn9zCEtOj0+umaOde2EszqW9/xr6rM54WFtc0vfQNak57Ibd/Jerohu3GFwYqPjVEhve2Z4cbQU1ikFsQ73z0fwj+ga3VBezGuggFQAAAABJRU5ErkJggg==\"}");
-
-/***/ }),
 /* 4 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var arrayWithHoles = __webpack_require__(27);
+var arrayWithHoles = __webpack_require__(34);
 
-var iterableToArrayLimit = __webpack_require__(28);
+var iterableToArrayLimit = __webpack_require__(35);
 
-var nonIterableRest = __webpack_require__(29);
+var unsupportedIterableToArray = __webpack_require__(26);
+
+var nonIterableRest = __webpack_require__(36);
 
 function _slicedToArray(arr, i) {
-  return arrayWithHoles(arr) || iterableToArrayLimit(arr, i) || nonIterableRest();
+  return arrayWithHoles(arr) || iterableToArrayLimit(arr, i) || unsupportedIterableToArray(arr, i) || nonIterableRest();
 }
 
 module.exports = _slicedToArray;
 
 /***/ }),
 /* 5 */
+/***/ (function(module) {
+
+module.exports = JSON.parse("{\"extended.png\":\"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABkAAAAZAQMAAAD+JxcgAAAAAXNSR0IB2cksfwAAAAlwSFlzAAALEwAACxMBAJqcGAAAAAZQTFRFAAAATU1NkJ+rOQAAAAJ0Uk5TAP9bkSK1AAAANElEQVR4nGNggABGEMEEIlhABAeI+AASF0AlHmAqA4kzKAAx8wGQuAMKwd6AoYzBAWonAwAcLwTgNfJ3RQAAAABJRU5ErkJggg==\",\"segment.png\":\"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABkAAAAZAgMAAAC5h23wAAAAAXNSR0IB2cksfwAAAAlwSFlzAAALEwAACxMBAJqcGAAAAAlQTFRFAAAATU1NJCQkCxcHIQAAAAN0Uk5TAP8SmutI5AAAACxJREFUeJxjYMACGAMgNAsLdpoVKi8AVe8A1QblQlWRKt0AoULw2w1zGxoAABdiAviQhF/mAAAAAElFTkSuQmCC\",\"add.png\":\"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACoAAAAqCAMAAADyHTlpAAAAAXNSR0IB2cksfwAAAAlwSFlzAAALEwAACxMBAJqcGAAAAH5QTFRFAAAAAAAAAAAAAAAAAAAAAAAAAAAACgoKBgYGGxsbKioqPz8/Pj4+BQUFCQkJAQEBZGRkh4eHAgICEBAQNjY2g4ODgYGBAAAAAwMDeXl5d3d3GBgYERERgICAgICANDQ0PDw8Y2NjCAgIhYWFGhoaJycnOjo6YWFhgICAdXV14Y16sQAAACp0Uk5TAAILDxIKESEnJiYoKCgTKSkpKCAnKSkFKCkpJiDl/ycpKSA2JyYpKSkpOkQ+xgAAARdJREFUeJzllNt2gyAQRTWiRsHLoDU0GpPYmMv//2BMS+sgl6Z9bM8bi73gnJkBz/sn8lcBIUHofwtG8TpJKUuTLI6cYF7QEqRKynP71VX9AkhNXVlsbMQrLLQVGyPZLsGHWgPrCxMJwHUPlXa79NBp2et5d9f3u3m1XxatQNn7SagOXCUjCjYUDuqxcWlHj4MSfw12FDJchFViRN8+1qcQoUH6lR1L1mEMEErofB6WzEUwylzomfzOQGiOJdXiWH7mQoUyMa4WXJQWOBvLFvPCGxt6FSr5kyH0qi0YddNG2/pgCsOjff4ZTizXPNwKIzl56OoGg9d9Z/+5cs6On+CFCfevFQ3ZaTycx1YMbvDdRvjkp/lHdAcPXzokxcwfDwAAAABJRU5ErkJggg==\",\"cursor.png\":\"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABkAAAAZAgMAAAC5h23wAAAAAXNSR0IB2cksfwAAAAlwSFlzAAALEwAACxMBAJqcGAAAAAxQTFRFAAAATU1NTU1NTU1NwlMHHwAAAAR0Uk5TAOvhxbpPrUkAAAAkSURBVHicY2BgYHBggAByabxg1WoGBq2pRCk9AKUbcND43AEAufYHlSuusE4AAAAASUVORK5CYII=\",\"display_off.png\":\"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACoAAAAqCAMAAADyHTlpAAAAAXNSR0IB2cksfwAAAAlwSFlzAAALEwAACxMBAJqcGAAAAU1QTFRFAAAAh4eHh4eHAAAAAAAAAAAAAwMDAAAAAAAAhoaGGBgYgYGBAAAAPz8/AgICg4ODCQkJhISEh4eHh4eHPj4+NjY2gYGBg4ODgYGBgYGBgoKCAQEBJycngoKChYWFEBAQg4ODCAgIKioqZGRkCgoKBQUFERERd3d3gYGBGxsbNDQ0hISEgYGBPDw8gYGBgYGBh4eHh4eHhYWFh4eHgoKChYWFgYGBgYGBg4ODhoaGg4ODYWFhgoKCBgYGdXV1goKCg4ODgYGBgICAgYGBAAAAg4ODhYWFhISEh4eHgoKChYWFOjo6goKCGhoah4eHh4eHh4eHgoKCh4eHeXl5hoaGgoKChISEgYGBgYGBgoKCY2NjgYGBgoKCh4eHgoKCgYGBhoaGg4ODhoaGhYWFh4eHgYGBhoaGhoaGhoaGg4ODgoKChISEgoKChYWFh4eHfKktUwAAAG90Uk5TACn/AhEFKA8SLCbxCigoVBNKUTYoJ/lh3PyAKSaTNiBtICYpISggKSkmJ0LEKef3lGxA8rn//+pcMSkpnCcptHPJKe0LUjnx5LzKKaMnX73hl64pLnhkzNSgKeLv17LQ+liIzaLe7PfTw5tFpz3K1fXR/gAAAgBJREFUeJzllNdXwjAUxknB0lIoCKVsGTIFQRAZ7r333nuv///R3LZ4mlDQZ/0ekp7b37n5bnITk+mfyDxv5Tir3fwjaElO5BIOKZFLJS1dQVfI0Y809TtEV+elo95RpFPWG+1go4fdQ5QybI8haaNBkM2ANbM09bnrwaPY7iFKrz7EMBdu7CHdVruXIt0M1hb+GKA3LTRKkp5lTA6Dg6xIkhaHhvQ1IlW/UCouQdJNJTRIpk1qO7+wUpcfpl537oBc7VNip3Gi/AmVPBAC1UrL6HXtSGVT+k2Yz0Focad07OMRf3P5BEbd63PFQx7HN+w61JoAm+uBlV48O/0jkLSMmtPCmQ8HwlYdykFV4/LJPp7e3hVyFdapHNehLk6PSjhSkBvwu/cFyJGIYvOyhoc1jjYQFGbygD4CWjoAMla/og3YoSw+KPhjPNoFcim4iFD+pFYA8zZ9WeYU5OBjZ3ORWyCfG03E+47kKpCIJTpGO4KP8XMgtw990xG/PBNTgmPEEXwf7P42oOdFIRAoBCtqTKL6Rcwq4Xsgh5xYC/mmSs6yJKk1YbnVeTq1NaEpmlHbmVn2EORkW2trF2ZzmHGTSUMGl1a9hp4ySRpdQ8yKGURpMmRIYg9pb1YPzg6kO79cLlE6bYFjEtv91bLEUxvhwbWwjY13BxUb9l8+mn9EX8x3Nki8ff5wAAAAAElFTkSuQmCC\",\"display_on.png\":\"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACoAAAAqCAMAAADyHTlpAAAAAXNSR0IB2cksfwAAAAlwSFlzAAALEwAACxMBAJqcGAAAAR1QTFRFAAAAh4eHgYGBAAAAAAAAgYGBAAAAAwMDAAAAAAAAgYGBg4ODGBgYgYGBhISEAAAAPz8/AgIChoaGCQkJhYWFPj4+NjY2goKCgYGBAQEBJycngYGBgoKCEBAQCAgIhISEKioqZGRkCgoKBQUFERERd3d3gYGBg4ODgYGBGxsbNDQ0hISEgoKCgoKChYWFPDw8gYGBgYGBhoaGgoKCg4ODgoKCgYGBgoKCgoKCgoKCg4ODgoKChoaGgoKCgYGBhoaGg4ODYWFhBgYGdXV1gYGBg4ODgoKCgICAg4ODg4ODhISEAAAAg4ODOjo6gYGBGhoaeXl5goKCgYGBgoKChYWFgoKChISEgoKCY2NjgYGBg4ODgYGBgYGBg4ODgYGBo8n54AAAAF90Uk5TACn/AhH3BSgPEuhUJvFACigoLBM2KCeA6ykm+pMgIEkmKSEoICn9XCkmJ0u6nDop4sUypGuEzLZ6vmCYLZ/dLykpJynUYa8pcllCC1Ip2ycpisl1PadFsintbsPQZdi/bTW7AAAB4UlEQVR4nOWUZ1fCMBSGSSGWFiq0UDbIkr2XbBwMxS0b1P//M0xK9XSiftX7oel585zkvfcmMRj+SRhvzRRlthm/BU3Ry3TYzofTsajpIOjw2iNAjIiddehvHXSdA0mkXEEdG0fkE1DEKXmkSVqVIA6rBmsktUgAWLWHoGp30UNclbtLmwQgoyya91wPTbFy0mQXJ5zJQO6BgXRjfH0iSkX5stHIXr5r0bB/lu8syjR8rzsFbR2SpX+5J2eMP3csLtYsEY2K8BeTFuE2jaVCBw7bHOBuxq16AXmpbui3LtIfbRLUHMY2q4lcFo2WB4KA1SUAlWumNEKCzyxBKZxVHvYGaFguCBx1vM/x0IPzoqQoj5SdP4mns2cCGhBsrgj0uaeUBtzMyxQN8w4mYROTW8+r0oANp8W5mf6WQw5aCYJ2o7ymPaKMi2uVpmWM4TW6tdImgGo1bT4nK6DbbsCc0AZSdmLEFszzHrh6riVvRrNA3/9SE8QLWQu+Gjto9+gE9NBMwr9zi83gFeeFTe11zpm1CHE3HeyVCSknf3MIDcFTbfJKdbR1L4xX49L+/BoillV5uPJqkshD3JWSgpNMXP/lcrD8+hO84MnDr5YpFHv0Fe99VjJ0GBRs2H74aP6R+ACr+TFvZNAQ1wAAAABJRU5ErkJggg==\",\"down.png\":\"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACoAAAAqCAMAAADyHTlpAAAAAXNSR0IB2cksfwAAAKVQTFRFAAAAg4ODgICAAAAAAAAAAAAACAgIAAAAAAAAAAAAAAAAOTk5hYWFEBAQfHx8ODg4dnZ2NDQ0XV1dGxsbKCgogICAFBQUIiIiZGRkgICAgICAFRUVAAAAgICAgICAgICAf39/Li4ugICAcHBwgoKCgICAgoKCgICAg4ODgYGBPj4+goKCgICAhISEgYGBgICAgoKCgICAgYGBgYGBf39/gICAgICAIdPQHAAAADd0Uk5TACn/KAIRIBMFDwooKyApKSknKSYmzCcmKfL7JRCUi2L3J7IpcLUrr0VbKXntNEnkMbxrUcG56CMpi50AAAFZSURBVHic5ZRpf4MgDIeFKFatWm/tfW091u7evv9Hm1Acoujm2y0vFPH5Jf+EEE37J6bblmlatv4jaBCI4rMfR0CMXtAEJ0fccgfM7tAkQHXzArdDxggmqGETGCnJWROkNlOwOqhIhKCtgbSicw1uK/dATSK0aRatIzytA8ik4XSiyJnLSm+VPxULgeyLI3uHRJH+qcB4WZGrKb4c20WwI7b3iUt74OS6XD+xZWrXUCtme0uKTvfcJ65CZFa9VOebqwXmft+oT8yF+/VymT4XeGB+Xx8L+j4gBcoFIDT+oMz6Qp93Y74pCeBpUXaLuW0rUk6r1iv3nP322ewYkgv2nZIvgpSPQDrY5wTjRJDNg9XAE/+uSXIVX812GdKEmtvR2rtWaw+5MAOuofJy79SXu9TgBl4d9DZdI0NjgyiswNCB/qk1J5Bmvp+lQOa9IJNhW4bxm6H5R+wLQYMSQXZNzbcAAAAASUVORK5CYII=\",\"price_range.png\":\"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABkAAAAZAQMAAAD+JxcgAAAAAXNSR0IB2cksfwAAAAlwSFlzAAALEwAACxMBAJqcGAAAAAZQTFRFAAAATU1NkJ+rOQAAAAJ0Uk5TAP9bkSK1AAAAIUlEQVR4nGNggAPm/w9gTA4QIQMitECEJ1yMEgLNDiAAADfgBMRu78GgAAAAAElFTkSuQmCC\",\"remove.png\":\"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACoAAAAqCAMAAADyHTlpAAAAAXNSR0IB2cksfwAAAAlwSFlzAAALEwAACxMBAJqcGAAAAK5QTFRFAAAAh4eHgICAAAAAAAAAh4eHAAAAAwMDAAAAAAAAgICAGBgYAAAAPz8/AgICgICACQkJhoaGhoaGgICAPj4+NjY2gYGBg4ODgYGBAQEBJycngoKCEBAQgICAgICACAgIKioqZGRkCgoKBQUFERERd3d3gYGBGxsbNDQ0gICAPDw8YWFhBgYGdXV1gICAg4ODgICAAAAAOjo6GhoaeXl5gICAhYWFY2NjhYWFgICA9O0oCgAAADp0Uk5TACn/AhErBSgPEvEmCigowxMuMcgoJ7hWrCkmdCD6vSAmKSEoICkpJie6KSknKSkp0wspJynCMik11rrLte8AAAFwSURBVHic5ZTXkoIwFIZNAAPSpKkoRQV7Wcva3v/FFiRmEwise7t7bs7MP98k/ylJq/VPQjjKiiJrwo+gON0uxro7XiRTsRHs+voE4JjoRrf+6sD7AFTMvaDGRht9glLMUJtLqmUwD5XDCohHAmBUPQSV27GHtFK7xycBWJab5uPaR+Hlmue7GfZxHwyWFHVMQghXFgD2A8IOZtfssdNJIXcyFEaSfchzp9BuMVP+Fhvr5Qh0nGfqYTGhm3BcYFUaQBKOhMWzRqHyGFRY03ppQ5lCFZ30RloVZGQTaa3QqEt0OyrQnkSkk8I1YJkvAwPCMgY0UpbzXRZhVbosIWGbZTLNQszGMCM42FJEjWDDjIAMtp+xj6x2K+/DqNDc0r4Yc8yGl3uer2aIyT1iyd8sYSuY8cldZbVrH4zPebTvP8OMNSoedj6XzDyk3pwG98u0/ufqGu7tBW5c1PxriXFyHq5PQxXFzeDThvbmp/lH4gt6WxfZ03H8DwAAAABJRU5ErkJggg==\",\"settings.png\":\"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACoAAAAqCAMAAADyHTlpAAAAAXNSR0IB2cksfwAAAAlwSFlzAAALEwAACxMBAJqcGAAAAW5QTFRFAAAAAAAAAAAAAAAAAAAAAAAAAAAACgoKBgYGGxsbKioqQEBAPj4+BQUFCAgIAQEBPz8/ZWVlh4eHZGRkAgICCQkJDw8PNjY2g4ODgoKCNTU1EBAQAAAAAwMDeXl5d3d3AAAAGBgYAAAAERERioqKgoKCgoKCgoKCgYGBgoKChISEhoaGNDQ0g4ODgICAgICAgICAgYGBgYGBhYWFgICAgICAPT09AAAAgYGBgICAgICAgICAgICAY2NjCAgIgICAgICAhYWFhYWFgYGBHBwcgICAhYWFGhoagYGBgYGBg4ODhoaGJycnAAAAhISEgICAg4ODPDw8AAAAgoKCgICAhISEOjo6h4eHgoKCgYGBgICAf39/gYGBgoKCgICAGBgYgYGBg4ODg4ODgICACwsLgYGBgICAgYGBgYGBgYGBgICAgYGBYWFhf39/g4ODPj4+gYGBg4ODgICAhYWFgoKCgYGBgICAgYGBgoKCdXV1T0kC9QAAAHp0Uk5TAAILDxMKESEnJiYpKSgTKSgpKSkoEyAnKSknIAYoKSkFJQEgKl94jYVvVC4nU9f/+K8pOu71KBCi3NPq/ikg0e01Nokm1UUnsZVqQSYOT9lrKRJz5lIpK12jyu+sesgnhGVLxCG55a6Um+GaKfJCKKRgKUt8ocergymDQ9knAAABsElEQVR4nOWUV1vCMBSGg1AQpBZrcVdE3KJxo4LgnuCoe4F7orjHv7doTk3bgF7rd5OnX94nZ+SkCP0TWQqsNpuVs/wI2h2FTleR2+XkHfa8YLHgKRGJSj2SN3fosvIKkVJlVXWONGrkWtEgn1zHJP1GMCs/g7XILFIUpXoTWmaKTnIImGovh72Gxqbmlta2dvgOGpsmQO0dnfhTXd3E6JH0pN1DNnr7MFE/HDsQ0qEO6Pxg9sCh4XDkGx2J6sovBD+G8eiYuo5PxLTKeLoJBZNgT2EcnjY0YYajUKsL7Fk1gcjU3PwChcYTFGorAnsRqlpa1tAVhUbdmr+6RtjIOlgbCjMBUdzc2t7ZzbJ7zAQ4p6GSfRVNwkeKLsvCg31w2JBdjlT0GDxZNzEnpcQ+xWfnFxeXVyp6Tay07gq+L/YUOoBvbomV0V8skiq//DutWfeEfJD1JPLCED4+Pb8kX986tApNQ4iqfSJT76bRzvlgBPODQXW/foYqK5lyeBeYJEL1gaoeGnwIBhjRoQ9SZgTAdEbO/9cKRfmZ+MpGPCVHQ3nBzzS4hKIkuNyh/5g+ALiAXSSas9hwAAAAAElFTkSuQmCC\",\"trash.png\":\"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAABkAAAAZAQMAAAD+JxcgAAAAAXNSR0IB2cksfwAAAAlwSFlzAAALEwAACxMBAJqcGAAAAAZQTFRFAAAATU1NkJ+rOQAAAAJ0Uk5TAP9bkSK1AAAALUlEQVR4nGNgAIN6ENHQACX4//9gYBBgYIESYC4LkA0lPEkmGFAI5v8PILYCAHygDJxlK0RUAAAAAElFTkSuQmCC\",\"up.png\":\"data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAACoAAAAqCAMAAADyHTlpAAAAAXNSR0IB2cksfwAAAAlwSFlzAAALEwAACxMBAJqcGAAAAMZQTFRFAAAAh4eHgICAAAAAAAAAAAAAAwMDAAAAAAAAGBgYAAAAPz8/AgICCQkJgICAh4eHPj4+NjY2AQEBJycnEBAQgICAgICACAgIKioqZGRkCgoKBQUFgYGBERERd3d3gYGBGxsbNDQ0gICAgYGBPDw8gYGBh4eHgICAYWFhBgYGgYGBdXV1goKCg4ODhYWFgICAgoKCAAAAhISEOjo6gICAGhoagYGBeXl5hoaGgICAY2Njg4ODgoKCgoKCgYGBgoKCg4ODgoKC64uw1gAAAEJ0Uk5TACn/AhEFKA8SJgooKBP7KignKSYg9c0gJikhKLQgKSkmJ7ywKY8s5SknlClxKTMpXwtFKe0neiku8ClKWmSbbFFjM5GHSgAAAW5JREFUeJzllGd/gjAQxk3AMFWWOHDvVa2rVbu//5cqhJWQQO3b9nkVjv/v7rnLKJX+iYS9JMuSKvwIiu3loKkZzYHXFgvBiqW1QKSWplfySzvmAyDUN50cG2X0DDLqoTKXVLJgIIXDCohHAqCzHhymeuShy/Ru8kkAhtmhWUTvW9fdEnPQaVLU0n8XF0L3kn5P6LTtZPKgNoK+RrUkcGtQ7S9TsgOxxinrkUPYD+LwLCIh7CTsWSVQqRmTuPqpitlZFLQlApXjrsYBc335wOw47ksmUSMMrgKi/gnAE/awCqNHmTUwDf5X34LlBuedsgbUsK15kPMxTIXzzvFSIdsSPBw7nGD1K+7bL3F9xStEnZhoCw71TbpL71GBBbUF1MZmZWTOi97PI3eIJn9zCEtOj0+umaOde2EszqW9/xr6rM54WFtc0vfQNak57Ibd/Jerohu3GFwYqPjVEhve2Z4cbQU1ikFsQ73z0fwj+ga3VBezGuggFQAAAABJRU5ErkJggg==\"}");
+
+/***/ }),
+/* 6 */
 /***/ (function(module, exports, __webpack_require__) {
 
 var __WEBPACK_AMD_DEFINE_RESULT__;/*! Hammer.JS - v2.0.7 - 2016-04-22
@@ -2819,7 +3032,7 @@ if (true) {
 
 
 /***/ }),
-/* 6 */
+/* 7 */
 /***/ (function(module, exports, __webpack_require__) {
 
 "use strict";
@@ -2919,7 +3132,7 @@ function toComment(sourceMap) {
 }
 
 /***/ }),
-/* 7 */
+/* 8 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -3184,137 +3397,94 @@ function applyToTag (styleElement, obj) {
 
 
 /***/ }),
-/* 8 */
-/***/ (function(module, exports, __webpack_require__) {
-
-// style-loader: Adds some css to the DOM by adding a <style> tag
-
-// load the styles
-var content = __webpack_require__(34);
-if(typeof content === 'string') content = [[module.i, content, '']];
-if(content.locals) module.exports = content.locals;
-// add the styles to the DOM
-var add = __webpack_require__(7).default
-var update = add("68f243ea", content, false, {});
-// Hot Module Replacement
-if(false) {}
-
-/***/ }),
 /* 9 */
-/***/ (function(module, exports, __webpack_require__) {
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
 
-// style-loader: Adds some css to the DOM by adding a <style> tag
+"use strict";
+/* WEBPACK VAR INJECTION */(function(setImmediate) {/* harmony import */ var _stuff_utils_js__WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(0);
+// Interactive canvas-based component
+// Should implement: mousemove, mouseout, mouseup, mousedown, click
 
-// load the styles
-var content = __webpack_require__(36);
-if(typeof content === 'string') content = [[module.i, content, '']];
-if(content.locals) module.exports = content.locals;
-// add the styles to the DOM
-var add = __webpack_require__(7).default
-var update = add("9895d3a6", content, false, {});
-// Hot Module Replacement
-if(false) {}
+/* harmony default export */ __webpack_exports__["a"] = ({
+  methods: {
+    setup: function setup() {
+      var _this = this;
+
+      var id = "".concat(this.$props.tv_id, "-").concat(this._id, "-canvas");
+      var canvas = document.getElementById(id);
+      var dpr = window.devicePixelRatio || 1;
+      canvas.style.width = "".concat(this._attrs.width, "px");
+      canvas.style.height = "".concat(this._attrs.height, "px");
+      if (dpr < 1) dpr = 1; // Realy ? That's it? Issue #63
+
+      setImmediate(function () {
+        var rect = canvas.getBoundingClientRect();
+        canvas.width = rect.width * dpr;
+        canvas.height = rect.height * dpr;
+        var ctx = canvas.getContext('2d', {
+          alpha: true,
+          desynchronized: true,
+          preserveDrawingBuffer: false
+        });
+        ctx.scale(dpr, dpr);
+
+        _this.redraw();
+      });
+    },
+    create_canvas: function create_canvas(h, id, props) {
+      var _this2 = this;
+
+      this._id = id;
+      this._attrs = props.attrs;
+      return h('div', {
+        "class": "trading-vue-".concat(id),
+        style: {
+          left: props.position.x + 'px',
+          top: props.position.y + 'px',
+          position: 'absolute'
+        }
+      }, [h('canvas', {
+        on: {
+          mousemove: function mousemove(e) {
+            return _this2.renderer.mousemove(e);
+          },
+          mouseout: function mouseout(e) {
+            return _this2.renderer.mouseout(e);
+          },
+          mouseup: function mouseup(e) {
+            return _this2.renderer.mouseup(e);
+          },
+          mousedown: function mousedown(e) {
+            return _this2.renderer.mousedown(e);
+          }
+        },
+        attrs: Object.assign({
+          id: "".concat(this.$props.tv_id, "-").concat(id, "-canvas")
+        }, props.attrs),
+        ref: 'canvas',
+        style: props.style
+      })].concat(props.hs || []));
+    },
+    redraw: function redraw() {
+      if (!this.renderer) return;
+      this.renderer.update();
+    }
+  },
+  watch: {
+    width: function width(val) {
+      this._attrs.width = val;
+      this.setup();
+    },
+    height: function height(val) {
+      this._attrs.height = val;
+      this.setup();
+    }
+  }
+});
+/* WEBPACK VAR INJECTION */}.call(this, __webpack_require__(27).setImmediate))
 
 /***/ }),
 /* 10 */
-/***/ (function(module, exports, __webpack_require__) {
-
-// style-loader: Adds some css to the DOM by adding a <style> tag
-
-// load the styles
-var content = __webpack_require__(38);
-if(typeof content === 'string') content = [[module.i, content, '']];
-if(content.locals) module.exports = content.locals;
-// add the styles to the DOM
-var add = __webpack_require__(7).default
-var update = add("1db01c0b", content, false, {});
-// Hot Module Replacement
-if(false) {}
-
-/***/ }),
-/* 11 */
-/***/ (function(module, exports, __webpack_require__) {
-
-// style-loader: Adds some css to the DOM by adding a <style> tag
-
-// load the styles
-var content = __webpack_require__(40);
-if(typeof content === 'string') content = [[module.i, content, '']];
-if(content.locals) module.exports = content.locals;
-// add the styles to the DOM
-var add = __webpack_require__(7).default
-var update = add("12d2309d", content, false, {});
-// Hot Module Replacement
-if(false) {}
-
-/***/ }),
-/* 12 */
-/***/ (function(module, exports, __webpack_require__) {
-
-// style-loader: Adds some css to the DOM by adding a <style> tag
-
-// load the styles
-var content = __webpack_require__(42);
-if(typeof content === 'string') content = [[module.i, content, '']];
-if(content.locals) module.exports = content.locals;
-// add the styles to the DOM
-var add = __webpack_require__(7).default
-var update = add("1b34bfeb", content, false, {});
-// Hot Module Replacement
-if(false) {}
-
-/***/ }),
-/* 13 */
-/***/ (function(module, exports, __webpack_require__) {
-
-// style-loader: Adds some css to the DOM by adding a <style> tag
-
-// load the styles
-var content = __webpack_require__(44);
-if(typeof content === 'string') content = [[module.i, content, '']];
-if(content.locals) module.exports = content.locals;
-// add the styles to the DOM
-var add = __webpack_require__(7).default
-var update = add("604bf5ef", content, false, {});
-// Hot Module Replacement
-if(false) {}
-
-/***/ }),
-/* 14 */
-/***/ (function(module, exports, __webpack_require__) {
-
-// style-loader: Adds some css to the DOM by adding a <style> tag
-
-// load the styles
-var content = __webpack_require__(46);
-if(typeof content === 'string') content = [[module.i, content, '']];
-if(content.locals) module.exports = content.locals;
-// add the styles to the DOM
-var add = __webpack_require__(7).default
-var update = add("f32fd36e", content, false, {});
-// Hot Module Replacement
-if(false) {}
-
-/***/ }),
-/* 15 */
-/***/ (function(module, exports, __webpack_require__) {
-
-var _typeof = __webpack_require__(18);
-
-var assertThisInitialized = __webpack_require__(47);
-
-function _possibleConstructorReturn(self, call) {
-  if (call && (_typeof(call) === "object" || typeof call === "function")) {
-    return call;
-  }
-
-  return assertThisInitialized(self);
-}
-
-module.exports = _possibleConstructorReturn;
-
-/***/ }),
-/* 16 */
 /***/ (function(module, exports) {
 
 function _getPrototypeOf(o) {
@@ -3327,10 +3497,138 @@ function _getPrototypeOf(o) {
 module.exports = _getPrototypeOf;
 
 /***/ }),
+/* 11 */
+/***/ (function(module, exports, __webpack_require__) {
+
+// style-loader: Adds some css to the DOM by adding a <style> tag
+
+// load the styles
+var content = __webpack_require__(43);
+if(typeof content === 'string') content = [[module.i, content, '']];
+if(content.locals) module.exports = content.locals;
+// add the styles to the DOM
+var add = __webpack_require__(8).default
+var update = add("21fde573", content, false, {});
+// Hot Module Replacement
+if(false) {}
+
+/***/ }),
+/* 12 */
+/***/ (function(module, exports, __webpack_require__) {
+
+// style-loader: Adds some css to the DOM by adding a <style> tag
+
+// load the styles
+var content = __webpack_require__(45);
+if(typeof content === 'string') content = [[module.i, content, '']];
+if(content.locals) module.exports = content.locals;
+// add the styles to the DOM
+var add = __webpack_require__(8).default
+var update = add("68f243ea", content, false, {});
+// Hot Module Replacement
+if(false) {}
+
+/***/ }),
+/* 13 */
+/***/ (function(module, exports, __webpack_require__) {
+
+// style-loader: Adds some css to the DOM by adding a <style> tag
+
+// load the styles
+var content = __webpack_require__(47);
+if(typeof content === 'string') content = [[module.i, content, '']];
+if(content.locals) module.exports = content.locals;
+// add the styles to the DOM
+var add = __webpack_require__(8).default
+var update = add("9895d3a6", content, false, {});
+// Hot Module Replacement
+if(false) {}
+
+/***/ }),
+/* 14 */
+/***/ (function(module, exports, __webpack_require__) {
+
+// style-loader: Adds some css to the DOM by adding a <style> tag
+
+// load the styles
+var content = __webpack_require__(49);
+if(typeof content === 'string') content = [[module.i, content, '']];
+if(content.locals) module.exports = content.locals;
+// add the styles to the DOM
+var add = __webpack_require__(8).default
+var update = add("1db01c0b", content, false, {});
+// Hot Module Replacement
+if(false) {}
+
+/***/ }),
+/* 15 */
+/***/ (function(module, exports, __webpack_require__) {
+
+// style-loader: Adds some css to the DOM by adding a <style> tag
+
+// load the styles
+var content = __webpack_require__(51);
+if(typeof content === 'string') content = [[module.i, content, '']];
+if(content.locals) module.exports = content.locals;
+// add the styles to the DOM
+var add = __webpack_require__(8).default
+var update = add("12d2309d", content, false, {});
+// Hot Module Replacement
+if(false) {}
+
+/***/ }),
+/* 16 */
+/***/ (function(module, exports, __webpack_require__) {
+
+// style-loader: Adds some css to the DOM by adding a <style> tag
+
+// load the styles
+var content = __webpack_require__(53);
+if(typeof content === 'string') content = [[module.i, content, '']];
+if(content.locals) module.exports = content.locals;
+// add the styles to the DOM
+var add = __webpack_require__(8).default
+var update = add("1b34bfeb", content, false, {});
+// Hot Module Replacement
+if(false) {}
+
+/***/ }),
 /* 17 */
 /***/ (function(module, exports, __webpack_require__) {
 
-var setPrototypeOf = __webpack_require__(48);
+// style-loader: Adds some css to the DOM by adding a <style> tag
+
+// load the styles
+var content = __webpack_require__(55);
+if(typeof content === 'string') content = [[module.i, content, '']];
+if(content.locals) module.exports = content.locals;
+// add the styles to the DOM
+var add = __webpack_require__(8).default
+var update = add("604bf5ef", content, false, {});
+// Hot Module Replacement
+if(false) {}
+
+/***/ }),
+/* 18 */
+/***/ (function(module, exports, __webpack_require__) {
+
+// style-loader: Adds some css to the DOM by adding a <style> tag
+
+// load the styles
+var content = __webpack_require__(57);
+if(typeof content === 'string') content = [[module.i, content, '']];
+if(content.locals) module.exports = content.locals;
+// add the styles to the DOM
+var add = __webpack_require__(8).default
+var update = add("f32fd36e", content, false, {});
+// Hot Module Replacement
+if(false) {}
+
+/***/ }),
+/* 19 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var setPrototypeOf = __webpack_require__(58);
 
 function _inherits(subClass, superClass) {
   if (typeof superClass !== "function" && superClass !== null) {
@@ -3350,7 +3648,25 @@ function _inherits(subClass, superClass) {
 module.exports = _inherits;
 
 /***/ }),
-/* 18 */
+/* 20 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var _typeof = __webpack_require__(21);
+
+var assertThisInitialized = __webpack_require__(59);
+
+function _possibleConstructorReturn(self, call) {
+  if (call && (_typeof(call) === "object" || typeof call === "function")) {
+    return call;
+  }
+
+  return assertThisInitialized(self);
+}
+
+module.exports = _possibleConstructorReturn;
+
+/***/ }),
+/* 21 */
 /***/ (function(module, exports) {
 
 function _typeof(obj) {
@@ -3372,35 +3688,7 @@ function _typeof(obj) {
 module.exports = _typeof;
 
 /***/ }),
-/* 19 */
-/***/ (function(module, exports) {
-
-function _defineProperty(obj, key, value) {
-  if (key in obj) {
-    Object.defineProperty(obj, key, {
-      value: value,
-      enumerable: true,
-      configurable: true,
-      writable: true
-    });
-  } else {
-    obj[key] = value;
-  }
-
-  return obj;
-}
-
-module.exports = _defineProperty;
-
-/***/ }),
-/* 20 */
-/***/ (function(module, exports, __webpack_require__) {
-
-module.exports = __webpack_require__(49);
-
-
-/***/ }),
-/* 21 */
+/* 22 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /**
@@ -3410,9 +3698,9 @@ module.exports = __webpack_require__(49);
 /**
  * Dependencies
  */
-var util = __webpack_require__(30),
-    cmp = __webpack_require__(31),
-    bin = __webpack_require__(32);
+var util = __webpack_require__(39),
+    cmp = __webpack_require__(40),
+    bin = __webpack_require__(41);
 
 /**
  * Module interface definition
@@ -3624,337 +3912,506 @@ IndexedArray.prototype.getRange = function (begin, end) {
 
 
 /***/ }),
-/* 22 */
+/* 23 */
+/***/ (function(module, exports) {
+
+function _defineProperty(obj, key, value) {
+  if (key in obj) {
+    Object.defineProperty(obj, key, {
+      value: value,
+      enumerable: true,
+      configurable: true,
+      writable: true
+    });
+  } else {
+    obj[key] = value;
+  }
+
+  return obj;
+}
+
+module.exports = _defineProperty;
+
+/***/ }),
+/* 24 */
+/***/ (function(module, exports, __webpack_require__) {
+
+module.exports = __webpack_require__(60);
+
+
+/***/ }),
+/* 25 */
+/***/ (function(module, exports) {
+
+function _arrayLikeToArray(arr, len) {
+  if (len == null || len > arr.length) len = arr.length;
+
+  for (var i = 0, arr2 = new Array(len); i < len; i++) {
+    arr2[i] = arr[i];
+  }
+
+  return arr2;
+}
+
+module.exports = _arrayLikeToArray;
+
+/***/ }),
+/* 26 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var arrayLikeToArray = __webpack_require__(25);
+
+function _unsupportedIterableToArray(o, minLen) {
+  if (!o) return;
+  if (typeof o === "string") return arrayLikeToArray(o, minLen);
+  var n = Object.prototype.toString.call(o).slice(8, -1);
+  if (n === "Object" && o.constructor) n = o.constructor.name;
+  if (n === "Map" || n === "Set") return Array.from(n);
+  if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return arrayLikeToArray(o, minLen);
+}
+
+module.exports = _unsupportedIterableToArray;
+
+/***/ }),
+/* 27 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/* WEBPACK VAR INJECTION */(function(global) {var scope = (typeof global !== "undefined" && global) ||
+            (typeof self !== "undefined" && self) ||
+            window;
+var apply = Function.prototype.apply;
+
+// DOM APIs, for completeness
+
+exports.setTimeout = function() {
+  return new Timeout(apply.call(setTimeout, scope, arguments), clearTimeout);
+};
+exports.setInterval = function() {
+  return new Timeout(apply.call(setInterval, scope, arguments), clearInterval);
+};
+exports.clearTimeout =
+exports.clearInterval = function(timeout) {
+  if (timeout) {
+    timeout.close();
+  }
+};
+
+function Timeout(id, clearFn) {
+  this._id = id;
+  this._clearFn = clearFn;
+}
+Timeout.prototype.unref = Timeout.prototype.ref = function() {};
+Timeout.prototype.close = function() {
+  this._clearFn.call(scope, this._id);
+};
+
+// Does not start the time, just sets up the members needed.
+exports.enroll = function(item, msecs) {
+  clearTimeout(item._idleTimeoutId);
+  item._idleTimeout = msecs;
+};
+
+exports.unenroll = function(item) {
+  clearTimeout(item._idleTimeoutId);
+  item._idleTimeout = -1;
+};
+
+exports._unrefActive = exports.active = function(item) {
+  clearTimeout(item._idleTimeoutId);
+
+  var msecs = item._idleTimeout;
+  if (msecs >= 0) {
+    item._idleTimeoutId = setTimeout(function onTimeout() {
+      if (item._onTimeout)
+        item._onTimeout();
+    }, msecs);
+  }
+};
+
+// setimmediate attaches itself to the global object
+__webpack_require__(37);
+// On some exotic environments, it's not clear which object `setimmediate` was
+// able to install onto.  Search each possibility in the same order as the
+// `setimmediate` library.
+exports.setImmediate = (typeof self !== "undefined" && self.setImmediate) ||
+                       (typeof global !== "undefined" && global.setImmediate) ||
+                       (this && this.setImmediate);
+exports.clearImmediate = (typeof self !== "undefined" && self.clearImmediate) ||
+                         (typeof global !== "undefined" && global.clearImmediate) ||
+                         (this && this.clearImmediate);
+
+/* WEBPACK VAR INJECTION */}.call(this, __webpack_require__(28)))
+
+/***/ }),
+/* 28 */
+/***/ (function(module, exports) {
+
+var g;
+
+// This works in non-strict mode
+g = (function() {
+	return this;
+})();
+
+try {
+	// This works if eval is allowed (see CSP)
+	g = g || new Function("return this")();
+} catch (e) {
+	// This works if the window reference is available
+	if (typeof window === "object") g = window;
+}
+
+// g can still be undefined, but nothing to do about it...
+// We return undefined, instead of nothing here, so it's
+// easier to handle this case. if(!global) { ...}
+
+module.exports = g;
+
+
+/***/ }),
+/* 29 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /*
- * Hamster.js v1.1.2
+ * Hamster.js v1.1.4
  * (c) 2013 Monospaced http://monospaced.com
  * License: MIT
+ */
+
+ /*
+ MODIFIED FOR PASSIVE EVENT LISTENERS
+ BY KENSINGTON TECHNOLOGY ASSOCIATES
  */
 
 (function(window, document){
 'use strict';
 
-/**
- * Hamster
- * use this to create instances
- * @returns {Hamster.Instance}
- * @constructor
- */
-var Hamster = function(element) {
-  return new Hamster.Instance(element);
-};
-
-// default event name
-Hamster.SUPPORT = 'wheel';
-
-// default DOM methods
-Hamster.ADD_EVENT = 'addEventListener';
-Hamster.REMOVE_EVENT = 'removeEventListener';
-Hamster.PREFIX = '';
-
-// until browser inconsistencies have been fixed...
-Hamster.READY = false;
-
-Hamster.Instance = function(element){
-  if (!Hamster.READY) {
-    // fix browser inconsistencies
-    Hamster.normalise.browser();
-
-    // Hamster is ready...!
-    Hamster.READY = true;
-  }
-
-  this.element = element;
-
-  // store attached event handlers
-  this.handlers = [];
-
-  // return instance
-  return this;
-};
-
-/**
- * create new hamster instance
- * all methods should return the instance itself, so it is chainable.
- * @param   {HTMLElement}       element
- * @returns {Hamster.Instance}
- * @constructor
- */
-Hamster.Instance.prototype = {
   /**
-   * bind events to the instance
-   * @param   {Function}    handler
-   * @param   {Boolean}     useCapture
+   * Hamster
+   * use this to create instances
    * @returns {Hamster.Instance}
+   * @constructor
    */
-  wheel: function onEvent(handler, useCapture){
-    Hamster.event.add(this, Hamster.SUPPORT, handler, useCapture);
+  var Hamster = function(element, passive) {
+    return new Hamster.Instance(element, passive);
+  };
 
-    // handle MozMousePixelScroll in older Firefox
-    if (Hamster.SUPPORT === 'DOMMouseScroll') {
-      Hamster.event.add(this, 'MozMousePixelScroll', handler, useCapture);
+  // default event name
+  Hamster.SUPPORT = 'wheel';
+
+  // default DOM methods
+  Hamster.ADD_EVENT = 'addEventListener';
+  Hamster.REMOVE_EVENT = 'removeEventListener';
+  Hamster.PREFIX = '';
+
+  // until browser inconsistencies have been fixed...
+  Hamster.READY = false;
+
+  Hamster.Instance = function(element, passive){
+    if (!Hamster.READY) {
+      // fix browser inconsistencies
+      Hamster.normalise.browser();
+
+      // Hamster is ready...!
+      Hamster.READY = true;
     }
 
+    this.element = element;
+
+    this.passive = passive || false;
+
+    // store attached event handlers
+    this.handlers = [];
+
+    // return instance
     return this;
-  },
+  };
 
   /**
-   * unbind events to the instance
-   * @param   {Function}    handler
-   * @param   {Boolean}     useCapture
+   * create new hamster instance
+   * all methods should return the instance itself, so it is chainable.
+   * @param   {HTMLElement}       element
    * @returns {Hamster.Instance}
+   * @constructor
    */
-  unwheel: function offEvent(handler, useCapture){
-    // if no handler argument,
-    // unbind the last bound handler (if exists)
-    if (handler === undefined && (handler = this.handlers.slice(-1)[0])) {
-      handler = handler.original;
-    }
+  Hamster.Instance.prototype = {
+    /**
+     * bind events to the instance
+     * @param   {Function}    handler
+     * @param   {Boolean}     useCapture
+     * @returns {Hamster.Instance}
+     */
+    wheel: function onEvent(handler, useCapture){
+      Hamster.event.add(this, Hamster.SUPPORT, handler, useCapture);
 
-    Hamster.event.remove(this, Hamster.SUPPORT, handler, useCapture);
-
-    // handle MozMousePixelScroll in older Firefox
-    if (Hamster.SUPPORT === 'DOMMouseScroll') {
-      Hamster.event.remove(this, 'MozMousePixelScroll', handler, useCapture);
-    }
-
-    return this;
-  }
-};
-
-Hamster.event = {
-  /**
-   * cross-browser 'addWheelListener'
-   * @param   {Instance}    hamster
-   * @param   {String}      eventName
-   * @param   {Function}    handler
-   * @param   {Boolean}     useCapture
-   */
-  add: function add(hamster, eventName, handler, useCapture){
-    // store the original handler
-    var originalHandler = handler;
-
-    // redefine the handler
-    handler = function(originalEvent){
-
-      if (!originalEvent) {
-        originalEvent = window.event;
+      // handle MozMousePixelScroll in older Firefox
+      if (Hamster.SUPPORT === 'DOMMouseScroll') {
+        Hamster.event.add(this, 'MozMousePixelScroll', handler, useCapture);
       }
 
-      // create a normalised event object,
-      // and normalise "deltas" of the mouse wheel
-      var event = Hamster.normalise.event(originalEvent),
-          delta = Hamster.normalise.delta(originalEvent);
+      return this;
+    },
 
-      // fire the original handler with normalised arguments
-      return originalHandler(event, delta[0], delta[1], delta[2]);
+    /**
+     * unbind events to the instance
+     * @param   {Function}    handler
+     * @param   {Boolean}     useCapture
+     * @returns {Hamster.Instance}
+     */
+    unwheel: function offEvent(handler, useCapture){
+      // if no handler argument,
+      // unbind the last bound handler (if exists)
+      if (handler === undefined && (handler = this.handlers.slice(-1)[0])) {
+        handler = handler.original;
+      }
 
-    };
+      Hamster.event.remove(this, Hamster.SUPPORT, handler, useCapture);
 
-    // cross-browser addEventListener
-    hamster.element[Hamster.ADD_EVENT](Hamster.PREFIX + eventName, handler, useCapture || false);
+      // handle MozMousePixelScroll in older Firefox
+      if (Hamster.SUPPORT === 'DOMMouseScroll') {
+        Hamster.event.remove(this, 'MozMousePixelScroll', handler, useCapture);
+      }
 
-    // store original and normalised handlers on the instance
-    hamster.handlers.push({
-      original: originalHandler,
-      normalised: handler
+      return this;
+    }
+  };
+
+  Hamster.event = {
+    /**
+     * cross-browser 'addWheelListener'
+     * @param   {Instance}    hamster
+     * @param   {String}      eventName
+     * @param   {Function}    handler
+     * @param   {Boolean}     useCapture
+     */
+    add: function add(hamster, eventName, handler, useCapture){
+      // store the original handler
+      var originalHandler = handler;
+
+      // redefine the handler
+      handler = function(originalEvent){
+
+        if (!originalEvent) {
+          originalEvent = window.event;
+        }
+
+        // create a normalised event object,
+        // and normalise "deltas" of the mouse wheel
+        var event = Hamster.normalise.event(originalEvent),
+            delta = Hamster.normalise.delta(originalEvent);
+
+        // fire the original handler with normalised arguments
+        return originalHandler(event, delta[0], delta[1], delta[2]);
+
+      };
+
+      // cross-browser addEventListener
+      if (!hamster.passive) {
+        hamster.element[Hamster.ADD_EVENT](Hamster.PREFIX + eventName, handler, useCapture || false);
+      }
+      else {
+        hamster.element[Hamster.ADD_EVENT](Hamster.PREFIX + eventName, handler, { passive: true } );
+      }
+
+      // store original and normalised handlers on the instance
+      hamster.handlers.push({
+        original: originalHandler,
+        normalised: handler
+      });
+    },
+
+    /**
+     * removeWheelListener
+     * @param   {Instance}    hamster
+     * @param   {String}      eventName
+     * @param   {Function}    handler
+     * @param   {Boolean}     useCapture
+     */
+    remove: function remove(hamster, eventName, handler, useCapture){
+      // find the normalised handler on the instance
+      var originalHandler = handler,
+          lookup = {},
+          handlers;
+      for (var i = 0, len = hamster.handlers.length; i < len; ++i) {
+        lookup[hamster.handlers[i].original] = hamster.handlers[i];
+      }
+      handlers = lookup[originalHandler];
+      handler = handlers.normalised;
+
+      // cross-browser removeEventListener
+      hamster.element[Hamster.REMOVE_EVENT](Hamster.PREFIX + eventName, handler, useCapture || false);
+
+      // remove original and normalised handlers from the instance
+      for (var h in hamster.handlers) {
+        if (hamster.handlers[h] == handlers) {
+          hamster.handlers.splice(h, 1);
+          break;
+        }
+      }
+    }
+  };
+
+  /**
+   * these hold the lowest deltas,
+   * used to normalise the delta values
+   * @type {Number}
+   */
+  var lowestDelta,
+      lowestDeltaXY;
+
+  Hamster.normalise = {
+    /**
+     * fix browser inconsistencies
+     */
+    browser: function normaliseBrowser(){
+      // detect deprecated wheel events
+      if (!('onwheel' in document || document.documentMode >= 9)) {
+        Hamster.SUPPORT = document.onmousewheel !== undefined ?
+                          'mousewheel' : // webkit and IE < 9 support at least "mousewheel"
+                          'DOMMouseScroll'; // assume remaining browsers are older Firefox
+      }
+
+      // detect deprecated event model
+      if (!window.addEventListener) {
+        // assume IE < 9
+        Hamster.ADD_EVENT = 'attachEvent';
+        Hamster.REMOVE_EVENT = 'detachEvent';
+        Hamster.PREFIX = 'on';
+      }
+
+    },
+
+    /**
+     * create a normalised event object
+     * @param   {Function}    originalEvent
+     * @returns {Object}      event
+     */
+    event: function normaliseEvent(originalEvent){
+      var event = {
+            // keep a reference to the original event object
+            originalEvent: originalEvent,
+            target: originalEvent.target || originalEvent.srcElement,
+            type: 'wheel',
+            deltaMode: originalEvent.type === 'MozMousePixelScroll' ? 0 : 1,
+            deltaX: 0,
+            deltaZ: 0,
+            preventDefault: function(){
+              if (originalEvent.preventDefault) {
+                originalEvent.preventDefault();
+              } else {
+                originalEvent.returnValue = false;
+              }
+            },
+            stopPropagation: function(){
+              if (originalEvent.stopPropagation) {
+                originalEvent.stopPropagation();
+              } else {
+                originalEvent.cancelBubble = false;
+              }
+            }
+          };
+
+      // calculate deltaY (and deltaX) according to the event
+
+      // 'mousewheel'
+      if (originalEvent.wheelDelta) {
+        event.deltaY = - 1/40 * originalEvent.wheelDelta;
+      }
+      // webkit
+      if (originalEvent.wheelDeltaX) {
+        event.deltaX = - 1/40 * originalEvent.wheelDeltaX;
+      }
+
+      // 'DomMouseScroll'
+      if (originalEvent.detail) {
+        event.deltaY = originalEvent.detail;
+      }
+
+      return event;
+    },
+
+    /**
+     * normalise 'deltas' of the mouse wheel
+     * @param   {Function}    originalEvent
+     * @returns {Array}       deltas
+     */
+    delta: function normaliseDelta(originalEvent){
+      var delta = 0,
+        deltaX = 0,
+        deltaY = 0,
+        absDelta = 0,
+        absDeltaXY = 0,
+        fn;
+
+      // normalise deltas according to the event
+
+      // 'wheel' event
+      if (originalEvent.deltaY) {
+        deltaY = originalEvent.deltaY * -1;
+        delta  = deltaY;
+      }
+      if (originalEvent.deltaX) {
+        deltaX = originalEvent.deltaX;
+        delta  = deltaX * -1;
+      }
+
+      // 'mousewheel' event
+      if (originalEvent.wheelDelta) {
+        delta = originalEvent.wheelDelta;
+      }
+      // webkit
+      if (originalEvent.wheelDeltaY) {
+        deltaY = originalEvent.wheelDeltaY;
+      }
+      if (originalEvent.wheelDeltaX) {
+        deltaX = originalEvent.wheelDeltaX * -1;
+      }
+
+      // 'DomMouseScroll' event
+      if (originalEvent.detail) {
+        delta = originalEvent.detail * -1;
+      }
+
+      // Don't return NaN
+      if (delta === 0) {
+        return [0, 0, 0];
+      }
+
+      // look for lowest delta to normalize the delta values
+      absDelta = Math.abs(delta);
+      if (!lowestDelta || absDelta < lowestDelta) {
+        lowestDelta = absDelta;
+      }
+      absDeltaXY = Math.max(Math.abs(deltaY), Math.abs(deltaX));
+      if (!lowestDeltaXY || absDeltaXY < lowestDeltaXY) {
+        lowestDeltaXY = absDeltaXY;
+      }
+
+      // convert deltas to whole numbers
+      fn = delta > 0 ? 'floor' : 'ceil';
+      delta  = Math[fn](delta / lowestDelta);
+      deltaX = Math[fn](deltaX / lowestDeltaXY);
+      deltaY = Math[fn](deltaY / lowestDeltaXY);
+
+      return [delta, deltaX, deltaY];
+    }
+  };
+
+  if (typeof window.define === 'function' && window.define.amd) {
+    // AMD
+    window.define('hamster', [], function(){
+      return Hamster;
     });
-  },
-
-  /**
-   * removeWheelListener
-   * @param   {Instance}    hamster
-   * @param   {String}      eventName
-   * @param   {Function}    handler
-   * @param   {Boolean}     useCapture
-   */
-  remove: function remove(hamster, eventName, handler, useCapture){
-    // find the normalised handler on the instance
-    var originalHandler = handler,
-        lookup = {},
-        handlers;
-    for (var i = 0, len = hamster.handlers.length; i < len; ++i) {
-      lookup[hamster.handlers[i].original] = hamster.handlers[i];
-    }
-    handlers = lookup[originalHandler];
-    handler = handlers.normalised;
-
-    // cross-browser removeEventListener
-    hamster.element[Hamster.REMOVE_EVENT](Hamster.PREFIX + eventName, handler, useCapture || false);
-
-    // remove original and normalised handlers from the instance
-    for (var h in hamster.handlers) {
-      if (hamster.handlers[h] == handlers) {
-        hamster.handlers.splice(h, 1);
-        break;
-      }
-    }
-  }
-};
-
-/**
- * these hold the lowest deltas,
- * used to normalise the delta values
- * @type {Number}
- */
-var lowestDelta,
-    lowestDeltaXY;
-
-Hamster.normalise = {
-  /**
-   * fix browser inconsistencies
-   */
-  browser: function normaliseBrowser(){
-    // detect deprecated wheel events
-    if (!('onwheel' in document || document.documentMode >= 9)) {
-      Hamster.SUPPORT = document.onmousewheel !== undefined ?
-                        'mousewheel' : // webkit and IE < 9 support at least "mousewheel"
-                        'DOMMouseScroll'; // assume remaining browsers are older Firefox
-    }
-
-    // detect deprecated event model
-    if (!window.addEventListener) {
-      // assume IE < 9
-      Hamster.ADD_EVENT = 'attachEvent';
-      Hamster.REMOVE_EVENT = 'detachEvent';
-      Hamster.PREFIX = 'on';
-    }
-
-  },
-
-  /**
-   * create a normalised event object
-   * @param   {Function}    originalEvent
-   * @returns {Object}      event
-   */
-   event: function normaliseEvent(originalEvent){
-    var event = {
-          // keep a reference to the original event object
-          originalEvent: originalEvent,
-          target: originalEvent.target || originalEvent.srcElement,
-          type: 'wheel',
-          deltaMode: originalEvent.type === 'MozMousePixelScroll' ? 0 : 1,
-          deltaX: 0,
-          deltaZ: 0,
-          preventDefault: function(){
-            if (originalEvent.preventDefault) {
-              originalEvent.preventDefault();
-            } else {
-              originalEvent.returnValue = false;
-            }
-          },
-          stopPropagation: function(){
-            if (originalEvent.stopPropagation) {
-              originalEvent.stopPropagation();
-            } else {
-              originalEvent.cancelBubble = false;
-            }
-          }
-        };
-
-    // calculate deltaY (and deltaX) according to the event
-
-    // 'mousewheel'
-    if (originalEvent.wheelDelta) {
-      event.deltaY = - 1/40 * originalEvent.wheelDelta;
-    }
-    // webkit
-    if (originalEvent.wheelDeltaX) {
-      event.deltaX = - 1/40 * originalEvent.wheelDeltaX;
-    }
-
-    // 'DomMouseScroll'
-    if (originalEvent.detail) {
-      event.deltaY = originalEvent.detail;
-    }
-
-    return event;
-  },
-
-  /**
-   * normalise 'deltas' of the mouse wheel
-   * @param   {Function}    originalEvent
-   * @returns {Array}       deltas
-   */
-  delta: function normaliseDelta(originalEvent){
-    var delta = 0,
-      deltaX = 0,
-      deltaY = 0,
-      absDelta = 0,
-      absDeltaXY = 0,
-      fn;
-
-    // normalise deltas according to the event
-
-    // 'wheel' event
-    if (originalEvent.deltaY) {
-      deltaY = originalEvent.deltaY * -1;
-      delta  = deltaY;
-    }
-    if (originalEvent.deltaX) {
-      deltaX = originalEvent.deltaX;
-      delta  = deltaX * -1;
-    }
-
-    // 'mousewheel' event
-    if (originalEvent.wheelDelta) {
-      delta = originalEvent.wheelDelta;
-    }
-    // webkit
-    if (originalEvent.wheelDeltaY) {
-      deltaY = originalEvent.wheelDeltaY;
-    }
-    if (originalEvent.wheelDeltaX) {
-      deltaX = originalEvent.wheelDeltaX * -1;
-    }
-
-    // 'DomMouseScroll' event
-    if (originalEvent.detail) {
-      delta = originalEvent.detail * -1;
-    }
-
-    // Don't return NaN
-    if (delta === 0) {
-      return [0, 0, 0];
-    }
-
-    // look for lowest delta to normalize the delta values
-    absDelta = Math.abs(delta);
-    if (!lowestDelta || absDelta < lowestDelta) {
-      lowestDelta = absDelta;
-    }
-    absDeltaXY = Math.max(Math.abs(deltaY), Math.abs(deltaX));
-    if (!lowestDeltaXY || absDeltaXY < lowestDeltaXY) {
-      lowestDeltaXY = absDeltaXY;
-    }
-
-    // convert deltas to whole numbers
-    fn = delta > 0 ? 'floor' : 'ceil';
-    delta  = Math[fn](delta / lowestDelta);
-    deltaX = Math[fn](deltaX / lowestDeltaXY);
-    deltaY = Math[fn](deltaY / lowestDeltaXY);
-
-    return [delta, deltaX, deltaY];
-  }
-};
-
-if (typeof window.define === 'function' && window.define.amd) {
-  // AMD
-  window.define('hamster', [], function(){
-    return Hamster;
-  });
-} else if (true) {
-  // CommonJS
-  module.exports = Hamster;
-} else {}
+  } else if (true) {
+    // CommonJS
+    module.exports = Hamster;
+  } else {}
 
 })(window, window.document);
 
 
 /***/ }),
-/* 23 */
+/* 30 */
 /***/ (function(module, exports) {
 
 function asyncGeneratorStep(gen, resolve, reject, _next, _throw, key, arg) {
@@ -3996,43 +4453,39 @@ function _asyncToGenerator(fn) {
 module.exports = _asyncToGenerator;
 
 /***/ }),
-/* 24 */
-/***/ (function(module, exports) {
+/* 31 */
+/***/ (function(module, exports, __webpack_require__) {
+
+var arrayLikeToArray = __webpack_require__(25);
 
 function _arrayWithoutHoles(arr) {
-  if (Array.isArray(arr)) {
-    for (var i = 0, arr2 = new Array(arr.length); i < arr.length; i++) {
-      arr2[i] = arr[i];
-    }
-
-    return arr2;
-  }
+  if (Array.isArray(arr)) return arrayLikeToArray(arr);
 }
 
 module.exports = _arrayWithoutHoles;
 
 /***/ }),
-/* 25 */
+/* 32 */
 /***/ (function(module, exports) {
 
 function _iterableToArray(iter) {
-  if (Symbol.iterator in Object(iter) || Object.prototype.toString.call(iter) === "[object Arguments]") return Array.from(iter);
+  if (typeof Symbol !== "undefined" && Symbol.iterator in Object(iter)) return Array.from(iter);
 }
 
 module.exports = _iterableToArray;
 
 /***/ }),
-/* 26 */
+/* 33 */
 /***/ (function(module, exports) {
 
 function _nonIterableSpread() {
-  throw new TypeError("Invalid attempt to spread non-iterable instance");
+  throw new TypeError("Invalid attempt to spread non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method.");
 }
 
 module.exports = _nonIterableSpread;
 
 /***/ }),
-/* 27 */
+/* 34 */
 /***/ (function(module, exports) {
 
 function _arrayWithHoles(arr) {
@@ -4042,14 +4495,11 @@ function _arrayWithHoles(arr) {
 module.exports = _arrayWithHoles;
 
 /***/ }),
-/* 28 */
+/* 35 */
 /***/ (function(module, exports) {
 
 function _iterableToArrayLimit(arr, i) {
-  if (!(Symbol.iterator in Object(arr) || Object.prototype.toString.call(arr) === "[object Arguments]")) {
-    return;
-  }
-
+  if (typeof Symbol === "undefined" || !(Symbol.iterator in Object(arr))) return;
   var _arr = [];
   var _n = true;
   var _d = false;
@@ -4078,17 +4528,400 @@ function _iterableToArrayLimit(arr, i) {
 module.exports = _iterableToArrayLimit;
 
 /***/ }),
-/* 29 */
+/* 36 */
 /***/ (function(module, exports) {
 
 function _nonIterableRest() {
-  throw new TypeError("Invalid attempt to destructure non-iterable instance");
+  throw new TypeError("Invalid attempt to destructure non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method.");
 }
 
 module.exports = _nonIterableRest;
 
 /***/ }),
-/* 30 */
+/* 37 */
+/***/ (function(module, exports, __webpack_require__) {
+
+/* WEBPACK VAR INJECTION */(function(global, process) {(function (global, undefined) {
+    "use strict";
+
+    if (global.setImmediate) {
+        return;
+    }
+
+    var nextHandle = 1; // Spec says greater than zero
+    var tasksByHandle = {};
+    var currentlyRunningATask = false;
+    var doc = global.document;
+    var registerImmediate;
+
+    function setImmediate(callback) {
+      // Callback can either be a function or a string
+      if (typeof callback !== "function") {
+        callback = new Function("" + callback);
+      }
+      // Copy function arguments
+      var args = new Array(arguments.length - 1);
+      for (var i = 0; i < args.length; i++) {
+          args[i] = arguments[i + 1];
+      }
+      // Store and register the task
+      var task = { callback: callback, args: args };
+      tasksByHandle[nextHandle] = task;
+      registerImmediate(nextHandle);
+      return nextHandle++;
+    }
+
+    function clearImmediate(handle) {
+        delete tasksByHandle[handle];
+    }
+
+    function run(task) {
+        var callback = task.callback;
+        var args = task.args;
+        switch (args.length) {
+        case 0:
+            callback();
+            break;
+        case 1:
+            callback(args[0]);
+            break;
+        case 2:
+            callback(args[0], args[1]);
+            break;
+        case 3:
+            callback(args[0], args[1], args[2]);
+            break;
+        default:
+            callback.apply(undefined, args);
+            break;
+        }
+    }
+
+    function runIfPresent(handle) {
+        // From the spec: "Wait until any invocations of this algorithm started before this one have completed."
+        // So if we're currently running a task, we'll need to delay this invocation.
+        if (currentlyRunningATask) {
+            // Delay by doing a setTimeout. setImmediate was tried instead, but in Firefox 7 it generated a
+            // "too much recursion" error.
+            setTimeout(runIfPresent, 0, handle);
+        } else {
+            var task = tasksByHandle[handle];
+            if (task) {
+                currentlyRunningATask = true;
+                try {
+                    run(task);
+                } finally {
+                    clearImmediate(handle);
+                    currentlyRunningATask = false;
+                }
+            }
+        }
+    }
+
+    function installNextTickImplementation() {
+        registerImmediate = function(handle) {
+            process.nextTick(function () { runIfPresent(handle); });
+        };
+    }
+
+    function canUsePostMessage() {
+        // The test against `importScripts` prevents this implementation from being installed inside a web worker,
+        // where `global.postMessage` means something completely different and can't be used for this purpose.
+        if (global.postMessage && !global.importScripts) {
+            var postMessageIsAsynchronous = true;
+            var oldOnMessage = global.onmessage;
+            global.onmessage = function() {
+                postMessageIsAsynchronous = false;
+            };
+            global.postMessage("", "*");
+            global.onmessage = oldOnMessage;
+            return postMessageIsAsynchronous;
+        }
+    }
+
+    function installPostMessageImplementation() {
+        // Installs an event handler on `global` for the `message` event: see
+        // * https://developer.mozilla.org/en/DOM/window.postMessage
+        // * http://www.whatwg.org/specs/web-apps/current-work/multipage/comms.html#crossDocumentMessages
+
+        var messagePrefix = "setImmediate$" + Math.random() + "$";
+        var onGlobalMessage = function(event) {
+            if (event.source === global &&
+                typeof event.data === "string" &&
+                event.data.indexOf(messagePrefix) === 0) {
+                runIfPresent(+event.data.slice(messagePrefix.length));
+            }
+        };
+
+        if (global.addEventListener) {
+            global.addEventListener("message", onGlobalMessage, false);
+        } else {
+            global.attachEvent("onmessage", onGlobalMessage);
+        }
+
+        registerImmediate = function(handle) {
+            global.postMessage(messagePrefix + handle, "*");
+        };
+    }
+
+    function installMessageChannelImplementation() {
+        var channel = new MessageChannel();
+        channel.port1.onmessage = function(event) {
+            var handle = event.data;
+            runIfPresent(handle);
+        };
+
+        registerImmediate = function(handle) {
+            channel.port2.postMessage(handle);
+        };
+    }
+
+    function installReadyStateChangeImplementation() {
+        var html = doc.documentElement;
+        registerImmediate = function(handle) {
+            // Create a <script> element; its readystatechange event will be fired asynchronously once it is inserted
+            // into the document. Do so, thus queuing up the task. Remember to clean up once it's been called.
+            var script = doc.createElement("script");
+            script.onreadystatechange = function () {
+                runIfPresent(handle);
+                script.onreadystatechange = null;
+                html.removeChild(script);
+                script = null;
+            };
+            html.appendChild(script);
+        };
+    }
+
+    function installSetTimeoutImplementation() {
+        registerImmediate = function(handle) {
+            setTimeout(runIfPresent, 0, handle);
+        };
+    }
+
+    // If supported, we should attach to the prototype of global, since that is where setTimeout et al. live.
+    var attachTo = Object.getPrototypeOf && Object.getPrototypeOf(global);
+    attachTo = attachTo && attachTo.setTimeout ? attachTo : global;
+
+    // Don't get fooled by e.g. browserify environments.
+    if ({}.toString.call(global.process) === "[object process]") {
+        // For Node.js before 0.9
+        installNextTickImplementation();
+
+    } else if (canUsePostMessage()) {
+        // For non-IE10 modern browsers
+        installPostMessageImplementation();
+
+    } else if (global.MessageChannel) {
+        // For web workers, where supported
+        installMessageChannelImplementation();
+
+    } else if (doc && "onreadystatechange" in doc.createElement("script")) {
+        // For IE 6–8
+        installReadyStateChangeImplementation();
+
+    } else {
+        // For older browsers
+        installSetTimeoutImplementation();
+    }
+
+    attachTo.setImmediate = setImmediate;
+    attachTo.clearImmediate = clearImmediate;
+}(typeof self === "undefined" ? typeof global === "undefined" ? this : global : self));
+
+/* WEBPACK VAR INJECTION */}.call(this, __webpack_require__(28), __webpack_require__(38)))
+
+/***/ }),
+/* 38 */
+/***/ (function(module, exports) {
+
+// shim for using process in browser
+var process = module.exports = {};
+
+// cached from whatever global is present so that test runners that stub it
+// don't break things.  But we need to wrap it in a try catch in case it is
+// wrapped in strict mode code which doesn't define any globals.  It's inside a
+// function because try/catches deoptimize in certain engines.
+
+var cachedSetTimeout;
+var cachedClearTimeout;
+
+function defaultSetTimout() {
+    throw new Error('setTimeout has not been defined');
+}
+function defaultClearTimeout () {
+    throw new Error('clearTimeout has not been defined');
+}
+(function () {
+    try {
+        if (typeof setTimeout === 'function') {
+            cachedSetTimeout = setTimeout;
+        } else {
+            cachedSetTimeout = defaultSetTimout;
+        }
+    } catch (e) {
+        cachedSetTimeout = defaultSetTimout;
+    }
+    try {
+        if (typeof clearTimeout === 'function') {
+            cachedClearTimeout = clearTimeout;
+        } else {
+            cachedClearTimeout = defaultClearTimeout;
+        }
+    } catch (e) {
+        cachedClearTimeout = defaultClearTimeout;
+    }
+} ())
+function runTimeout(fun) {
+    if (cachedSetTimeout === setTimeout) {
+        //normal enviroments in sane situations
+        return setTimeout(fun, 0);
+    }
+    // if setTimeout wasn't available but was latter defined
+    if ((cachedSetTimeout === defaultSetTimout || !cachedSetTimeout) && setTimeout) {
+        cachedSetTimeout = setTimeout;
+        return setTimeout(fun, 0);
+    }
+    try {
+        // when when somebody has screwed with setTimeout but no I.E. maddness
+        return cachedSetTimeout(fun, 0);
+    } catch(e){
+        try {
+            // When we are in I.E. but the script has been evaled so I.E. doesn't trust the global object when called normally
+            return cachedSetTimeout.call(null, fun, 0);
+        } catch(e){
+            // same as above but when it's a version of I.E. that must have the global object for 'this', hopfully our context correct otherwise it will throw a global error
+            return cachedSetTimeout.call(this, fun, 0);
+        }
+    }
+
+
+}
+function runClearTimeout(marker) {
+    if (cachedClearTimeout === clearTimeout) {
+        //normal enviroments in sane situations
+        return clearTimeout(marker);
+    }
+    // if clearTimeout wasn't available but was latter defined
+    if ((cachedClearTimeout === defaultClearTimeout || !cachedClearTimeout) && clearTimeout) {
+        cachedClearTimeout = clearTimeout;
+        return clearTimeout(marker);
+    }
+    try {
+        // when when somebody has screwed with setTimeout but no I.E. maddness
+        return cachedClearTimeout(marker);
+    } catch (e){
+        try {
+            // When we are in I.E. but the script has been evaled so I.E. doesn't  trust the global object when called normally
+            return cachedClearTimeout.call(null, marker);
+        } catch (e){
+            // same as above but when it's a version of I.E. that must have the global object for 'this', hopfully our context correct otherwise it will throw a global error.
+            // Some versions of I.E. have different rules for clearTimeout vs setTimeout
+            return cachedClearTimeout.call(this, marker);
+        }
+    }
+
+
+
+}
+var queue = [];
+var draining = false;
+var currentQueue;
+var queueIndex = -1;
+
+function cleanUpNextTick() {
+    if (!draining || !currentQueue) {
+        return;
+    }
+    draining = false;
+    if (currentQueue.length) {
+        queue = currentQueue.concat(queue);
+    } else {
+        queueIndex = -1;
+    }
+    if (queue.length) {
+        drainQueue();
+    }
+}
+
+function drainQueue() {
+    if (draining) {
+        return;
+    }
+    var timeout = runTimeout(cleanUpNextTick);
+    draining = true;
+
+    var len = queue.length;
+    while(len) {
+        currentQueue = queue;
+        queue = [];
+        while (++queueIndex < len) {
+            if (currentQueue) {
+                currentQueue[queueIndex].run();
+            }
+        }
+        queueIndex = -1;
+        len = queue.length;
+    }
+    currentQueue = null;
+    draining = false;
+    runClearTimeout(timeout);
+}
+
+process.nextTick = function (fun) {
+    var args = new Array(arguments.length - 1);
+    if (arguments.length > 1) {
+        for (var i = 1; i < arguments.length; i++) {
+            args[i - 1] = arguments[i];
+        }
+    }
+    queue.push(new Item(fun, args));
+    if (queue.length === 1 && !draining) {
+        runTimeout(drainQueue);
+    }
+};
+
+// v8 likes predictible objects
+function Item(fun, array) {
+    this.fun = fun;
+    this.array = array;
+}
+Item.prototype.run = function () {
+    this.fun.apply(null, this.array);
+};
+process.title = 'browser';
+process.browser = true;
+process.env = {};
+process.argv = [];
+process.version = ''; // empty string to avoid regexp issues
+process.versions = {};
+
+function noop() {}
+
+process.on = noop;
+process.addListener = noop;
+process.once = noop;
+process.off = noop;
+process.removeListener = noop;
+process.removeAllListeners = noop;
+process.emit = noop;
+process.prependListener = noop;
+process.prependOnceListener = noop;
+
+process.listeners = function (name) { return [] }
+
+process.binding = function (name) {
+    throw new Error('process.binding is not supported');
+};
+
+process.cwd = function () { return '/' };
+process.chdir = function (dir) {
+    throw new Error('process.chdir is not supported');
+};
+process.umask = function() { return 0; };
+
+
+/***/ }),
+/* 39 */
 /***/ (function(module, exports) {
 
 /**
@@ -4133,7 +4966,7 @@ module.exports.isSortableArrayLike = function (o) {
 
 
 /***/ }),
-/* 31 */
+/* 40 */
 /***/ (function(module, exports) {
 
 /**
@@ -4168,7 +5001,7 @@ module.exports = {
 
 
 /***/ }),
-/* 32 */
+/* 41 */
 /***/ (function(module, exports) {
 
 /**
@@ -4230,21 +5063,44 @@ module.exports.search = search;
 
 
 /***/ }),
-/* 33 */
+/* 42 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-/* harmony import */ var _node_modules_vue_style_loader_index_js_node_modules_css_loader_dist_cjs_js_node_modules_vue_loader_lib_loaders_stylePostLoader_js_node_modules_vue_loader_lib_index_js_vue_loader_options_LegendButton_vue_vue_type_style_index_0_lang_css___WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(8);
+/* harmony import */ var _node_modules_vue_style_loader_index_js_node_modules_css_loader_dist_cjs_js_node_modules_vue_loader_lib_loaders_stylePostLoader_js_node_modules_vue_loader_lib_index_js_vue_loader_options_UxWrapper_vue_vue_type_style_index_0_lang_css___WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(11);
+/* harmony import */ var _node_modules_vue_style_loader_index_js_node_modules_css_loader_dist_cjs_js_node_modules_vue_loader_lib_loaders_stylePostLoader_js_node_modules_vue_loader_lib_index_js_vue_loader_options_UxWrapper_vue_vue_type_style_index_0_lang_css___WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(_node_modules_vue_style_loader_index_js_node_modules_css_loader_dist_cjs_js_node_modules_vue_loader_lib_loaders_stylePostLoader_js_node_modules_vue_loader_lib_index_js_vue_loader_options_UxWrapper_vue_vue_type_style_index_0_lang_css___WEBPACK_IMPORTED_MODULE_0__);
+/* unused harmony reexport * */
+ /* unused harmony default export */ var _unused_webpack_default_export = (_node_modules_vue_style_loader_index_js_node_modules_css_loader_dist_cjs_js_node_modules_vue_loader_lib_loaders_stylePostLoader_js_node_modules_vue_loader_lib_index_js_vue_loader_options_UxWrapper_vue_vue_type_style_index_0_lang_css___WEBPACK_IMPORTED_MODULE_0___default.a); 
+
+/***/ }),
+/* 43 */
+/***/ (function(module, exports, __webpack_require__) {
+
+// Imports
+var ___CSS_LOADER_API_IMPORT___ = __webpack_require__(7);
+exports = ___CSS_LOADER_API_IMPORT___(false);
+// Module
+exports.push([module.i, "\n.trading-vue-ux-wrapper {\n    position: absolute;\n    display: flex;\n}\n.tvjs-ux-wrapper-pin {\n    position: absolute;\n    width: 9px;\n    height: 9px;\n    z-index: 100;\n    background-color: #23a776;\n    border-radius: 10px;\n    margin-left: -6px;\n    margin-top: -6px;\n    pointer-events: none;\n}\n.tvjs-ux-wrapper-head {\n    position: absolute;\n    height: 23px;\n    width: 100%;\n}\n.tvjs-ux-wrapper-close {\n    position: absolute;\n    width: 11px;\n    height: 11px;\n    font-size: 1.5em;\n    line-height: 0.5em;\n    padding: 1px 0px 1px 2px;\n    border-radius: 10px;\n    right: 5px;\n    top: 5px;\n    user-select: none;\n}\n.tvjs-ux-wrapper-close-hb {\n}\n.tvjs-ux-wrapper-close:hover {\n    background-color: #FF605C !important;\n    color: #692324 !important;\n}\n.tvjs-ux-wrapper-full {\n}\n", ""]);
+// Exports
+module.exports = exports;
+
+
+/***/ }),
+/* 44 */
+/***/ (function(module, __webpack_exports__, __webpack_require__) {
+
+"use strict";
+/* harmony import */ var _node_modules_vue_style_loader_index_js_node_modules_css_loader_dist_cjs_js_node_modules_vue_loader_lib_loaders_stylePostLoader_js_node_modules_vue_loader_lib_index_js_vue_loader_options_LegendButton_vue_vue_type_style_index_0_lang_css___WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(12);
 /* harmony import */ var _node_modules_vue_style_loader_index_js_node_modules_css_loader_dist_cjs_js_node_modules_vue_loader_lib_loaders_stylePostLoader_js_node_modules_vue_loader_lib_index_js_vue_loader_options_LegendButton_vue_vue_type_style_index_0_lang_css___WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(_node_modules_vue_style_loader_index_js_node_modules_css_loader_dist_cjs_js_node_modules_vue_loader_lib_loaders_stylePostLoader_js_node_modules_vue_loader_lib_index_js_vue_loader_options_LegendButton_vue_vue_type_style_index_0_lang_css___WEBPACK_IMPORTED_MODULE_0__);
 /* unused harmony reexport * */
  /* unused harmony default export */ var _unused_webpack_default_export = (_node_modules_vue_style_loader_index_js_node_modules_css_loader_dist_cjs_js_node_modules_vue_loader_lib_loaders_stylePostLoader_js_node_modules_vue_loader_lib_index_js_vue_loader_options_LegendButton_vue_vue_type_style_index_0_lang_css___WEBPACK_IMPORTED_MODULE_0___default.a); 
 
 /***/ }),
-/* 34 */
+/* 45 */
 /***/ (function(module, exports, __webpack_require__) {
 
 // Imports
-var ___CSS_LOADER_API_IMPORT___ = __webpack_require__(6);
+var ___CSS_LOADER_API_IMPORT___ = __webpack_require__(7);
 exports = ___CSS_LOADER_API_IMPORT___(false);
 // Module
 exports.push([module.i, "\n.t-vue-lbtn {\n    z-index: 100;\n    width: 21px;\n    height: 21px;\n    margin-bottom: -6px;\n    pointer-events: all;\n    cursor: pointer;\n}\n", ""]);
@@ -4253,21 +5109,21 @@ module.exports = exports;
 
 
 /***/ }),
-/* 35 */
+/* 46 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-/* harmony import */ var _node_modules_vue_style_loader_index_js_node_modules_css_loader_dist_cjs_js_node_modules_vue_loader_lib_loaders_stylePostLoader_js_node_modules_vue_loader_lib_index_js_vue_loader_options_ButtonGroup_vue_vue_type_style_index_0_lang_css___WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(9);
+/* harmony import */ var _node_modules_vue_style_loader_index_js_node_modules_css_loader_dist_cjs_js_node_modules_vue_loader_lib_loaders_stylePostLoader_js_node_modules_vue_loader_lib_index_js_vue_loader_options_ButtonGroup_vue_vue_type_style_index_0_lang_css___WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(13);
 /* harmony import */ var _node_modules_vue_style_loader_index_js_node_modules_css_loader_dist_cjs_js_node_modules_vue_loader_lib_loaders_stylePostLoader_js_node_modules_vue_loader_lib_index_js_vue_loader_options_ButtonGroup_vue_vue_type_style_index_0_lang_css___WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(_node_modules_vue_style_loader_index_js_node_modules_css_loader_dist_cjs_js_node_modules_vue_loader_lib_loaders_stylePostLoader_js_node_modules_vue_loader_lib_index_js_vue_loader_options_ButtonGroup_vue_vue_type_style_index_0_lang_css___WEBPACK_IMPORTED_MODULE_0__);
 /* unused harmony reexport * */
  /* unused harmony default export */ var _unused_webpack_default_export = (_node_modules_vue_style_loader_index_js_node_modules_css_loader_dist_cjs_js_node_modules_vue_loader_lib_loaders_stylePostLoader_js_node_modules_vue_loader_lib_index_js_vue_loader_options_ButtonGroup_vue_vue_type_style_index_0_lang_css___WEBPACK_IMPORTED_MODULE_0___default.a); 
 
 /***/ }),
-/* 36 */
+/* 47 */
 /***/ (function(module, exports, __webpack_require__) {
 
 // Imports
-var ___CSS_LOADER_API_IMPORT___ = __webpack_require__(6);
+var ___CSS_LOADER_API_IMPORT___ = __webpack_require__(7);
 exports = ___CSS_LOADER_API_IMPORT___(false);
 // Module
 exports.push([module.i, "\n.t-vue-lbtn-grp {\n    margin-left: 0.5em;\n}\n", ""]);
@@ -4276,21 +5132,21 @@ module.exports = exports;
 
 
 /***/ }),
-/* 37 */
+/* 48 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-/* harmony import */ var _node_modules_vue_style_loader_index_js_node_modules_css_loader_dist_cjs_js_node_modules_vue_loader_lib_loaders_stylePostLoader_js_node_modules_vue_loader_lib_index_js_vue_loader_options_Legend_vue_vue_type_style_index_0_lang_css___WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(10);
+/* harmony import */ var _node_modules_vue_style_loader_index_js_node_modules_css_loader_dist_cjs_js_node_modules_vue_loader_lib_loaders_stylePostLoader_js_node_modules_vue_loader_lib_index_js_vue_loader_options_Legend_vue_vue_type_style_index_0_lang_css___WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(14);
 /* harmony import */ var _node_modules_vue_style_loader_index_js_node_modules_css_loader_dist_cjs_js_node_modules_vue_loader_lib_loaders_stylePostLoader_js_node_modules_vue_loader_lib_index_js_vue_loader_options_Legend_vue_vue_type_style_index_0_lang_css___WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(_node_modules_vue_style_loader_index_js_node_modules_css_loader_dist_cjs_js_node_modules_vue_loader_lib_loaders_stylePostLoader_js_node_modules_vue_loader_lib_index_js_vue_loader_options_Legend_vue_vue_type_style_index_0_lang_css___WEBPACK_IMPORTED_MODULE_0__);
 /* unused harmony reexport * */
  /* unused harmony default export */ var _unused_webpack_default_export = (_node_modules_vue_style_loader_index_js_node_modules_css_loader_dist_cjs_js_node_modules_vue_loader_lib_loaders_stylePostLoader_js_node_modules_vue_loader_lib_index_js_vue_loader_options_Legend_vue_vue_type_style_index_0_lang_css___WEBPACK_IMPORTED_MODULE_0___default.a); 
 
 /***/ }),
-/* 38 */
+/* 49 */
 /***/ (function(module, exports, __webpack_require__) {
 
 // Imports
-var ___CSS_LOADER_API_IMPORT___ = __webpack_require__(6);
+var ___CSS_LOADER_API_IMPORT___ = __webpack_require__(7);
 exports = ___CSS_LOADER_API_IMPORT___(false);
 // Module
 exports.push([module.i, "\n.trading-vue-legend {\n    position: relative;\n    z-index: 100;\n    font-size: 1.25em;\n    margin-left: 10px;\n    pointer-events: none;\n}\n.trading-vue-ohlcv {\n    pointer-events: none;\n    margin-bottom: 0.5em;\n}\n.t-vue-lspan {\n    font-variant-numeric: tabular-nums;\n    font-weight: 100;\n    font-size: 0.95em;\n    color: #999999; /* TODO: move => params */\n    margin-left: 0.1em;\n    margin-right: 0.2em;\n}\n.t-vue-title {\n    margin-right: 0.25em;\n    font-size: 1.45em;\n    font-weight: 200;\n}\n.t-vue-ind {\n    margin-left: 0.2em;\n    margin-bottom: 0.5em;\n    font-weight: 200;\n    font-size: 1.0em;\n}\n.t-vue-ivalue {\n    margin-left: 0.5em;\n}\n.t-vue-unknown {\n    color: #999999; /* TODO: move => params */\n}\n", ""]);
@@ -4299,21 +5155,21 @@ module.exports = exports;
 
 
 /***/ }),
-/* 39 */
+/* 50 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-/* harmony import */ var _node_modules_vue_style_loader_index_js_node_modules_css_loader_dist_cjs_js_node_modules_vue_loader_lib_loaders_stylePostLoader_js_node_modules_vue_loader_lib_index_js_vue_loader_options_Section_vue_vue_type_style_index_0_lang_css___WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(11);
+/* harmony import */ var _node_modules_vue_style_loader_index_js_node_modules_css_loader_dist_cjs_js_node_modules_vue_loader_lib_loaders_stylePostLoader_js_node_modules_vue_loader_lib_index_js_vue_loader_options_Section_vue_vue_type_style_index_0_lang_css___WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(15);
 /* harmony import */ var _node_modules_vue_style_loader_index_js_node_modules_css_loader_dist_cjs_js_node_modules_vue_loader_lib_loaders_stylePostLoader_js_node_modules_vue_loader_lib_index_js_vue_loader_options_Section_vue_vue_type_style_index_0_lang_css___WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(_node_modules_vue_style_loader_index_js_node_modules_css_loader_dist_cjs_js_node_modules_vue_loader_lib_loaders_stylePostLoader_js_node_modules_vue_loader_lib_index_js_vue_loader_options_Section_vue_vue_type_style_index_0_lang_css___WEBPACK_IMPORTED_MODULE_0__);
 /* unused harmony reexport * */
  /* unused harmony default export */ var _unused_webpack_default_export = (_node_modules_vue_style_loader_index_js_node_modules_css_loader_dist_cjs_js_node_modules_vue_loader_lib_loaders_stylePostLoader_js_node_modules_vue_loader_lib_index_js_vue_loader_options_Section_vue_vue_type_style_index_0_lang_css___WEBPACK_IMPORTED_MODULE_0___default.a); 
 
 /***/ }),
-/* 40 */
+/* 51 */
 /***/ (function(module, exports, __webpack_require__) {
 
 // Imports
-var ___CSS_LOADER_API_IMPORT___ = __webpack_require__(6);
+var ___CSS_LOADER_API_IMPORT___ = __webpack_require__(7);
 exports = ___CSS_LOADER_API_IMPORT___(false);
 // Module
 exports.push([module.i, "\n.trading-vue-section {\n    height: 0;\n    position: absolute;\n}\n", ""]);
@@ -4322,21 +5178,21 @@ module.exports = exports;
 
 
 /***/ }),
-/* 41 */
+/* 52 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-/* harmony import */ var _node_modules_vue_style_loader_index_js_node_modules_css_loader_dist_cjs_js_node_modules_vue_loader_lib_loaders_stylePostLoader_js_node_modules_vue_loader_lib_index_js_vue_loader_options_Botbar_vue_vue_type_style_index_0_lang_css___WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(12);
+/* harmony import */ var _node_modules_vue_style_loader_index_js_node_modules_css_loader_dist_cjs_js_node_modules_vue_loader_lib_loaders_stylePostLoader_js_node_modules_vue_loader_lib_index_js_vue_loader_options_Botbar_vue_vue_type_style_index_0_lang_css___WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(16);
 /* harmony import */ var _node_modules_vue_style_loader_index_js_node_modules_css_loader_dist_cjs_js_node_modules_vue_loader_lib_loaders_stylePostLoader_js_node_modules_vue_loader_lib_index_js_vue_loader_options_Botbar_vue_vue_type_style_index_0_lang_css___WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(_node_modules_vue_style_loader_index_js_node_modules_css_loader_dist_cjs_js_node_modules_vue_loader_lib_loaders_stylePostLoader_js_node_modules_vue_loader_lib_index_js_vue_loader_options_Botbar_vue_vue_type_style_index_0_lang_css___WEBPACK_IMPORTED_MODULE_0__);
 /* unused harmony reexport * */
  /* unused harmony default export */ var _unused_webpack_default_export = (_node_modules_vue_style_loader_index_js_node_modules_css_loader_dist_cjs_js_node_modules_vue_loader_lib_loaders_stylePostLoader_js_node_modules_vue_loader_lib_index_js_vue_loader_options_Botbar_vue_vue_type_style_index_0_lang_css___WEBPACK_IMPORTED_MODULE_0___default.a); 
 
 /***/ }),
-/* 42 */
+/* 53 */
 /***/ (function(module, exports, __webpack_require__) {
 
 // Imports
-var ___CSS_LOADER_API_IMPORT___ = __webpack_require__(6);
+var ___CSS_LOADER_API_IMPORT___ = __webpack_require__(7);
 exports = ___CSS_LOADER_API_IMPORT___(false);
 // Module
 exports.push([module.i, "\n.trading-vue-botbar {\n    position: relative !important;\n}\n", ""]);
@@ -4345,21 +5201,21 @@ module.exports = exports;
 
 
 /***/ }),
-/* 43 */
+/* 54 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-/* harmony import */ var _node_modules_vue_style_loader_index_js_node_modules_css_loader_dist_cjs_js_node_modules_vue_loader_lib_loaders_stylePostLoader_js_node_modules_vue_loader_lib_index_js_vue_loader_options_ToolbarItem_vue_vue_type_style_index_0_lang_css___WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(13);
+/* harmony import */ var _node_modules_vue_style_loader_index_js_node_modules_css_loader_dist_cjs_js_node_modules_vue_loader_lib_loaders_stylePostLoader_js_node_modules_vue_loader_lib_index_js_vue_loader_options_ToolbarItem_vue_vue_type_style_index_0_lang_css___WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(17);
 /* harmony import */ var _node_modules_vue_style_loader_index_js_node_modules_css_loader_dist_cjs_js_node_modules_vue_loader_lib_loaders_stylePostLoader_js_node_modules_vue_loader_lib_index_js_vue_loader_options_ToolbarItem_vue_vue_type_style_index_0_lang_css___WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(_node_modules_vue_style_loader_index_js_node_modules_css_loader_dist_cjs_js_node_modules_vue_loader_lib_loaders_stylePostLoader_js_node_modules_vue_loader_lib_index_js_vue_loader_options_ToolbarItem_vue_vue_type_style_index_0_lang_css___WEBPACK_IMPORTED_MODULE_0__);
 /* unused harmony reexport * */
  /* unused harmony default export */ var _unused_webpack_default_export = (_node_modules_vue_style_loader_index_js_node_modules_css_loader_dist_cjs_js_node_modules_vue_loader_lib_loaders_stylePostLoader_js_node_modules_vue_loader_lib_index_js_vue_loader_options_ToolbarItem_vue_vue_type_style_index_0_lang_css___WEBPACK_IMPORTED_MODULE_0___default.a); 
 
 /***/ }),
-/* 44 */
+/* 55 */
 /***/ (function(module, exports, __webpack_require__) {
 
 // Imports
-var ___CSS_LOADER_API_IMPORT___ = __webpack_require__(6);
+var ___CSS_LOADER_API_IMPORT___ = __webpack_require__(7);
 exports = ___CSS_LOADER_API_IMPORT___(false);
 // Module
 exports.push([module.i, "\n.trading-vue-tbitem {\n}\n.trading-vue-tbitem:hover {\n    background-color: #76878319;\n}\n.trading-vue-tbicon {\n    position: absolute;\n}\n.trading-vue-tbitem.selected-item .trading-vue-tbicon {\n     filter: brightness(1.45) sepia(1) hue-rotate(90deg) saturate(4.5) !important;\n}\n.pixelated {\n    -ms-interpolation-mode: nearest-neighbor;\n    image-rendering: -webkit-optimize-contrast;\n    image-rendering: -webkit-crisp-edges;\n    image-rendering: -moz-crisp-edges;\n    image-rendering: -o-crisp-edges;\n    image-rendering: pixelated;\n}\n\n", ""]);
@@ -4368,21 +5224,21 @@ module.exports = exports;
 
 
 /***/ }),
-/* 45 */
+/* 56 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
-/* harmony import */ var _node_modules_vue_style_loader_index_js_node_modules_css_loader_dist_cjs_js_node_modules_vue_loader_lib_loaders_stylePostLoader_js_node_modules_vue_loader_lib_index_js_vue_loader_options_Toolbar_vue_vue_type_style_index_0_lang_css___WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(14);
+/* harmony import */ var _node_modules_vue_style_loader_index_js_node_modules_css_loader_dist_cjs_js_node_modules_vue_loader_lib_loaders_stylePostLoader_js_node_modules_vue_loader_lib_index_js_vue_loader_options_Toolbar_vue_vue_type_style_index_0_lang_css___WEBPACK_IMPORTED_MODULE_0__ = __webpack_require__(18);
 /* harmony import */ var _node_modules_vue_style_loader_index_js_node_modules_css_loader_dist_cjs_js_node_modules_vue_loader_lib_loaders_stylePostLoader_js_node_modules_vue_loader_lib_index_js_vue_loader_options_Toolbar_vue_vue_type_style_index_0_lang_css___WEBPACK_IMPORTED_MODULE_0___default = /*#__PURE__*/__webpack_require__.n(_node_modules_vue_style_loader_index_js_node_modules_css_loader_dist_cjs_js_node_modules_vue_loader_lib_loaders_stylePostLoader_js_node_modules_vue_loader_lib_index_js_vue_loader_options_Toolbar_vue_vue_type_style_index_0_lang_css___WEBPACK_IMPORTED_MODULE_0__);
 /* unused harmony reexport * */
  /* unused harmony default export */ var _unused_webpack_default_export = (_node_modules_vue_style_loader_index_js_node_modules_css_loader_dist_cjs_js_node_modules_vue_loader_lib_loaders_stylePostLoader_js_node_modules_vue_loader_lib_index_js_vue_loader_options_Toolbar_vue_vue_type_style_index_0_lang_css___WEBPACK_IMPORTED_MODULE_0___default.a); 
 
 /***/ }),
-/* 46 */
+/* 57 */
 /***/ (function(module, exports, __webpack_require__) {
 
 // Imports
-var ___CSS_LOADER_API_IMPORT___ = __webpack_require__(6);
+var ___CSS_LOADER_API_IMPORT___ = __webpack_require__(7);
 exports = ___CSS_LOADER_API_IMPORT___(false);
 // Module
 exports.push([module.i, "\n.trading-vue-toolbar {\n    position: absolute;\n    border-right: 1px solid black;\n    z-index: 100;\n    padding-top: 3px;\n}\n", ""]);
@@ -4391,21 +5247,7 @@ module.exports = exports;
 
 
 /***/ }),
-/* 47 */
-/***/ (function(module, exports) {
-
-function _assertThisInitialized(self) {
-  if (self === void 0) {
-    throw new ReferenceError("this hasn't been initialised - super() hasn't been called");
-  }
-
-  return self;
-}
-
-module.exports = _assertThisInitialized;
-
-/***/ }),
-/* 48 */
+/* 58 */
 /***/ (function(module, exports) {
 
 function _setPrototypeOf(o, p) {
@@ -4420,7 +5262,21 @@ function _setPrototypeOf(o, p) {
 module.exports = _setPrototypeOf;
 
 /***/ }),
-/* 49 */
+/* 59 */
+/***/ (function(module, exports) {
+
+function _assertThisInitialized(self) {
+  if (self === void 0) {
+    throw new ReferenceError("this hasn't been initialised - super() hasn't been called");
+  }
+
+  return self;
+}
+
+module.exports = _assertThisInitialized;
+
+/***/ }),
+/* 60 */
 /***/ (function(module, exports, __webpack_require__) {
 
 /**
@@ -5155,7 +6011,7 @@ try {
 
 
 /***/ }),
-/* 50 */
+/* 61 */
 /***/ (function(module, __webpack_exports__, __webpack_require__) {
 
 "use strict";
@@ -5165,13 +6021,15 @@ __webpack_require__.r(__webpack_exports__);
 // EXPORTS
 __webpack_require__.d(__webpack_exports__, "TradingVue", function() { return /* reexport */ TradingVue; });
 __webpack_require__.d(__webpack_exports__, "Overlay", function() { return /* reexport */ mixins_overlay; });
-__webpack_require__.d(__webpack_exports__, "Utils", function() { return /* reexport */ utils; });
+__webpack_require__.d(__webpack_exports__, "Utils", function() { return /* reexport */ utils["a" /* default */]; });
 __webpack_require__.d(__webpack_exports__, "Constants", function() { return /* reexport */ constants; });
 __webpack_require__.d(__webpack_exports__, "Candle", function() { return /* reexport */ candle_CandleExt; });
 __webpack_require__.d(__webpack_exports__, "Volbar", function() { return /* reexport */ volbar_VolbarExt; });
 __webpack_require__.d(__webpack_exports__, "layout_cnv", function() { return /* reexport */ layout_cnv; });
 __webpack_require__.d(__webpack_exports__, "layout_vol", function() { return /* reexport */ layout_vol; });
 __webpack_require__.d(__webpack_exports__, "DataCube", function() { return /* reexport */ datacube_DataCube; });
+__webpack_require__.d(__webpack_exports__, "OICandle", function() { return /* reexport */ oi_candle_OICandleExt; });
+__webpack_require__.d(__webpack_exports__, "OIPrice", function() { return /* reexport */ oi_price_OIPrice; });
 
 // CONCATENATED MODULE: ./node_modules/vue-loader/lib/loaders/templateLoader.js??vue-loader-options!./node_modules/vue-loader/lib??vue-loader-options!./src/TradingVue.vue?vue&type=template&id=235c0ade&
 var TradingVuevue_type_template_id_235c0ade_render = function() {
@@ -5235,7 +6093,7 @@ TradingVuevue_type_template_id_235c0ade_render._withStripped = true
 // CONCATENATED MODULE: ./src/TradingVue.vue?vue&type=template&id=235c0ade&
 
 // EXTERNAL MODULE: ./node_modules/@babel/runtime/helpers/toConsumableArray.js
-var toConsumableArray = __webpack_require__(0);
+var toConsumableArray = __webpack_require__(1);
 var toConsumableArray_default = /*#__PURE__*/__webpack_require__.n(toConsumableArray);
 
 // CONCATENATED MODULE: ./src/stuff/constants.js
@@ -5292,7 +6150,9 @@ var ChartConfig = {
   // candles
   MAX_ZOOM: 1000,
   // candles,
-  VOLSCALE: 0.15 // %/100 of height
+  VOLSCALE: 0.15,
+  // %/100 of height
+  UX_OPACITY: 0.9 // Ux background opacity
 
 };
 ChartConfig.FONT = "11px -apple-system,BlinkMacSystemFont,\n    Segoe UI,Roboto,Oxygen,Ubuntu,Cantarell,\n    Fira Sans,Droid Sans,Helvetica Neue,\n    sans-serif";
@@ -5337,7 +6197,8 @@ var Chartvue_type_template_id_4d06a4de_render = function() {
             "sidebar-transform": _vm.set_ytransform,
             "layer-meta-props": _vm.layer_meta_props,
             "custom-event": _vm.emit_custom_event,
-            "legend-button-click": _vm.legend_button_click
+            "legend-button-click": _vm.legend_button_click,
+            "chart-panned": _vm.chart_panned
           }
         })
       }),
@@ -5361,6 +6222,10 @@ Chartvue_type_template_id_4d06a4de_render._withStripped = true
 
 // CONCATENATED MODULE: ./src/components/Chart.vue?vue&type=template&id=4d06a4de&
 
+// EXTERNAL MODULE: ./node_modules/@babel/runtime/helpers/slicedToArray.js
+var slicedToArray = __webpack_require__(4);
+var slicedToArray_default = /*#__PURE__*/__webpack_require__.n(slicedToArray);
+
 // CONCATENATED MODULE: ./src/stuff/context.js
 // Canvas context for text measurments
 function Context($p) {
@@ -5371,177 +6236,20 @@ function Context($p) {
 }
 
 /* harmony default export */ var context = (Context);
-// EXTERNAL MODULE: ./node_modules/@babel/runtime/helpers/slicedToArray.js
-var slicedToArray = __webpack_require__(4);
-var slicedToArray_default = /*#__PURE__*/__webpack_require__.n(slicedToArray);
+// EXTERNAL MODULE: ./src/stuff/utils.js
+var utils = __webpack_require__(0);
 
-// EXTERNAL MODULE: ./node_modules/arrayslicer/lib/index.js
-var lib = __webpack_require__(21);
-var lib_default = /*#__PURE__*/__webpack_require__.n(lib);
-
-// CONCATENATED MODULE: ./src/stuff/utils.js
-
-
-/* harmony default export */ var utils = ({
-  clamp: function clamp(num, min, max) {
-    return num <= min ? min : num >= max ? max : num;
-  },
-  add_zero: function add_zero(i) {
-    if (i < 10) {
-      i = "0" + i;
-    }
-
-    return i;
-  },
-  // Start of the day (zero millisecond)
-  day_start: function day_start(t) {
-    var start = new Date(t);
-    start.setHours(0, 0, 0, 0);
-    return start.getTime();
-  },
-  // Start of the month
-  month_start: function month_start(t) {
-    var date = new Date(t);
-    var start = new Date(date.getFullYear(), date.getMonth(), 1);
-    return start.getTime();
-  },
-  // Start of the year
-  year_start: function year_start(t) {
-    var start = new Date(new Date(t).getFullYear(), 0, 1);
-    return start.getTime();
-  },
-  // Nearest in array
-  nearest_a: function nearest_a(x, array) {
-    var dist = Infinity;
-    var val = null;
-    var index = -1;
-
-    for (var i = 0; i < array.length; i++) {
-      var xi = array[i];
-
-      if (Math.abs(xi - x) < dist) {
-        dist = Math.abs(xi - x);
-        val = xi;
-        index = i;
-      }
-    }
-
-    return [index, val];
-  },
-  round: function round(num) {
-    var decimals = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : 8;
-    return parseFloat(num.toFixed(decimals));
-  },
-  // Strip? No, it's ugly floats in js
-  strip: function strip(number) {
-    return parseFloat(parseFloat(number).toPrecision(12));
-  },
-  get_day: function get_day(t) {
-    return t ? new Date(t).getDate() : null;
-  },
-  // Update array keeping the same reference
-  overwrite: function overwrite(arr, new_arr) {
-    arr.splice.apply(arr, [0, arr.length].concat(toConsumableArray_default()(new_arr)));
-  },
-  // Copy layout in reactive way
-  copy_layout: function copy_layout(obj, new_obj) {
-    for (var k in obj) {
-      if (Array.isArray(obj[k])) {
-        // (some offchart indicators are added/removed)
-        // we need to update layout in a reactive way
-        if (obj[k].length !== new_obj[k].length) {
-          this.overwrite(obj[k], new_obj[k]);
-          continue;
-        }
-
-        for (var m in obj[k]) {
-          Object.assign(obj[k][m], new_obj[k][m]);
-        }
-      } else {
-        Object.assign(obj[k], new_obj[k]);
-      }
-    }
-  },
-  // Checks if the ohlcv data is changed (given the new
-  // and old dataset values)
-  data_changed: function data_changed(n, p) {
-    n = n.ohlcv || (n.chart ? n.chart.data : []) || [];
-    p = p.ohlcv || (p.chart ? p.chart.data : []) || [];
-    return n.length !== p.length && n[0] !== p[0];
-  },
-  // Detects candles interval
-  detect_interval: function detect_interval(ohlcv) {
-    var len = Math.min(ohlcv.length - 1, 99);
-    var min = Infinity;
-    ohlcv.slice(0, len).forEach(function (x, i) {
-      var d = ohlcv[i + 1][0] - x[0];
-      if (d === d && d < min) min = d;
-    });
-    return min;
-  },
-  // Detects candles interval. (old version, slightly slower)
-
-  /*detect_interval(ohlcv) {
-      // Initial value of accumulator
-      let a0 = [Infinity, ohlcv[0][0]]
-      return ohlcv.slice(1, 99).reduce((a,x) =>
-      [Math.min(x[0] - a[1], a[0]), x[0]], a0)[0]
-  },*/
-  // Gets numberic part of overlay id (e.g 'EMA_1' = > 1)
-  get_num_id: function get_num_id(id) {
-    return parseInt(id.split('_').pop());
-  },
-  // Fast filter. Really fast, like 10X
-  fast_filter: function fast_filter(arr, t1, t2) {
-    if (!arr.length) return arr;
-
-    try {
-      var ia = new lib_default.a(arr, "0");
-      return ia.getRange(t1, t2);
-    } catch (e) {
-      // Something wrong with fancy slice lib
-      // Fast fix: fallback to filter
-      return arr.filter(function (x) {
-        return x[0] >= t1 && x[0] <= t2;
-      });
-    }
-  },
-  now: function now() {
-    return new Date().getTime();
-  },
-  pause: function pause(delay) {
-    return new Promise(function (rs, rj) {
-      return setTimeout(rs, delay);
-    });
-  },
-  // Limit crazy wheel delta values
-  smart_wheel: function smart_wheel(delta) {
-    var abs = Math.abs(delta);
-
-    if (abs > 500) {
-      return (200 + Math.log(abs)) * Math.sign(delta);
-    }
-
-    return delta;
-  },
-  // Parse the original mouse event to find deltaX
-  get_deltaX: function get_deltaX(event) {
-    return event.originalEvent.deltaX / 12;
-  },
-  // Parse the original mouse event to find deltaY
-  get_deltaY: function get_deltaY(event) {
-    return event.originalEvent.deltaY / 12;
-  }
-});
 // CONCATENATED MODULE: ./src/components/js/layout_fn.js
 // Layout functional interface
 
 /* harmony default export */ var layout_fn = (function (self, range) {
+  var ib = self.ti_map.ib;
+  var dt = range[1] - range[0];
+  var r = self.spacex / dt;
   Object.assign(self, {
     // Time to screen coordinates
     t2screen: function t2screen(t) {
-      var dt = range[1] - range[0];
-      var r = self.spacex / dt;
+      if (ib) t = self.ti_map.smth2i(t);
       return Math.floor((t - range[0]) * r) - 0.5;
     },
     // $ to screen coordinates
@@ -5554,7 +6262,7 @@ var lib_default = /*#__PURE__*/__webpack_require__.n(lib);
       var arr = cn.map(function (x) {
         return x.raw[0];
       });
-      var i = utils.nearest_a(t, arr)[0];
+      var i = utils["a" /* default */].nearest_a(t, arr)[0];
       if (!cn[i]) return;
       return Math.floor(cn[i].x) - 0.5;
     },
@@ -5567,9 +6275,9 @@ var lib_default = /*#__PURE__*/__webpack_require__.n(lib);
     },
     // Screen-X to timestamp
     screen2t: function screen2t(x) {
-      var dt = range[1] - range[0];
-      var r = self.spacex / dt;
-      return Math.floor(range[0] + x / r);
+      // TODO: most likely Math.floor not needed
+      // return Math.floor(range[0] + x / r)
+      return range[0] + x / r;
     },
     // $-axis nearest step
     $_magnet: function $_magnet(price) {},
@@ -5579,7 +6287,7 @@ var lib_default = /*#__PURE__*/__webpack_require__.n(lib);
       var arr = cn.map(function (x) {
         return x.raw[0];
       });
-      var i = utils.nearest_a(t, arr)[0];
+      var i = utils["a" /* default */].nearest_a(t, arr)[0];
       return cn[i];
     },
     // Nearest data points
@@ -5608,8 +6316,11 @@ function GridMaker(id, params) {
       $p = params.$p,
       layers_meta = params.layers_meta,
       height = params.height,
-      y_t = params.y_t;
-  var self = {};
+      y_t = params.y_t,
+      ti_map = params.ti_map;
+  var self = {
+    ti_map: ti_map
+  };
   var lm = layers_meta[id];
   var y_range_fn = null;
 
@@ -5772,10 +6483,11 @@ function GridMaker(id, params) {
 
 
   function time_step() {
-    var xrange = range[1] - range[0];
+    var k = ti_map.ib ? 60000 : 1;
+    var xrange = (range[1] - range[0]) * k;
     var m = xrange * ($p.config.GRIDX / $p.width);
     var s = grid_maker_TIMESCALES;
-    return utils.nearest_a(m, s)[1];
+    return utils["a" /* default */].nearest_a(m, s)[1] / k;
   } // Select nearest good-loking $ step (m is target scale)
 
 
@@ -5789,7 +6501,7 @@ function GridMaker(id, params) {
     }); // TODO: center the range (look at RSI for eaxmple,
     // it looks ugly when "80" is near the top)
 
-    return utils.strip(utils.nearest_a(m, s)[1]);
+    return utils["a" /* default */].strip(utils["a" /* default */].nearest_a(m, s)[1]);
   }
 
   function grid_x() {
@@ -5863,7 +6575,7 @@ function GridMaker(id, params) {
     for (var y$ = y1; y$ <= self.$_hi; y$ += self.$_step) {
       var y = Math.floor(y$ * self.A + self.B);
       if (y > height) continue;
-      self.ys.push([y, utils.strip(y$)]);
+      self.ys.push([y, utils["a" /* default */].strip(y$)]);
     }
   }
 
@@ -5908,6 +6620,13 @@ function GridMaker(id, params) {
 // CONCATENATED MODULE: ./src/components/js/layout.js
 
 
+
+function _createForOfIteratorHelper(o) { if (typeof Symbol === "undefined" || o[Symbol.iterator] == null) { if (Array.isArray(o) || (o = _unsupportedIterableToArray(o))) { var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var it, normalCompletion = true, didErr = false, err; return { s: function s() { it = o[Symbol.iterator](); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it["return"] != null) it["return"](); } finally { if (didErr) throw err; } } }; }
+
+function _unsupportedIterableToArray(o, minLen) { if (!o) return; if (typeof o === "string") return _arrayLikeToArray(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(n); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return _arrayLikeToArray(o, minLen); }
+
+function _arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) { arr2[i] = arr[i]; } return arr2; }
+
 // Calculates all necessary s*it to build the chart
 // Heights, widths, transforms, ... = everything
 // Why such a mess you ask? Well, that's because
@@ -5924,6 +6643,7 @@ function Layout(params) {
       range = params.range,
       ctx = params.ctx,
       layers_meta = params.layers_meta,
+      ti_map = params.ti_map,
       $p = params.$props,
       y_ts = params.y_transforms;
   offsub = offsub.filter(function (x, i) {
@@ -5978,12 +6698,6 @@ function Layout(params) {
     return hs;
   }
 
-  function t2screen(t) {
-    var dt = range[1] - range[0];
-    var r = self.spacex / dt;
-    return Math.floor((t - range[0]) * r);
-  }
-
   function candles_n_vol() {
     self.candles = [];
     self.volume = [];
@@ -5999,7 +6713,7 @@ function Layout(params) {
 
     for (var i = 0; i < sub.length; i++) {
       var p = sub[i];
-      mid = t2screen(p[0]);
+      mid = self.t2screen(p[0]) + 0.5;
       self.candles.push({
         x: mid,
         w: self.px_step * $p.config.CANDLEW,
@@ -6036,17 +6750,17 @@ function Layout(params) {
     ctx: ctx,
     $p: $p,
     layers_meta: layers_meta,
+    ti_map: ti_map,
     height: hs[0],
     y_t: y_ts[0]
   };
   var gms = [new grid_maker(0, specs)]; // Sub grids
 
-  var _iteratorNormalCompletion = true;
-  var _didIteratorError = false;
-  var _iteratorError = undefined;
+  var _iterator = _createForOfIteratorHelper(offsub.entries()),
+      _step;
 
   try {
-    for (var _iterator = offsub.entries()[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+    for (_iterator.s(); !(_step = _iterator.n()).done;) {
       var _step$value = slicedToArray_default()(_step.value, 2),
           i = _step$value[0],
           data = _step$value[1].data;
@@ -6058,18 +6772,9 @@ function Layout(params) {
     } // Max sidebar among all grinds
 
   } catch (err) {
-    _didIteratorError = true;
-    _iteratorError = err;
+    _iterator.e(err);
   } finally {
-    try {
-      if (!_iteratorNormalCompletion && _iterator["return"] != null) {
-        _iterator["return"]();
-      }
-    } finally {
-      if (_didIteratorError) {
-        throw _iteratorError;
-      }
-    }
+    _iterator.f();
   }
 
   var sb = Math.max.apply(Math, toConsumableArray_default()(gms.map(function (x) {
@@ -6101,15 +6806,22 @@ function Layout(params) {
 
 /* harmony default export */ var js_layout = (Layout);
 // EXTERNAL MODULE: ./node_modules/@babel/runtime/helpers/classCallCheck.js
-var classCallCheck = __webpack_require__(1);
+var classCallCheck = __webpack_require__(2);
 var classCallCheck_default = /*#__PURE__*/__webpack_require__.n(classCallCheck);
 
 // EXTERNAL MODULE: ./node_modules/@babel/runtime/helpers/createClass.js
-var createClass = __webpack_require__(2);
+var createClass = __webpack_require__(3);
 var createClass_default = /*#__PURE__*/__webpack_require__.n(createClass);
 
 // CONCATENATED MODULE: ./src/components/js/updater.js
 
+
+
+function updater_createForOfIteratorHelper(o) { if (typeof Symbol === "undefined" || o[Symbol.iterator] == null) { if (Array.isArray(o) || (o = updater_unsupportedIterableToArray(o))) { var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var it, normalCompletion = true, didErr = false, err; return { s: function s() { it = o[Symbol.iterator](); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it["return"] != null) it["return"](); } finally { if (didErr) throw err; } } }; }
+
+function updater_unsupportedIterableToArray(o, minLen) { if (!o) return; if (typeof o === "string") return updater_arrayLikeToArray(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(n); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return updater_arrayLikeToArray(o, minLen); }
+
+function updater_arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) { arr2[i] = arr[i]; } return arr2; }
 
 // Cursor updater: calculates current values for
 // OHLCV and all other indicators
@@ -6127,12 +6839,12 @@ var updater_CursorUpdater = /*#__PURE__*/function () {
     value: function sync(e) {
       this.cursor.grid_id = e.grid_id;
       var once = true;
-      var _iteratorNormalCompletion = true;
-      var _didIteratorError = false;
-      var _iteratorError = undefined;
+
+      var _iterator = updater_createForOfIteratorHelper(this.grids),
+          _step;
 
       try {
-        for (var _iterator = this.grids[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+        for (_iterator.s(); !(_step = _iterator.n()).done;) {
           var grid = _step.value;
           var c = this.cursor_data(grid, e);
 
@@ -6154,18 +6866,9 @@ var updater_CursorUpdater = /*#__PURE__*/function () {
           this.cursor.y$ = c.y$;
         }
       } catch (err) {
-        _didIteratorError = true;
-        _iteratorError = err;
+        _iterator.e(err);
       } finally {
-        try {
-          if (!_iteratorNormalCompletion && _iterator["return"] != null) {
-            _iterator["return"]();
-          }
-        } finally {
-          if (_didIteratorError) {
-            throw _iteratorError;
-          }
-        }
+        _iterator.f();
       }
     }
   }, {
@@ -6178,33 +6881,24 @@ var updater_CursorUpdater = /*#__PURE__*/function () {
       var t = grid.screen2t(e.x);
       var ids = {},
           res = {};
-      var _iteratorNormalCompletion2 = true;
-      var _didIteratorError2 = false;
-      var _iteratorError2 = undefined;
+
+      var _iterator2 = updater_createForOfIteratorHelper(data),
+          _step2;
 
       try {
-        for (var _iterator2 = data[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
+        for (_iterator2.s(); !(_step2 = _iterator2.n()).done;) {
           var d = _step2.value;
           var ts = d.data.map(function (x) {
             return x[0];
           });
-          var i = utils.nearest_a(t, ts)[0];
+          var i = utils["a" /* default */].nearest_a(t, ts)[0];
           d.type in ids ? ids[d.type]++ : ids[d.type] = 0;
           res["".concat(d.type, "_").concat(ids[d.type])] = d.data[i];
         }
       } catch (err) {
-        _didIteratorError2 = true;
-        _iteratorError2 = err;
+        _iterator2.e(err);
       } finally {
-        try {
-          if (!_iteratorNormalCompletion2 && _iterator2["return"] != null) {
-            _iterator2["return"]();
-          }
-        } finally {
-          if (_didIteratorError2) {
-            throw _iteratorError2;
-          }
-        }
+        _iterator2.f();
       }
 
       return res;
@@ -6217,7 +6911,7 @@ var updater_CursorUpdater = /*#__PURE__*/function () {
       var xs = data.map(function (x) {
         return grid.t2screen(x[0]) + 0.5;
       });
-      var i = utils.nearest_a(e.x, xs)[0];
+      var i = utils["a" /* default */].nearest_a(e.x, xs)[0];
       if (!xs[i]) return {};
       return {
         x: Math.floor(xs[i]) - 0.5,
@@ -6320,10 +7014,10 @@ Sectionvue_type_template_id_8fbe9336_render._withStripped = true
 // CONCATENATED MODULE: ./src/components/Section.vue?vue&type=template&id=8fbe9336&
 
 // EXTERNAL MODULE: ./node_modules/hammerjs/hammer.js
-var hammer = __webpack_require__(5);
+var hammer = __webpack_require__(6);
 
-// EXTERNAL MODULE: ./node_modules/hamsterjs/hamster.js
-var hamsterjs_hamster = __webpack_require__(22);
+// EXTERNAL MODULE: ./node_modules/@kensingtontech/hamsterjs/hamster.js
+var hamsterjs_hamster = __webpack_require__(29);
 var hamster_default = /*#__PURE__*/__webpack_require__.n(hamsterjs_hamster);
 
 // CONCATENATED MODULE: ./src/components/js/grid.js
@@ -6331,9 +7025,17 @@ var hamster_default = /*#__PURE__*/__webpack_require__.n(hamsterjs_hamster);
 
 
 
+
+function grid_createForOfIteratorHelper(o) { if (typeof Symbol === "undefined" || o[Symbol.iterator] == null) { if (Array.isArray(o) || (o = grid_unsupportedIterableToArray(o))) { var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var it, normalCompletion = true, didErr = false, err; return { s: function s() { it = o[Symbol.iterator](); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it["return"] != null) it["return"](); } finally { if (didErr) throw err; } } }; }
+
+function grid_unsupportedIterableToArray(o, minLen) { if (!o) return; if (typeof o === "string") return grid_arrayLikeToArray(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(n); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return grid_arrayLikeToArray(o, minLen); }
+
+function grid_arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) { arr2[i] = arr[i]; } return arr2; }
+
 // Grid.js listens to various user-generated events,
 // emits Vue-events if something has changed (e.g. range)
 // Think of it as an I/O system for Grid.vue
+ //hamsterjs with passive event
 
 
  // Grid is good.
@@ -6345,7 +7047,11 @@ var grid_Grid = /*#__PURE__*/function () {
     this.MIN_ZOOM = comp.config.MIN_ZOOM;
     this.MAX_ZOOM = comp.config.MAX_ZOOM;
     this.canvas = canvas;
-    this.ctx = canvas.getContext('2d');
+    this.ctx = canvas.getContext('2d', {
+      alpha: true,
+      desynchronized: true,
+      preserveDrawingBuffer: false
+    });
     this.comp = comp;
     this.$p = comp.$props;
     this.data = this.$p.sub;
@@ -6367,7 +7073,7 @@ var grid_Grid = /*#__PURE__*/function () {
     value: function listeners() {
       var _this = this;
 
-      var hamster = hamster_default()(this.canvas);
+      var hamster = hamster_default()(this.canvas, false);
       hamster.wheel(function (event, delta) {
         return _this.mousezoom(-delta * 50, event);
       });
@@ -6525,9 +7231,17 @@ var grid_Grid = /*#__PURE__*/function () {
       // TODO: check what happens if data changes interval
       this.layout = this.$p.layout.grids[this.id];
       this.interval = this.$p.interval;
-      if (!this.layout) return;
-      this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-      this.grid();
+      if (!this.layout) return; //this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height)
+      //we dont need grid lines
+      //this.grid()
+
+      var dpr = window.devicePixelRatio || 1;
+      if (dpr < 1) dpr = 1; //chrome 81 not working
+
+      var bgcolor = this.$p.colors.colorBack;
+      this.ctx.clearRect(0, 0, this.canvas.width * dpr, this.canvas.height * dpr, bgcolor);
+      this.ctx.fillStyle = this.$p.colors.colorBack;
+      this.ctx.fillRect(0, 0, this.canvas.width * dpr, this.canvas.height * dpr);
       var overlays = [];
       overlays.push.apply(overlays, toConsumableArray_default()(this.overlays)); // z-index sorting
 
@@ -6539,13 +7253,14 @@ var grid_Grid = /*#__PURE__*/function () {
 
         _this2.ctx.save();
 
-        var r = l.renderer;
-        if (r.pre_draw) r.pre_draw(_this2.ctx);
-        r.draw(_this2.ctx);
-        if (r.post_draw) r.post_draw(_this2.ctx);
+        var r = l.renderer; //me: what is post_draw/pre_draw for?
+        //c4: just in case for now (for overlay devs)
+        //if (r.pre_draw) r.pre_draw(this.ctx, scale)
+        //if (r.pre_draw) r.pre_draw(this.ctx)
 
-        _this2.ctx.restore();
+        r.draw(_this2.ctx); //if (r.post_draw) r.post_draw(this.ctx)			
       });
+      this.ctx.restore();
 
       if (this.crosshair) {
         this.crosshair.renderer.draw(this.ctx);
@@ -6558,12 +7273,12 @@ var grid_Grid = /*#__PURE__*/function () {
       this.ctx.strokeStyle = this.$p.colors.colorGrid;
       this.ctx.beginPath();
       var ymax = this.layout.height;
-      var _iteratorNormalCompletion = true;
-      var _didIteratorError = false;
-      var _iteratorError = undefined;
+
+      var _iterator = grid_createForOfIteratorHelper(this.layout.xs),
+          _step;
 
       try {
-        for (var _iterator = this.layout.xs[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+        for (_iterator.s(); !(_step = _iterator.n()).done;) {
           var _step$value = slicedToArray_default()(_step.value, 2),
               x = _step$value[0],
               p = _step$value[1];
@@ -6572,26 +7287,16 @@ var grid_Grid = /*#__PURE__*/function () {
           this.ctx.lineTo(x - 0.5, ymax);
         }
       } catch (err) {
-        _didIteratorError = true;
-        _iteratorError = err;
+        _iterator.e(err);
       } finally {
-        try {
-          if (!_iteratorNormalCompletion && _iterator["return"] != null) {
-            _iterator["return"]();
-          }
-        } finally {
-          if (_didIteratorError) {
-            throw _iteratorError;
-          }
-        }
+        _iterator.f();
       }
 
-      var _iteratorNormalCompletion2 = true;
-      var _didIteratorError2 = false;
-      var _iteratorError2 = undefined;
+      var _iterator2 = grid_createForOfIteratorHelper(this.layout.ys),
+          _step2;
 
       try {
-        for (var _iterator2 = this.layout.ys[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
+        for (_iterator2.s(); !(_step2 = _iterator2.n()).done;) {
           var _step2$value = slicedToArray_default()(_step2.value, 2),
               y = _step2$value[0],
               y$ = _step2$value[1];
@@ -6600,18 +7305,9 @@ var grid_Grid = /*#__PURE__*/function () {
           this.ctx.lineTo(this.layout.width, y - 0.5);
         }
       } catch (err) {
-        _didIteratorError2 = true;
-        _iteratorError2 = err;
+        _iterator2.e(err);
       } finally {
-        try {
-          if (!_iteratorNormalCompletion2 && _iterator2["return"] != null) {
-            _iterator2["return"]();
-          }
-        } finally {
-          if (_didIteratorError2) {
-            throw _iteratorError2;
-          }
-        }
+        _iterator2.f();
       }
 
       this.ctx.stroke();
@@ -6631,8 +7327,8 @@ var grid_Grid = /*#__PURE__*/function () {
     value: function mousezoom(delta, event) {
       event.originalEvent.preventDefault();
       event.preventDefault();
-      event.deltaX = event.deltaX || utils.get_deltaX(event);
-      event.deltaY = event.deltaY || utils.get_deltaY(event);
+      event.deltaX = event.deltaX || utils["a" /* default */].get_deltaX(event);
+      event.deltaY = event.deltaY || utils["a" /* default */].get_deltaY(event);
 
       if (Math.abs(event.deltaX) > 0) {
         this.trackpad = true;
@@ -6645,7 +7341,7 @@ var grid_Grid = /*#__PURE__*/function () {
       }
 
       if (this.trackpad) delta *= 0.032;
-      delta = utils.smart_wheel(delta); // TODO: mouse zooming is a little jerky,
+      delta = utils["a" /* default */].smart_wheel(delta); // TODO: mouse zooming is a little jerky,
       // needs to follow f(mouse_wheel_speed) and
       // if speed is low, scroll shoud be slower
 
@@ -6716,8 +7412,8 @@ var grid_Grid = /*#__PURE__*/function () {
       var l = this.data.length - 1;
       var data = this.data;
       var range = this.range;
-      range[0] = utils.clamp(range[0], -Infinity, data[l][0] - this.interval * 5.5);
-      range[1] = utils.clamp(range[1], data[0][0] + this.interval * 5.5, Infinity); // TODO: IMPORTANT scrolling is jerky The Problem caused
+      range[0] = utils["a" /* default */].clamp(range[0], -Infinity, data[l][0] - this.interval * 5.5);
+      range[1] = utils["a" /* default */].clamp(range[1], data[0][0] + this.interval * 5.5, Infinity); // TODO: IMPORTANT scrolling is jerky The Problem caused
       // by the long round trip of 'range-changed' event.
       // First it propagates up to update layout in Chart.vue,
       // then it moves back as watch() update. It takes 1-5 ms.
@@ -6732,12 +7428,11 @@ var grid_Grid = /*#__PURE__*/function () {
   }, {
     key: "propagate",
     value: function propagate(name, event) {
-      var _iteratorNormalCompletion3 = true;
-      var _didIteratorError3 = false;
-      var _iteratorError3 = undefined;
+      var _iterator3 = grid_createForOfIteratorHelper(this.overlays),
+          _step3;
 
       try {
-        for (var _iterator3 = this.overlays[Symbol.iterator](), _step3; !(_iteratorNormalCompletion3 = (_step3 = _iterator3.next()).done); _iteratorNormalCompletion3 = true) {
+        for (_iterator3.s(); !(_step3 = _iterator3.n()).done;) {
           var layer = _step3.value;
 
           if (layer.renderer[name]) {
@@ -6756,18 +7451,9 @@ var grid_Grid = /*#__PURE__*/function () {
           }
         }
       } catch (err) {
-        _didIteratorError3 = true;
-        _iteratorError3 = err;
+        _iterator3.e(err);
       } finally {
-        try {
-          if (!_iteratorNormalCompletion3 && _iterator3["return"] != null) {
-            _iterator3["return"]();
-          }
-        } finally {
-          if (_didIteratorError3) {
-            throw _iteratorError3;
-          }
-        }
+        _iterator3.f();
       }
     }
   }]);
@@ -6776,79 +7462,81 @@ var grid_Grid = /*#__PURE__*/function () {
 }();
 
 
-// CONCATENATED MODULE: ./src/mixins/canvas.js
-// Interactive canvas-based component
-// Should implement: mousemove, mouseout, mouseup, mousedown, click
-/* harmony default export */ var mixins_canvas = ({
+// EXTERNAL MODULE: ./src/mixins/canvas.js
+var mixins_canvas = __webpack_require__(9);
+
+// CONCATENATED MODULE: ./src/mixins/uxlist.js
+// Manager for Inteerface objects
+/* harmony default export */ var uxlist = ({
   methods: {
-    setup: function setup() {
-      var _this = this;
-
-      var id = "".concat(this.$props.tv_id, "-").concat(this._id, "-canvas");
-      var canvas = document.getElementById(id);
-      var dpr = window.devicePixelRatio || 1;
-      canvas.style.width = "".concat(this._attrs.width, "px");
-      canvas.style.height = "".concat(this._attrs.height, "px");
-      if (dpr < 1) dpr = 1; // Realy ? That's it? Issue #63
-
-      this.$nextTick(function () {
-        var rect = canvas.getBoundingClientRect();
-        canvas.width = rect.width * dpr;
-        canvas.height = rect.height * dpr;
-        var ctx = canvas.getContext('2d');
-        ctx.scale(dpr, dpr);
-
-        _this.redraw();
-      });
-    },
-    create_canvas: function create_canvas(h, id, props) {
-      var _this2 = this;
-
-      this._id = id;
-      this._attrs = props.attrs;
-      return h('div', {
-        "class": "trading-vue-".concat(id),
-        style: {
-          left: props.position.x + 'px',
-          top: props.position.y + 'px',
-          position: 'absolute'
+    on_ux_event: function on_ux_event(d, target) {
+      if (d.event === 'new-interface') {
+        if (d.args[0].target === target) {
+          d.args[0].vars = d.args[0].vars || {};
+          d.args[0].grid_id = d.args[1];
+          d.args[0].overlay_id = d.args[2];
+          this.uxs.push(d.args[0]); // this.rerender++
         }
-      }, [h('canvas', {
-        on: {
-          mousemove: function mousemove(e) {
-            return _this2.renderer.mousemove(e);
-          },
-          mouseout: function mouseout(e) {
-            return _this2.renderer.mouseout(e);
-          },
-          mouseup: function mouseup(e) {
-            return _this2.renderer.mouseup(e);
-          },
-          mousedown: function mousedown(e) {
-            return _this2.renderer.mousedown(e);
-          }
-        },
-        attrs: Object.assign({
-          id: "".concat(this.$props.tv_id, "-").concat(id, "-canvas")
-        }, props.attrs),
-        ref: 'canvas',
-        style: props.style
-      })].concat(props.hs || []));
+      }
+
+      if (d.event === 'close-interface') {
+        this.uxs = this.uxs.filter(function (x) {
+          return x.uuid !== d.args[0];
+        });
+      }
+
+      if (d.event === 'modify-interface') {
+        var ux = this.uxs.filter(function (x) {
+          return x.uuid === d.args[0];
+        });
+
+        if (ux.length) {
+          this.modify(ux[0], d.args[1]);
+        }
+      }
+
+      if (d.event === 'hide-interface') {
+        var _ux = this.uxs.filter(function (x) {
+          return x.uuid === d.args[0];
+        });
+
+        if (_ux.length) {
+          _ux[0].hidden = true;
+          this.modify(_ux[0], {
+            hidden: true
+          });
+        }
+      }
+
+      if (d.event === 'show-interface') {
+        var _ux2 = this.uxs.filter(function (x) {
+          return x.uuid === d.args[0];
+        });
+
+        if (_ux2.length) {
+          this.modify(_ux2[0], {
+            hidden: false
+          });
+        }
+      }
     },
-    redraw: function redraw() {
-      if (!this.renderer) return;
-      this.renderer.update();
+    modify: function modify(ux) {
+      var obj = arguments.length > 1 && arguments[1] !== undefined ? arguments[1] : {};
+
+      for (var k in obj) {
+        if (k in ux) {
+          this.$set(ux, k, obj[k]);
+        }
+      }
+    },
+    remove_all_ux: function remove_all_ux() {
+      this.uxs = [];
     }
   },
-  watch: {
-    width: function width(val) {
-      this._attrs.width = val;
-      this.setup();
-    },
-    height: function height(val) {
-      this._attrs.height = val;
-      this.setup();
-    }
+  data: function data() {
+    return {
+      uxs: []
+    };
   }
 });
 // CONCATENATED MODULE: ./src/components/js/crosshair.js
@@ -7137,9 +7825,452 @@ var KeyboardListener_component = normalizeComponent(
 if (false) { var KeyboardListener_api; }
 KeyboardListener_component.options.__file = "src/components/KeyboardListener.vue"
 /* harmony default export */ var KeyboardListener = (KeyboardListener_component.exports);
+// CONCATENATED MODULE: ./node_modules/vue-loader/lib/loaders/templateLoader.js??vue-loader-options!./node_modules/vue-loader/lib??vue-loader-options!./src/components/UxLayer.vue?vue&type=template&id=390ccf6e&
+var UxLayervue_type_template_id_390ccf6e_render = function() {
+  var _vm = this
+  var _h = _vm.$createElement
+  var _c = _vm._self._c || _h
+  return _c(
+    "span",
+    { class: "trading-vue-grid-ux-" + _vm.id, style: _vm.style },
+    _vm._l(_vm.uxs, function(ux) {
+      return _c("ux-wrapper", {
+        key: ux.uuid,
+        attrs: {
+          ux: ux,
+          updater: _vm.updater,
+          colors: _vm.colors,
+          config: _vm.config
+        },
+        on: { "custom-event": _vm.on_custom_event }
+      })
+    }),
+    1
+  )
+}
+var UxLayervue_type_template_id_390ccf6e_staticRenderFns = []
+UxLayervue_type_template_id_390ccf6e_render._withStripped = true
+
+
+// CONCATENATED MODULE: ./src/components/UxLayer.vue?vue&type=template&id=390ccf6e&
+
+// CONCATENATED MODULE: ./node_modules/vue-loader/lib/loaders/templateLoader.js??vue-loader-options!./node_modules/vue-loader/lib??vue-loader-options!./src/components/UxWrapper.vue?vue&type=template&id=4bc32070&
+var UxWrappervue_type_template_id_4bc32070_render = function() {
+  var _vm = this
+  var _h = _vm.$createElement
+  var _c = _vm._self._c || _h
+  return _vm.visible
+    ? _c(
+        "div",
+        {
+          staticClass: "trading-vue-ux-wrapper",
+          style: _vm.style,
+          attrs: { id: "tvjs-ux-wrapper-" + _vm.ux.uuid }
+        },
+        [
+          _c(_vm.ux.component, {
+            tag: "component",
+            attrs: {
+              ux: _vm.ux,
+              updater: _vm.updater,
+              wrapper: _vm.wrapper,
+              colors: _vm.colors
+            },
+            on: { "custom-event": _vm.on_custom_event }
+          }),
+          _vm._v(" "),
+          _vm.ux.show_pin
+            ? _c("div", {
+                staticClass: "tvjs-ux-wrapper-pin",
+                style: _vm.pin_style
+              })
+            : _vm._e(),
+          _vm._v(" "),
+          _vm.ux.win_header !== false
+            ? _c("div", { staticClass: "tvjs-ux-wrapper-head" }, [
+                _c(
+                  "div",
+                  {
+                    staticClass: "tvjs-ux-wrapper-close",
+                    style: _vm.btn_style,
+                    on: { click: _vm.close }
+                  },
+                  [_vm._v("×")]
+                )
+              ])
+            : _vm._e()
+        ],
+        1
+      )
+    : _vm._e()
+}
+var UxWrappervue_type_template_id_4bc32070_staticRenderFns = []
+UxWrappervue_type_template_id_4bc32070_render._withStripped = true
+
+
+// CONCATENATED MODULE: ./src/components/UxWrapper.vue?vue&type=template&id=4bc32070&
+
+// CONCATENATED MODULE: ./node_modules/babel-loader/lib!./node_modules/vue-loader/lib??vue-loader-options!./src/components/UxWrapper.vue?vue&type=script&lang=js&
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+
+/* harmony default export */ var UxWrappervue_type_script_lang_js_ = ({
+  name: 'UxWrapper',
+  props: ['ux', 'updater', 'colors', 'config'],
+  mounted: function mounted() {
+    this.self = document.getElementById(this.uuid);
+    this.w = this.self.offsetWidth; // TODO: => width: "content"
+
+    this.h = this.self.offsetHeight; // TODO: => height: "content"
+
+    this.update_position();
+  },
+  created: function created() {
+    this.mouse.on('mousemove', this.mousemove);
+    this.mouse.on('mouseout', this.mouseout);
+  },
+  beforeDestroy: function beforeDestroy() {
+    this.mouse.off('mousemove', this.mousemove);
+    this.mouse.off('mouseout', this.mouseout);
+  },
+  methods: {
+    update_position: function update_position() {
+      if (this.uxr.hidden) return;
+      var lw = this.layout.width;
+      var lh = this.layout.height;
+      var pin = this.uxr.pin;
+
+      switch (pin[0]) {
+        case 'cursor':
+          var x = this.uxr.overlay.cursor.x;
+          break;
+
+        case 'mouse':
+          x = this.mouse.x;
+          break;
+
+        default:
+          if (typeof pin[0] === 'string') {
+            x = this.parse_coord(pin[0], lw);
+          } else {
+            x = this.layout.t2screen(pin[0]);
+          }
+
+      }
+
+      switch (pin[1]) {
+        case 'cursor':
+          var y = this.uxr.overlay.cursor.y;
+          break;
+
+        case 'mouse':
+          y = this.mouse.y;
+          break;
+
+        default:
+          if (typeof pin[1] === 'string') {
+            y = this.parse_coord(pin[1], lh);
+          } else {
+            y = this.layout.$2screen(pin[1]);
+          }
+
+      }
+
+      this.x = x + this.ox;
+      this.y = y + this.oy;
+    },
+    parse_coord: function parse_coord(str, scale) {
+      if (str === '0' || str === '') return 0;
+      var plus = str.split('+');
+
+      if (plus.length === 2) {
+        return this.parse_coord(plus[0], scale) + this.parse_coord(plus[1], scale);
+      }
+
+      var minus = str.split('-');
+
+      if (minus.length === 2) {
+        return this.parse_coord(minus[0], scale) - this.parse_coord(minus[1], scale);
+      }
+
+      var per = str.split('%');
+
+      if (per.length === 2) {
+        return scale * parseInt(per[0]) / 100;
+      }
+
+      var px = str.split('px');
+
+      if (px.length === 2) {
+        return parseInt(px[0]);
+      }
+
+      return undefined;
+    },
+    mousemove: function mousemove() {
+      this.update_position();
+      this.visible = true;
+    },
+    mouseout: function mouseout() {
+      if (this.uxr.pin.includes('cursor') || this.uxr.pin.includes('mouse')) this.visible = false;
+    },
+    on_custom_event: function on_custom_event(event) {
+      this.$emit('custom-event', event);
+
+      if (event.event === 'modify-interface') {
+        if (this.self) {
+          this.w = this.self.offsetWidth;
+          this.h = this.self.offsetHeight;
+        }
+
+        this.update_position();
+      }
+    },
+    close: function close() {
+      this.$emit('custom-event', {
+        event: 'close-interface',
+        args: [this.$props.ux.uuid]
+      });
+    }
+  },
+  computed: {
+    uxr: function uxr() {
+      return this.$props.ux; // just a ref
+    },
+    layout: function layout() {
+      return this.$props.ux.overlay.layout;
+    },
+    settings: function settings() {
+      return this.$props.ux.overlay.settings;
+    },
+    uuid: function uuid() {
+      return "tvjs-ux-wrapper-".concat(this.uxr.uuid);
+    },
+    mouse: function mouse() {
+      return this.uxr.overlay.mouse;
+    },
+    style: function style() {
+      var st = {
+        'display': this.uxr.hidden ? 'none' : undefined,
+        'left': "".concat(this.x, "px"),
+        'top': "".concat(this.y, "px"),
+        'pointer-events': this.uxr.pointer_events || 'all',
+        'z-index': this.z_index
+      };
+      if (this.uxr.win_styling !== false) st = Object.assign(st, {
+        'border': "1px solid ".concat(this.$props.colors.colorGrid),
+        'border-radius': '3px',
+        'background': "".concat(this.background)
+      });
+      return st;
+    },
+    pin_style: function pin_style() {
+      return {
+        'left': "".concat(-this.ox, "px"),
+        'top': "".concat(-this.oy, "px"),
+        'background-color': this.uxr.pin_color
+      };
+    },
+    btn_style: function btn_style() {
+      return {
+        'background': "".concat(this.inactive_btn_color),
+        'color': "".concat(this.inactive_btn_color)
+      };
+    },
+    pin_pos: function pin_pos() {
+      return this.uxr.pin_position ? this.uxr.pin_position.split(',') : ['0', '0'];
+    },
+    // Offset x
+    ox: function ox() {
+      if (this.pin_pos.length !== 2) return undefined;
+      var x = this.parse_coord(this.pin_pos[0], this.w);
+      return -x;
+    },
+    // Offset y
+    oy: function oy() {
+      if (this.pin_pos.length !== 2) return undefined;
+      var y = this.parse_coord(this.pin_pos[1], this.h);
+      return -y;
+    },
+    z_index: function z_index() {
+      var base_index = this.settings['z-index'] || this.settings['zIndex'] || 0;
+      var ux_index = this.uxr['z_index'] || 0;
+      return base_index + ux_index;
+    },
+    background: function background() {
+      var c = this.uxr.background || this.$props.colors.colorBack;
+      return utils["a" /* default */].apply_opacity(c, this.uxr.background_opacity || this.$props.config.UX_OPACITY);
+    },
+    inactive_btn_color: function inactive_btn_color() {
+      return this.uxr.inactive_btn_color || this.$props.colors.colorGrid;
+    },
+    wrapper: function wrapper() {
+      return {
+        x: this.x,
+        y: this.y,
+        pin_x: this.x - this.ox,
+        pin_y: this.y - this.oy
+      };
+    }
+  },
+  watch: {
+    updater: function updater() {
+      this.update_position();
+    }
+  },
+  data: function data() {
+    return {
+      x: 0,
+      y: 0,
+      w: 0,
+      h: 0,
+      visible: true
+    };
+  }
+});
+// CONCATENATED MODULE: ./src/components/UxWrapper.vue?vue&type=script&lang=js&
+ /* harmony default export */ var components_UxWrappervue_type_script_lang_js_ = (UxWrappervue_type_script_lang_js_); 
+// EXTERNAL MODULE: ./src/components/UxWrapper.vue?vue&type=style&index=0&lang=css&
+var UxWrappervue_type_style_index_0_lang_css_ = __webpack_require__(42);
+
+// CONCATENATED MODULE: ./src/components/UxWrapper.vue
+
+
+
+
+
+
+/* normalize component */
+
+var UxWrapper_component = normalizeComponent(
+  components_UxWrappervue_type_script_lang_js_,
+  UxWrappervue_type_template_id_4bc32070_render,
+  UxWrappervue_type_template_id_4bc32070_staticRenderFns,
+  false,
+  null,
+  null,
+  null
+  
+)
+
+/* hot reload */
+if (false) { var UxWrapper_api; }
+UxWrapper_component.options.__file = "src/components/UxWrapper.vue"
+/* harmony default export */ var UxWrapper = (UxWrapper_component.exports);
+// CONCATENATED MODULE: ./node_modules/babel-loader/lib!./node_modules/vue-loader/lib??vue-loader-options!./src/components/UxLayer.vue?vue&type=script&lang=js&
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+//
+
+/* harmony default export */ var UxLayervue_type_script_lang_js_ = ({
+  name: 'UxLayer',
+  props: ['tv_id', 'id', 'uxs', 'updater', 'colors', 'config'],
+  components: {
+    UxWrapper: UxWrapper
+  },
+  created: function created() {},
+  mounted: function mounted() {},
+  beforeDestroy: function beforeDestroy() {},
+  methods: {
+    on_custom_event: function on_custom_event(event) {
+      this.$emit('custom-event', event);
+    }
+  },
+  computed: {
+    style: function style() {
+      return {
+        'top': this.$props.id !== 0 ? '1px' : 0,
+        'left': 0,
+        'width': '100%',
+        'height': 'calc(100% - 2px)',
+        'position': 'absolute',
+        'z-index': '1',
+        'pointer-events': 'none',
+        'overflow': 'hidden'
+      };
+    }
+  }
+});
+// CONCATENATED MODULE: ./src/components/UxLayer.vue?vue&type=script&lang=js&
+ /* harmony default export */ var components_UxLayervue_type_script_lang_js_ = (UxLayervue_type_script_lang_js_); 
+// CONCATENATED MODULE: ./src/components/UxLayer.vue
+
+
+
+
+
+/* normalize component */
+
+var UxLayer_component = normalizeComponent(
+  components_UxLayervue_type_script_lang_js_,
+  UxLayervue_type_template_id_390ccf6e_render,
+  UxLayervue_type_template_id_390ccf6e_staticRenderFns,
+  false,
+  null,
+  null,
+  null
+  
+)
+
+/* hot reload */
+if (false) { var UxLayer_api; }
+UxLayer_component.options.__file = "src/components/UxLayer.vue"
+/* harmony default export */ var UxLayer = (UxLayer_component.exports);
 // CONCATENATED MODULE: ./src/stuff/mouse.js
 
 
+
+function mouse_createForOfIteratorHelper(o) { if (typeof Symbol === "undefined" || o[Symbol.iterator] == null) { if (Array.isArray(o) || (o = mouse_unsupportedIterableToArray(o))) { var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var it, normalCompletion = true, didErr = false, err; return { s: function s() { it = o[Symbol.iterator](); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it["return"] != null) it["return"](); } finally { if (didErr) throw err; } } }; }
+
+function mouse_unsupportedIterableToArray(o, minLen) { if (!o) return; if (typeof o === "string") return mouse_arrayLikeToArray(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(n); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return mouse_arrayLikeToArray(o, minLen); }
+
+function mouse_arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) { arr2[i] = arr[i]; } return arr2; }
 
 // Mouse event handler for overlay
 var mouse_Mouse = /*#__PURE__*/function () {
@@ -7166,6 +8297,15 @@ var mouse_Mouse = /*#__PURE__*/function () {
       this.map[name] = this.map[name] || [];
       this.map[name][dir](handler);
       this.listeners++;
+    }
+  }, {
+    key: "off",
+    value: function off(name, handler) {
+      if (!this.map[name]) return;
+      var i = this.map[name].indexOf(handler);
+      if (i < 0) return;
+      this.map[name].splice(i, 1);
+      this.listeners--;
     } // Called by grid.js
 
   }, {
@@ -7174,28 +8314,18 @@ var mouse_Mouse = /*#__PURE__*/function () {
       var l = this.comp.layout;
 
       if (name in this.map) {
-        var _iteratorNormalCompletion = true;
-        var _didIteratorError = false;
-        var _iteratorError = undefined;
+        var _iterator = mouse_createForOfIteratorHelper(this.map[name]),
+            _step;
 
         try {
-          for (var _iterator = this.map[name][Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+          for (_iterator.s(); !(_step = _iterator.n()).done;) {
             var f = _step.value;
             f(event);
           }
         } catch (err) {
-          _didIteratorError = true;
-          _iteratorError = err;
+          _iterator.e(err);
         } finally {
-          try {
-            if (!_iteratorNormalCompletion && _iterator["return"] != null) {
-              _iterator["return"]();
-            }
-          } finally {
-            if (_didIteratorError) {
-              throw _iteratorError;
-            }
-          }
+          _iterator.f();
         }
       }
 
@@ -7277,9 +8407,15 @@ var mouse_Mouse = /*#__PURE__*/function () {
         args[_key - 1] = arguments[_key];
       }
 
-      if (event === 'change-settings' || event === 'object-selected' || event === 'new-shader' || event === 'remove-tool') {
+      if (event === 'change-settings' || event === 'object-selected' || event === 'new-shader' || event === 'new-interface' || event === 'remove-tool') {
         args.push(this.grid_id, this.id);
       }
+
+      if (event === 'new-interface') {
+        args[0].overlay = this;
+        args[0].uuid = this.last_ux_id = "".concat(this.grid_id, "-").concat(this.id, "-").concat(this.uxs_count++);
+      } // TODO: add a namespace to the event name
+
 
       this._$emit('custom-event', {
         event: event,
@@ -7300,11 +8436,23 @@ var mouse_Mouse = /*#__PURE__*/function () {
       deep: true
     }
   },
+  data: function data() {
+    return {
+      uxs_count: 0,
+      last_ux_id: null
+    };
+  },
   render: function render(h) {
     return h();
   }
 });
 // CONCATENATED MODULE: ./node_modules/babel-loader/lib!./node_modules/vue-loader/lib??vue-loader-options!./src/components/overlays/Spline.vue?vue&type=script&lang=js&
+function Splinevue_type_script_lang_js_createForOfIteratorHelper(o) { if (typeof Symbol === "undefined" || o[Symbol.iterator] == null) { if (Array.isArray(o) || (o = Splinevue_type_script_lang_js_unsupportedIterableToArray(o))) { var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var it, normalCompletion = true, didErr = false, err; return { s: function s() { it = o[Symbol.iterator](); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it["return"] != null) it["return"](); } finally { if (didErr) throw err; } } }; }
+
+function Splinevue_type_script_lang_js_unsupportedIterableToArray(o, minLen) { if (!o) return; if (typeof o === "string") return Splinevue_type_script_lang_js_arrayLikeToArray(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(n); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return Splinevue_type_script_lang_js_arrayLikeToArray(o, minLen); }
+
+function Splinevue_type_script_lang_js_arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) { arr2[i] = arr[i]; } return arr2; }
+
 // Spline renderer. (SMAs, EMAs, TEMAs...
 // you know what I mean)
 // TODO: make a real spline, not a bunch of lines...
@@ -7344,30 +8492,21 @@ var mouse_Mouse = /*#__PURE__*/function () {
       ctx.beginPath();
       var layout = this.$props.layout;
       var i = this.data_index;
-      var _iteratorNormalCompletion = true;
-      var _didIteratorError = false;
-      var _iteratorError = undefined;
+
+      var _iterator = Splinevue_type_script_lang_js_createForOfIteratorHelper(this.$props.data),
+          _step;
 
       try {
-        for (var _iterator = this.$props.data[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+        for (_iterator.s(); !(_step = _iterator.n()).done;) {
           var p = _step.value;
           var x = layout.t2screen(p[0]);
           var y = layout.$2screen(p[i]);
           ctx.lineTo(x, y);
         }
       } catch (err) {
-        _didIteratorError = true;
-        _iteratorError = err;
+        _iterator.e(err);
       } finally {
-        try {
-          if (!_iteratorNormalCompletion && _iterator["return"] != null) {
-            _iterator["return"]();
-          }
-        } finally {
-          if (_didIteratorError) {
-            throw _iteratorError;
-          }
-        }
+        _iterator.f();
       }
 
       ctx.stroke();
@@ -7436,6 +8575,12 @@ if (false) { var Spline_api; }
 Spline_component.options.__file = "src/components/overlays/Spline.vue"
 /* harmony default export */ var Spline = (Spline_component.exports);
 // CONCATENATED MODULE: ./node_modules/babel-loader/lib!./node_modules/vue-loader/lib??vue-loader-options!./src/components/overlays/Splines.vue?vue&type=script&lang=js&
+function Splinesvue_type_script_lang_js_createForOfIteratorHelper(o) { if (typeof Symbol === "undefined" || o[Symbol.iterator] == null) { if (Array.isArray(o) || (o = Splinesvue_type_script_lang_js_unsupportedIterableToArray(o))) { var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var it, normalCompletion = true, didErr = false, err; return { s: function s() { it = o[Symbol.iterator](); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it["return"] != null) it["return"](); } finally { if (didErr) throw err; } } }; }
+
+function Splinesvue_type_script_lang_js_unsupportedIterableToArray(o, minLen) { if (!o) return; if (typeof o === "string") return Splinesvue_type_script_lang_js_arrayLikeToArray(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(n); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return Splinesvue_type_script_lang_js_arrayLikeToArray(o, minLen); }
+
+function Splinesvue_type_script_lang_js_arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) { arr2[i] = arr[i]; } return arr2; }
+
 // Channel renderer. (Keltner, Bollinger)
 
 /* harmony default export */ var Splinesvue_type_script_lang_js_ = ({
@@ -7455,30 +8600,21 @@ Spline_component.options.__file = "src/components/overlays/Spline.vue"
         ctx.strokeStyle = this.clrx[i];
         ctx.lineWidth = this.widths[i] || this.line_width;
         ctx.beginPath();
-        var _iteratorNormalCompletion = true;
-        var _didIteratorError = false;
-        var _iteratorError = undefined;
+
+        var _iterator = Splinesvue_type_script_lang_js_createForOfIteratorHelper(this.$props.data),
+            _step;
 
         try {
-          for (var _iterator = this.$props.data[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+          for (_iterator.s(); !(_step = _iterator.n()).done;) {
             var p = _step.value;
             var x = layout.t2screen(p[0]);
             var y = layout.$2screen(p[i + 1]);
             ctx.lineTo(x, y);
           }
         } catch (err) {
-          _didIteratorError = true;
-          _iteratorError = err;
+          _iterator.e(err);
         } finally {
-          try {
-            if (!_iteratorNormalCompletion && _iterator["return"] != null) {
-              _iterator["return"]();
-            }
-          } finally {
-            if (_didIteratorError) {
-              throw _iteratorError;
-            }
-          }
+          _iterator.f();
         }
 
         ctx.stroke();
@@ -7551,6 +8687,12 @@ if (false) { var Splines_api; }
 Splines_component.options.__file = "src/components/overlays/Splines.vue"
 /* harmony default export */ var Splines = (Splines_component.exports);
 // CONCATENATED MODULE: ./node_modules/babel-loader/lib!./node_modules/vue-loader/lib??vue-loader-options!./src/components/overlays/Range.vue?vue&type=script&lang=js&
+function Rangevue_type_script_lang_js_createForOfIteratorHelper(o) { if (typeof Symbol === "undefined" || o[Symbol.iterator] == null) { if (Array.isArray(o) || (o = Rangevue_type_script_lang_js_unsupportedIterableToArray(o))) { var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var it, normalCompletion = true, didErr = false, err; return { s: function s() { it = o[Symbol.iterator](); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it["return"] != null) it["return"](); } finally { if (didErr) throw err; } } }; }
+
+function Rangevue_type_script_lang_js_unsupportedIterableToArray(o, minLen) { if (!o) return; if (typeof o === "string") return Rangevue_type_script_lang_js_arrayLikeToArray(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(n); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return Rangevue_type_script_lang_js_arrayLikeToArray(o, minLen); }
+
+function Rangevue_type_script_lang_js_arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) { arr2[i] = arr[i]; } return arr2; }
+
 // R S I . Because we love it
 // Adds all necessary stuff for you.
 
@@ -7590,30 +8732,21 @@ Splines_component.options.__file = "src/components/overlays/Splines.vue"
       ctx.lineWidth = this.line_width;
       ctx.strokeStyle = this.color;
       ctx.beginPath();
-      var _iteratorNormalCompletion = true;
-      var _didIteratorError = false;
-      var _iteratorError = undefined;
+
+      var _iterator = Rangevue_type_script_lang_js_createForOfIteratorHelper(this.$props.data),
+          _step;
 
       try {
-        for (var _iterator = this.$props.data[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+        for (_iterator.s(); !(_step = _iterator.n()).done;) {
           var p = _step.value;
           var x = layout.t2screen(p[0]);
           var y = layout.$2screen(p[1]);
           ctx.lineTo(x, y);
         }
       } catch (err) {
-        _didIteratorError = true;
-        _iteratorError = err;
+        _iterator.e(err);
       } finally {
-        try {
-          if (!_iteratorNormalCompletion && _iterator["return"] != null) {
-            _iterator["return"]();
-          }
-        } finally {
-          if (_didIteratorError) {
-            throw _iteratorError;
-          }
-        }
+        _iterator.f();
       }
 
       ctx.stroke();
@@ -7699,6 +8832,12 @@ if (false) { var Range_api; }
 Range_component.options.__file = "src/components/overlays/Range.vue"
 /* harmony default export */ var Range = (Range_component.exports);
 // CONCATENATED MODULE: ./node_modules/babel-loader/lib!./node_modules/vue-loader/lib??vue-loader-options!./src/components/overlays/Trades.vue?vue&type=script&lang=js&
+function Tradesvue_type_script_lang_js_createForOfIteratorHelper(o) { if (typeof Symbol === "undefined" || o[Symbol.iterator] == null) { if (Array.isArray(o) || (o = Tradesvue_type_script_lang_js_unsupportedIterableToArray(o))) { var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var it, normalCompletion = true, didErr = false, err; return { s: function s() { it = o[Symbol.iterator](); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it["return"] != null) it["return"](); } finally { if (didErr) throw err; } } }; }
+
+function Tradesvue_type_script_lang_js_unsupportedIterableToArray(o, minLen) { if (!o) return; if (typeof o === "string") return Tradesvue_type_script_lang_js_arrayLikeToArray(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(n); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return Tradesvue_type_script_lang_js_arrayLikeToArray(o, minLen); }
+
+function Tradesvue_type_script_lang_js_arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) { arr2[i] = arr[i]; } return arr2; }
+
 
 /* harmony default export */ var Tradesvue_type_script_lang_js_ = ({
   name: 'Trades',
@@ -7714,12 +8853,12 @@ Range_component.options.__file = "src/components/overlays/Range.vue"
       var layout = this.$props.layout;
       ctx.lineWidth = 1.5;
       ctx.strokeStyle = 'black';
-      var _iteratorNormalCompletion = true;
-      var _didIteratorError = false;
-      var _iteratorError = undefined;
+
+      var _iterator = Tradesvue_type_script_lang_js_createForOfIteratorHelper(this.$props.data),
+          _step;
 
       try {
-        for (var _iterator = this.$props.data[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+        for (_iterator.s(); !(_step = _iterator.n()).done;) {
           var p = _step.value;
           ctx.fillStyle = p[1] ? this.buy_color : this.sell_color;
           ctx.beginPath();
@@ -7736,18 +8875,9 @@ Range_component.options.__file = "src/components/overlays/Range.vue"
           }
         }
       } catch (err) {
-        _didIteratorError = true;
-        _iteratorError = err;
+        _iterator.e(err);
       } finally {
-        try {
-          if (!_iteratorNormalCompletion && _iterator["return"] != null) {
-            _iterator["return"]();
-          }
-        } finally {
-          if (_didIteratorError) {
-            throw _iteratorError;
-          }
-        }
+        _iterator.f();
       }
     },
     draw_label: function draw_label(ctx, x, y, p) {
@@ -8056,8 +9186,9 @@ function layout_cnv(self) {
       avg_w,
       mid,
       prev = undefined; // Subset interval against main interval
+  // TODO: interval detection can be incorrect in IB mode
 
-  var interval2 = utils.detect_interval(sub);
+  var interval2 = utils["a" /* default */].detect_interval(sub);
   var ratio = interval2 / $p.interval;
   var px_step2 = layout.px_step * ratio;
   var splitter = px_step2 > 5 ? 1 : 0; // A & B are current chart tranformations:
@@ -8123,7 +9254,7 @@ function layout_vol(self) {
       mid,
       prev = undefined; // Subset interval against main interval
 
-  var interval2 = utils.detect_interval(sub);
+  var interval2 = utils["a" /* default */].detect_interval(sub);
   var ratio = interval2 / $p.interval;
   var px_step2 = layout.px_step * ratio;
   var splitter = px_step2 > 5 ? 1 : 0; // A & B are current chart tranformations:
@@ -8288,7 +9419,8 @@ var price_Price = /*#__PURE__*/function () {
       var layout = this.comp.$props.layout;
       var last = this.comp.$props.meta.last;
       var color = last[4] >= last[1] ? this.green() : this.red();
-      var y = layout.$2screen(last[4]) - 1;
+      var y = layout.$2screen(last[4]) - 1; // TODO: make more precise 
+
       ctx.strokeStyle = color;
       ctx.setLineDash([1, 1]);
       ctx.beginPath();
@@ -8334,6 +9466,13 @@ var price_Price = /*#__PURE__*/function () {
 
 // CONCATENATED MODULE: ./node_modules/babel-loader/lib!./node_modules/vue-loader/lib??vue-loader-options!./src/components/overlays/Candles.vue?vue&type=script&lang=js&
 
+
+function Candlesvue_type_script_lang_js_createForOfIteratorHelper(o) { if (typeof Symbol === "undefined" || o[Symbol.iterator] == null) { if (Array.isArray(o) || (o = Candlesvue_type_script_lang_js_unsupportedIterableToArray(o))) { var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var it, normalCompletion = true, didErr = false, err; return { s: function s() { it = o[Symbol.iterator](); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it["return"] != null) it["return"](); } finally { if (didErr) throw err; } } }; }
+
+function Candlesvue_type_script_lang_js_unsupportedIterableToArray(o, minLen) { if (!o) return; if (typeof o === "string") return Candlesvue_type_script_lang_js_arrayLikeToArray(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(n); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return Candlesvue_type_script_lang_js_arrayLikeToArray(o, minLen); }
+
+function Candlesvue_type_script_lang_js_arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) { arr2[i] = arr[i]; } return arr2; }
+
 // Renedrer for candlesticks + volume (optional)
 // It can be used as the main chart or an indicator
 
@@ -8367,53 +9506,33 @@ var price_Price = /*#__PURE__*/function () {
       }
 
       if (this.show_volume) {
-        var _iteratorNormalCompletion = true;
-        var _didIteratorError = false;
-        var _iteratorError = undefined;
+        var _iterator = Candlesvue_type_script_lang_js_createForOfIteratorHelper(cnv.volume),
+            _step;
 
         try {
-          for (var _iterator = cnv.volume[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+          for (_iterator.s(); !(_step = _iterator.n()).done;) {
             var v = _step.value;
             new volbar_VolbarExt(this, ctx, v);
           }
         } catch (err) {
-          _didIteratorError = true;
-          _iteratorError = err;
+          _iterator.e(err);
         } finally {
-          try {
-            if (!_iteratorNormalCompletion && _iterator["return"] != null) {
-              _iterator["return"]();
-            }
-          } finally {
-            if (_didIteratorError) {
-              throw _iteratorError;
-            }
-          }
+          _iterator.f();
         }
       }
 
-      var _iteratorNormalCompletion2 = true;
-      var _didIteratorError2 = false;
-      var _iteratorError2 = undefined;
+      var _iterator2 = Candlesvue_type_script_lang_js_createForOfIteratorHelper(cnv.candles),
+          _step2;
 
       try {
-        for (var _iterator2 = cnv.candles[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
+        for (_iterator2.s(); !(_step2 = _iterator2.n()).done;) {
           var c = _step2.value;
           new candle_CandleExt(this, ctx, c);
         }
       } catch (err) {
-        _didIteratorError2 = true;
-        _iteratorError2 = err;
+        _iterator2.e(err);
       } finally {
-        try {
-          if (!_iteratorNormalCompletion2 && _iterator2["return"] != null) {
-            _iterator2["return"]();
-          }
-        } finally {
-          if (_didIteratorError2) {
-            throw _iteratorError2;
-          }
-        }
+        _iterator2.f();
       }
 
       if (this.price_line) this.price.draw(ctx);
@@ -8496,6 +9615,13 @@ Candles_component.options.__file = "src/components/overlays/Candles.vue"
 /* harmony default export */ var Candles = (Candles_component.exports);
 // CONCATENATED MODULE: ./node_modules/babel-loader/lib!./node_modules/vue-loader/lib??vue-loader-options!./src/components/overlays/Volume.vue?vue&type=script&lang=js&
 
+
+function Volumevue_type_script_lang_js_createForOfIteratorHelper(o) { if (typeof Symbol === "undefined" || o[Symbol.iterator] == null) { if (Array.isArray(o) || (o = Volumevue_type_script_lang_js_unsupportedIterableToArray(o))) { var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var it, normalCompletion = true, didErr = false, err; return { s: function s() { it = o[Symbol.iterator](); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it["return"] != null) it["return"](); } finally { if (didErr) throw err; } } }; }
+
+function Volumevue_type_script_lang_js_unsupportedIterableToArray(o, minLen) { if (!o) return; if (typeof o === "string") return Volumevue_type_script_lang_js_arrayLikeToArray(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(n); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return Volumevue_type_script_lang_js_arrayLikeToArray(o, minLen); }
+
+function Volumevue_type_script_lang_js_arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) { arr2[i] = arr[i]; } return arr2; }
+
 // Standalone renedrer for the volume
 
 
@@ -8513,28 +9639,18 @@ Candles_component.options.__file = "src/components/overlays/Candles.vue"
     draw: function draw(ctx) {
       // TODO: volume average
       // TODO: Y-axis scaling
-      var _iteratorNormalCompletion = true;
-      var _didIteratorError = false;
-      var _iteratorError = undefined;
+      var _iterator = Volumevue_type_script_lang_js_createForOfIteratorHelper(layout_vol(this)),
+          _step;
 
       try {
-        for (var _iterator = layout_vol(this)[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+        for (_iterator.s(); !(_step = _iterator.n()).done;) {
           var v = _step.value;
           new volbar_VolbarExt(this, ctx, v);
         }
       } catch (err) {
-        _didIteratorError = true;
-        _iteratorError = err;
+        _iterator.e(err);
       } finally {
-        try {
-          if (!_iteratorNormalCompletion && _iterator["return"] != null) {
-            _iterator["return"]();
-          }
-        } finally {
-          if (_didIteratorError) {
-            throw _iteratorError;
-          }
-        }
+        _iterator.f();
       }
     },
     use_for: function use_for() {
@@ -8727,6 +9843,12 @@ Splitters_component.options.__file = "src/components/overlays/Splitters.vue"
 
 
 
+function keys_createForOfIteratorHelper(o) { if (typeof Symbol === "undefined" || o[Symbol.iterator] == null) { if (Array.isArray(o) || (o = keys_unsupportedIterableToArray(o))) { var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var it, normalCompletion = true, didErr = false, err; return { s: function s() { it = o[Symbol.iterator](); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it["return"] != null) it["return"](); } finally { if (didErr) throw err; } } }; }
+
+function keys_unsupportedIterableToArray(o, minLen) { if (!o) return; if (typeof o === "string") return keys_arrayLikeToArray(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(n); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return keys_arrayLikeToArray(o, minLen); }
+
+function keys_arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) { arr2[i] = arr[i]; } return arr2; }
+
 // Keyboard event handler for overlay
 var keys_Keys = /*#__PURE__*/function () {
   function Keys(comp) {
@@ -8751,28 +9873,18 @@ var keys_Keys = /*#__PURE__*/function () {
     key: "emit",
     value: function emit(name, event) {
       if (name in this.map) {
-        var _iteratorNormalCompletion = true;
-        var _didIteratorError = false;
-        var _iteratorError = undefined;
+        var _iterator = keys_createForOfIteratorHelper(this.map[name]),
+            _step;
 
         try {
-          for (var _iterator = this.map[name][Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+          for (_iterator.s(); !(_step = _iterator.n()).done;) {
             var f = _step.value;
             f(event);
           }
         } catch (err) {
-          _didIteratorError = true;
-          _iteratorError = err;
+          _iterator.e(err);
         } finally {
-          try {
-            if (!_iteratorNormalCompletion && _iterator["return"] != null) {
-              _iterator["return"]();
-            }
-          } finally {
-            if (_didIteratorError) {
-              throw _iteratorError;
-            }
-          }
+          _iterator.f();
         }
       }
 
@@ -8800,6 +9912,12 @@ var keys_Keys = /*#__PURE__*/function () {
 
 
 // CONCATENATED MODULE: ./src/mixins/tool.js
+function tool_createForOfIteratorHelper(o) { if (typeof Symbol === "undefined" || o[Symbol.iterator] == null) { if (Array.isArray(o) || (o = tool_unsupportedIterableToArray(o))) { var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var it, normalCompletion = true, didErr = false, err; return { s: function s() { it = o[Symbol.iterator](); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it["return"] != null) it["return"](); } finally { if (didErr) throw err; } } }; }
+
+function tool_unsupportedIterableToArray(o, minLen) { if (!o) return; if (typeof o === "string") return tool_arrayLikeToArray(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(n); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return tool_arrayLikeToArray(o, minLen); }
+
+function tool_arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) { arr2[i] = arr[i]; } return arr2; }
+
 // Usuful stuff for creating tools. Include as mixin
 
 /* harmony default export */ var mixins_tool = ({
@@ -8867,28 +9985,18 @@ var keys_Keys = /*#__PURE__*/function () {
       // If layer $uuid is changed, then re-init
       // pins & collisions
       if (n.$uuid !== p.$uuid) {
-        var _iteratorNormalCompletion = true;
-        var _didIteratorError = false;
-        var _iteratorError = undefined;
+        var _iterator = tool_createForOfIteratorHelper(this.pins),
+            _step;
 
         try {
-          for (var _iterator = this.pins[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+          for (_iterator.s(); !(_step = _iterator.n()).done;) {
             var p = _step.value;
             p.re_init();
           }
         } catch (err) {
-          _didIteratorError = true;
-          _iteratorError = err;
+          _iterator.e(err);
         } finally {
-          try {
-            if (!_iteratorNormalCompletion && _iterator["return"] != null) {
-              _iterator["return"]();
-            }
-          } finally {
-            if (_didIteratorError) {
-              throw _iteratorError;
-            }
-          }
+          _iterator.f();
         }
 
         this.collisions = [];
@@ -8935,10 +10043,10 @@ var keys_Keys = /*#__PURE__*/function () {
   }
 });
 // EXTERNAL MODULE: ./src/stuff/icons.json
-var icons = __webpack_require__(3);
+var icons = __webpack_require__(5);
 
 // EXTERNAL MODULE: ./node_modules/@babel/runtime/helpers/defineProperty.js
-var defineProperty = __webpack_require__(19);
+var defineProperty = __webpack_require__(23);
 var defineProperty_default = /*#__PURE__*/__webpack_require__.n(defineProperty);
 
 // CONCATENATED MODULE: ./src/components/primitives/pin.js
@@ -9034,7 +10142,11 @@ var pin_Pin = /*#__PURE__*/function () {
       this.y$ = this.comp.$props.cursor.y$;
       this.y = this.comp.$props.cursor.y;
       this.t = this.comp.$props.cursor.t;
-      this.x = this.comp.$props.cursor.x; // Reset the settings attahed to the pin (position)
+      this.x = this.comp.$props.cursor.x; // Save pin as time in IB mode
+      //if (this.layout.ti_map.ib) {
+      //    this.t = this.layout.ti_map.i2t(this.t )
+      //}
+      // Reset the settings attahed to the pin (position)
 
       this.comp.$emit('change-settings', defineProperty_default()({}, this.name, [this.t, this.y$]));
     }
@@ -9046,7 +10158,11 @@ var pin_Pin = /*#__PURE__*/function () {
       this.y$ = data[1];
       this.y = this.layout.$2screen(this.y$);
       this.t = data[0];
-      this.x = this.layout.t2screen(this.t);
+      this.x = this.layout.t2screen(this.t); // TODO: Save pin as time in IB mode
+      //if (this.layout.ti_map.ib) {
+      //    this.t = this.layout.ti_map.i2t(this.t )
+      //}
+
       if (emit) this.comp.$emit('change-settings', defineProperty_default()({}, this.name, [this.t, this.y$]));
     }
   }, {
@@ -9599,7 +10715,15 @@ if (false) { var RangeTool_api; }
 RangeTool_component.options.__file = "src/components/overlays/RangeTool.vue"
 /* harmony default export */ var RangeTool = (RangeTool_component.exports);
 // CONCATENATED MODULE: ./node_modules/babel-loader/lib!./node_modules/vue-loader/lib??vue-loader-options!./src/components/Grid.vue?vue&type=script&lang=js&
+function Gridvue_type_script_lang_js_createForOfIteratorHelper(o) { if (typeof Symbol === "undefined" || o[Symbol.iterator] == null) { if (Array.isArray(o) || (o = Gridvue_type_script_lang_js_unsupportedIterableToArray(o))) { var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var it, normalCompletion = true, didErr = false, err; return { s: function s() { it = o[Symbol.iterator](); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it["return"] != null) it["return"](); } finally { if (didErr) throw err; } } }; }
+
+function Gridvue_type_script_lang_js_unsupportedIterableToArray(o, minLen) { if (!o) return; if (typeof o === "string") return Gridvue_type_script_lang_js_arrayLikeToArray(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(n); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return Gridvue_type_script_lang_js_arrayLikeToArray(o, minLen); }
+
+function Gridvue_type_script_lang_js_arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) { arr2[i] = arr[i]; } return arr2; }
+
 // Sets up all layers/overlays for the grid with 'grid_id'
+
+
 
 
 
@@ -9618,7 +10742,7 @@ RangeTool_component.options.__file = "src/components/overlays/RangeTool.vue"
 /* harmony default export */ var Gridvue_type_script_lang_js_ = ({
   name: 'Grid',
   props: ['sub', 'layout', 'range', 'interval', 'cursor', 'colors', 'overlays', 'width', 'height', 'data', 'grid_id', 'y_transform', 'font', 'tv_id', 'config', 'meta'],
-  mixins: [mixins_canvas],
+  mixins: [mixins_canvas["a" /* default */], uxlist],
   components: {
     Crosshair: components_Crosshair,
     KeyboardListener: KeyboardListener
@@ -9648,6 +10772,7 @@ RangeTool_component.options.__file = "src/components/overlays/RangeTool.vue"
       event: 'register-tools',
       args: tools
     });
+    this.$on('custom-event', this.emit_ux_event);
   },
   mounted: function mounted() {
     var _this2 = this;
@@ -9669,7 +10794,8 @@ RangeTool_component.options.__file = "src/components/overlays/RangeTool.vue"
       },
       attrs: {
         width: layout.width,
-        height: layout.height
+        height: layout.height,
+        overflow: 'hidden'
       },
       style: {
         backgroundColor: this.$props.colors.colorBack
@@ -9679,6 +10805,18 @@ RangeTool_component.options.__file = "src/components/overlays/RangeTool.vue"
         on: this.layer_events
       }), h(KeyboardListener, {
         on: this.keyboard_events
+      }), h(UxLayer, {
+        props: {
+          id: id,
+          tv_id: this.$props.tv_id,
+          uxs: this.uxs,
+          colors: this.$props.colors,
+          config: this.$props.config,
+          updater: Math.random()
+        },
+        on: {
+          'custom-event': this.emit_ux_event
+        }
       })].concat(this.get_overlays(h))
     });
   },
@@ -9700,11 +10838,13 @@ RangeTool_component.options.__file = "src/components/overlays/RangeTool.vue"
       this.$emit('custom-event', {
         event: 'remove-shaders',
         args: [grid_id, layer]
-      });
+      }); // TODO: close all interfaces
+
       this.$emit('custom-event', {
         event: 'remove-layer-meta',
         args: [grid_id, layer]
       });
+      this.remove_all_ux();
     },
     get_overlays: function get_overlays(h) {
       var _this5 = this;
@@ -9713,12 +10853,12 @@ RangeTool_component.options.__file = "src/components/overlays/RangeTool.vue"
       // to this._registry; returns compo list
       var comp_list = [],
           count = {};
-      var _iteratorNormalCompletion = true;
-      var _didIteratorError = false;
-      var _iteratorError = undefined;
+
+      var _iterator = Gridvue_type_script_lang_js_createForOfIteratorHelper(this.$props.data),
+          _step;
 
       try {
-        for (var _iterator = this.$props.data[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+        for (_iterator.s(); !(_step = _iterator.n()).done;) {
           var d = _step.value;
           var comp = this._list[this._registry[d.type]];
 
@@ -9733,18 +10873,9 @@ RangeTool_component.options.__file = "src/components/overlays/RangeTool.vue"
           }
         }
       } catch (err) {
-        _didIteratorError = true;
-        _iteratorError = err;
+        _iterator.e(err);
       } finally {
-        try {
-          if (!_iteratorNormalCompletion && _iterator["return"] != null) {
-            _iterator["return"]();
-          }
-        } finally {
-          if (_didIteratorError) {
-            throw _iteratorError;
-          }
-        }
+        _iterator.f();
       }
 
       return comp_list.map(function (x, i) {
@@ -9772,6 +10903,9 @@ RangeTool_component.options.__file = "src/components/overlays/RangeTool.vue"
         font: this.$props.font,
         config: this.$props.config
       };
+    },
+    emit_ux_event: function emit_ux_event(e) {
+      this.on_ux_event(e, 'grid');
     }
   },
   computed: {
@@ -9877,6 +11011,13 @@ Grid_component.options.__file = "src/components/Grid.vue"
 
 
 
+function sidebar_createForOfIteratorHelper(o) { if (typeof Symbol === "undefined" || o[Symbol.iterator] == null) { if (Array.isArray(o) || (o = sidebar_unsupportedIterableToArray(o))) { var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var it, normalCompletion = true, didErr = false, err; return { s: function s() { it = o[Symbol.iterator](); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it["return"] != null) it["return"](); } finally { if (didErr) throw err; } } }; }
+
+function sidebar_unsupportedIterableToArray(o, minLen) { if (!o) return; if (typeof o === "string") return sidebar_arrayLikeToArray(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(n); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return sidebar_arrayLikeToArray(o, minLen); }
+
+function sidebar_arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) { arr2[i] = arr[i]; } return arr2; }
+
+
 
 var PANHEIGHT;
 
@@ -9888,7 +11029,11 @@ var sidebar_Sidebar = /*#__PURE__*/function () {
 
     PANHEIGHT = comp.config.PANHEIGHT;
     this.canvas = canvas;
-    this.ctx = canvas.getContext('2d');
+    this.ctx = canvas.getContext('2d', {
+      alpha: true,
+      desynchronized: true,
+      preserveDrawingBuffer: false
+    });
     this.comp = comp;
     this.$p = comp.$props;
     this.data = this.$p.sub;
@@ -10006,12 +11151,12 @@ var sidebar_Sidebar = /*#__PURE__*/function () {
 
       this.ctx.fillStyle = this.$p.colors.colorText;
       this.ctx.beginPath();
-      var _iteratorNormalCompletion = true;
-      var _didIteratorError = false;
-      var _iteratorError = undefined;
+
+      var _iterator = sidebar_createForOfIteratorHelper(points),
+          _step;
 
       try {
-        for (var _iterator = points[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+        for (_iterator.s(); !(_step = _iterator.n()).done;) {
           var p = _step.value;
           if (p[0] > this.layout.height) continue;
           var x1 = side === 'left' ? w - 0.5 : x - 0.5;
@@ -10024,18 +11169,9 @@ var sidebar_Sidebar = /*#__PURE__*/function () {
           this.ctx.fillText(p[1].toFixed(d), x1 + offst, p[0] + 4);
         }
       } catch (err) {
-        _didIteratorError = true;
-        _iteratorError = err;
+        _iterator.e(err);
       } finally {
-        try {
-          if (!_iteratorNormalCompletion && _iterator["return"] != null) {
-            _iterator["return"]();
-          }
-        } finally {
-          if (_didIteratorError) {
-            throw _iteratorError;
-          }
-        }
+        _iterator.f();
       }
 
       this.ctx.stroke();
@@ -10046,30 +11182,20 @@ var sidebar_Sidebar = /*#__PURE__*/function () {
   }, {
     key: "apply_shaders",
     value: function apply_shaders() {
-      var _iteratorNormalCompletion2 = true;
-      var _didIteratorError2 = false;
-      var _iteratorError2 = undefined;
+      var _iterator2 = sidebar_createForOfIteratorHelper(this.$p.shaders),
+          _step2;
 
       try {
-        for (var _iterator2 = this.$p.shaders[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
+        for (_iterator2.s(); !(_step2 = _iterator2.n()).done;) {
           var s = _step2.value;
           this.ctx.save();
           s.draw(this.ctx);
           this.ctx.restore();
         }
       } catch (err) {
-        _didIteratorError2 = true;
-        _iteratorError2 = err;
+        _iterator2.e(err);
       } finally {
-        try {
-          if (!_iteratorNormalCompletion2 && _iterator2["return"] != null) {
-            _iterator2["return"]();
-          }
-        } finally {
-          if (_didIteratorError2) {
-            throw _iteratorError2;
-          }
-        }
+        _iterator2.f();
       }
     }
   }, {
@@ -10106,7 +11232,7 @@ var sidebar_Sidebar = /*#__PURE__*/function () {
       var d = this.drug.y - event.center.y;
       var speed = d > 0 ? 3 : 1;
       var k = 1 + speed * d / this.layout.height;
-      return utils.clamp(this.drug.z * k, 0.005, 100);
+      return utils["a" /* default */].clamp(this.drug.z * k, 0.005, 100);
     } // Not the best place to calculate y-range but
     // this is the simplest solution I found up to
     // date
@@ -10147,7 +11273,7 @@ var sidebar_Sidebar = /*#__PURE__*/function () {
 /* harmony default export */ var Sidebarvue_type_script_lang_js_ = ({
   name: 'Sidebar',
   props: ['sub', 'layout', 'range', 'interval', 'cursor', 'colors', 'font', 'width', 'height', 'grid_id', 'rerender', 'y_transform', 'tv_id', 'config', 'shaders'],
-  mixins: [mixins_canvas],
+  mixins: [mixins_canvas["a" /* default */]],
   mounted: function mounted() {
     var el = this.$refs['canvas'];
     this.renderer = new sidebar_Sidebar(el, this);
@@ -10438,7 +11564,7 @@ LegendButtonvue_type_template_id_1ad87362_render._withStripped = true
 // CONCATENATED MODULE: ./src/components/LegendButton.vue?vue&type=script&lang=js&
  /* harmony default export */ var components_LegendButtonvue_type_script_lang_js_ = (LegendButtonvue_type_script_lang_js_); 
 // EXTERNAL MODULE: ./src/components/LegendButton.vue?vue&type=style&index=0&lang=css&
-var LegendButtonvue_type_style_index_0_lang_css_ = __webpack_require__(33);
+var LegendButtonvue_type_style_index_0_lang_css_ = __webpack_require__(44);
 
 // CONCATENATED MODULE: ./src/components/LegendButton.vue
 
@@ -10496,7 +11622,7 @@ LegendButton_component.options.__file = "src/components/LegendButton.vue"
 // CONCATENATED MODULE: ./src/components/ButtonGroup.vue?vue&type=script&lang=js&
  /* harmony default export */ var components_ButtonGroupvue_type_script_lang_js_ = (ButtonGroupvue_type_script_lang_js_); 
 // EXTERNAL MODULE: ./src/components/ButtonGroup.vue?vue&type=style&index=0&lang=css&
-var ButtonGroupvue_type_style_index_0_lang_css_ = __webpack_require__(35);
+var ButtonGroupvue_type_style_index_0_lang_css_ = __webpack_require__(46);
 
 // CONCATENATED MODULE: ./src/components/ButtonGroup.vue
 
@@ -10648,7 +11774,7 @@ ButtonGroup_component.options.__file = "src/components/ButtonGroup.vue"
 // CONCATENATED MODULE: ./src/components/Legend.vue?vue&type=script&lang=js&
  /* harmony default export */ var components_Legendvue_type_script_lang_js_ = (Legendvue_type_script_lang_js_); 
 // EXTERNAL MODULE: ./src/components/Legend.vue?vue&type=style&index=0&lang=css&
-var Legendvue_type_style_index_0_lang_css_ = __webpack_require__(37);
+var Legendvue_type_style_index_0_lang_css_ = __webpack_require__(48);
 
 // CONCATENATED MODULE: ./src/components/Legend.vue
 
@@ -10858,7 +11984,7 @@ Legend_component.options.__file = "src/components/Legend.vue"
 // CONCATENATED MODULE: ./src/components/Section.vue?vue&type=script&lang=js&
  /* harmony default export */ var components_Sectionvue_type_script_lang_js_ = (Sectionvue_type_script_lang_js_); 
 // EXTERNAL MODULE: ./src/components/Section.vue?vue&type=style&index=0&lang=css&
-var Sectionvue_type_style_index_0_lang_css_ = __webpack_require__(39);
+var Sectionvue_type_style_index_0_lang_css_ = __webpack_require__(50);
 
 // CONCATENATED MODULE: ./src/components/Section.vue
 
@@ -10888,6 +12014,13 @@ Section_component.options.__file = "src/components/Section.vue"
 
 
 
+function botbar_createForOfIteratorHelper(o) { if (typeof Symbol === "undefined" || o[Symbol.iterator] == null) { if (Array.isArray(o) || (o = botbar_unsupportedIterableToArray(o))) { var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var it, normalCompletion = true, didErr = false, err; return { s: function s() { it = o[Symbol.iterator](); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it["return"] != null) it["return"](); } finally { if (didErr) throw err; } } }; }
+
+function botbar_unsupportedIterableToArray(o, minLen) { if (!o) return; if (typeof o === "string") return botbar_arrayLikeToArray(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(n); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return botbar_arrayLikeToArray(o, minLen); }
+
+function botbar_arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) { arr2[i] = arr[i]; } return arr2; }
+
+
 
 var botbar_MINUTE15 = constants.MINUTE15,
     botbar_MINUTE = constants.MINUTE,
@@ -10902,7 +12035,11 @@ var botbar_Botbar = /*#__PURE__*/function () {
     classCallCheck_default()(this, Botbar);
 
     this.canvas = canvas;
-    this.ctx = canvas.getContext('2d');
+    this.ctx = canvas.getContext('2d', {
+      alpha: false,
+      desynchronized: true,
+      preserveDrawingBuffer: true
+    });
     this.comp = comp;
     this.$p = comp.$props;
     this.data = this.$p.sub;
@@ -10927,12 +12064,12 @@ var botbar_Botbar = /*#__PURE__*/function () {
       this.ctx.stroke();
       this.ctx.fillStyle = this.$p.colors.colorText;
       this.ctx.beginPath();
-      var _iteratorNormalCompletion = true;
-      var _didIteratorError = false;
-      var _iteratorError = undefined;
+
+      var _iterator = botbar_createForOfIteratorHelper(this.layout.botbar.xs),
+          _step;
 
       try {
-        for (var _iterator = this.layout.botbar.xs[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+        for (_iterator.s(); !(_step = _iterator.n()).done;) {
           var p = _step.value;
           var lbl = this.format_date(p[1][0]);
           if (p[0] > width - sb) continue;
@@ -10948,51 +12085,32 @@ var botbar_Botbar = /*#__PURE__*/function () {
           this.ctx.globalAlpha = 1;
         }
       } catch (err) {
-        _didIteratorError = true;
-        _iteratorError = err;
+        _iterator.e(err);
       } finally {
-        try {
-          if (!_iteratorNormalCompletion && _iterator["return"] != null) {
-            _iterator["return"]();
-          }
-        } finally {
-          if (_didIteratorError) {
-            throw _iteratorError;
-          }
-        }
+        _iterator.f();
       }
 
       this.ctx.stroke();
       this.apply_shaders();
-      if (this.$p.cursor.x && this.$p.cursor.t) this.panel();
+      if (this.$p.cursor.x && this.$p.cursor.t !== undefined) this.panel();
     }
   }, {
     key: "apply_shaders",
     value: function apply_shaders() {
-      var _iteratorNormalCompletion2 = true;
-      var _didIteratorError2 = false;
-      var _iteratorError2 = undefined;
+      var _iterator2 = botbar_createForOfIteratorHelper(this.$p.shaders),
+          _step2;
 
       try {
-        for (var _iterator2 = this.$p.shaders[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
+        for (_iterator2.s(); !(_step2 = _iterator2.n()).done;) {
           var s = _step2.value;
           this.ctx.save();
           s.draw(this.ctx);
           this.ctx.restore();
         }
       } catch (err) {
-        _didIteratorError2 = true;
-        _iteratorError2 = err;
+        _iterator2.e(err);
       } finally {
-        try {
-          if (!_iteratorNormalCompletion2 && _iterator2["return"] != null) {
-            _iterator2["return"]();
-          }
-        } finally {
-          if (_didIteratorError2) {
-            throw _iteratorError2;
-          }
-        }
+        _iterator2.f();
       }
     }
   }, {
@@ -11015,19 +12133,21 @@ var botbar_Botbar = /*#__PURE__*/function () {
   }, {
     key: "format_date",
     value: function format_date(t) {
+      t = this.grid_0.ti_map.i2t(t);
       t += new Date(t).getTimezoneOffset() * botbar_MINUTE;
       var d = new Date(t);
-      if (utils.year_start(t) === t) return d.getFullYear();
-      if (utils.month_start(t) === t) return botbar_MONTHMAP[d.getMonth()];
-      if (utils.day_start(t) === t) return d.getDate();
-      var h = utils.add_zero(d.getHours());
-      var m = utils.add_zero(d.getMinutes());
+      if (utils["a" /* default */].year_start(t) === t) return d.getFullYear();
+      if (utils["a" /* default */].month_start(t) === t) return botbar_MONTHMAP[d.getMonth()];
+      if (utils["a" /* default */].day_start(t) === t) return d.getDate();
+      var h = utils["a" /* default */].add_zero(d.getHours());
+      var m = utils["a" /* default */].add_zero(d.getMinutes());
       return h + ":" + m;
     }
   }, {
     key: "format_cursor_x",
     value: function format_cursor_x() {
       var t = this.$p.cursor.t;
+      t = this.grid_0.ti_map.i2t(t);
       var ti = this.$p.interval;
       t += new Date(t).getTimezoneOffset() * botbar_MINUTE;
       var d = new Date(t);
@@ -11047,8 +12167,8 @@ var botbar_Botbar = /*#__PURE__*/function () {
       var time = '';
 
       if (ti < botbar_DAY) {
-        var h = utils.add_zero(d.getHours());
-        var m = utils.add_zero(d.getMinutes());
+        var h = utils["a" /* default */].add_zero(d.getHours());
+        var m = utils["a" /* default */].add_zero(d.getMinutes());
         time = h + ":" + m;
       }
 
@@ -11064,8 +12184,8 @@ var botbar_Botbar = /*#__PURE__*/function () {
     value: function lbl_highlight(t) {
       var ti = this.$p.interval;
       if (t === 0) return true;
-      if (utils.month_start(t) === t) return true;
-      if (utils.day_start(t) === t) return true;
+      if (utils["a" /* default */].month_start(t) === t) return true;
+      if (utils["a" /* default */].day_start(t) === t) return true;
       if (ti <= botbar_MINUTE15 && t % botbar_HOUR === 0) return true;
       return false;
     }
@@ -11094,7 +12214,7 @@ var botbar_Botbar = /*#__PURE__*/function () {
 /* harmony default export */ var Botbarvue_type_script_lang_js_ = ({
   name: 'Botbar',
   props: ['sub', 'layout', 'range', 'interval', 'cursor', 'colors', 'font', 'width', 'height', 'rerender', 'tv_id', 'config', 'shaders'],
-  mixins: [mixins_canvas],
+  mixins: [mixins_canvas["a" /* default */]],
   mounted: function mounted() {
     var el = this.$refs['canvas'];
     this.renderer = new botbar_Botbar(el, this);
@@ -11143,7 +12263,7 @@ var botbar_Botbar = /*#__PURE__*/function () {
 // CONCATENATED MODULE: ./src/components/Botbar.vue?vue&type=script&lang=js&
  /* harmony default export */ var components_Botbarvue_type_script_lang_js_ = (Botbarvue_type_script_lang_js_); 
 // EXTERNAL MODULE: ./src/components/Botbar.vue?vue&type=style&index=0&lang=css&
-var Botbarvue_type_style_index_0_lang_css_ = __webpack_require__(41);
+var Botbarvue_type_style_index_0_lang_css_ = __webpack_require__(52);
 
 // CONCATENATED MODULE: ./src/components/Botbar.vue
 var Botbar_render, Botbar_staticRenderFns
@@ -11257,7 +12377,184 @@ var Keyboard_component = normalizeComponent(
 if (false) { var Keyboard_api; }
 Keyboard_component.options.__file = "src/components/Keyboard.vue"
 /* harmony default export */ var Keyboard = (Keyboard_component.exports);
+// CONCATENATED MODULE: ./src/components/js/ti_mapping.js
+
+
+
+// Time-index mapping (for non-linear t-axis)
+
+var MAX_ARR = Math.pow(2, 32);
+
+var ti_mapping_TI = /*#__PURE__*/function () {
+  function TI() {
+    classCallCheck_default()(this, TI);
+
+    this.ib = false;
+  }
+
+  createClass_default()(TI, [{
+    key: "init",
+    value: function init(params, res) {
+      var sub = params.sub,
+          onchart = params.onchart,
+          interval = params.interval,
+          meta = params.meta,
+          $p = params.$props,
+          interval_ms = params.interval_ms,
+          sub_start = params.sub_start,
+          ib = params.ib;
+      this.ti_map = [];
+      this.it_map = [];
+      this.sub_i = [];
+      this.ib = ib;
+      this.sub = res;
+      this.ss = sub_start;
+      this.tf = interval_ms;
+      var start = meta.sub_start; // Skip mapping for the regular mode
+
+      if (this.ib) {
+        this.map_sub(res);
+      }
+    } // Make maps for the main subset
+
+  }, {
+    key: "map_sub",
+    value: function map_sub(res) {
+      for (var i = 0; i < res.length; i++) {
+        var t = res[i][0];
+
+        var _i = this.ss + i;
+
+        this.ti_map[t] = _i;
+        this.it_map[_i] = t; // Overwrite t with i
+
+        var copy = toConsumableArray_default()(res[i]);
+
+        copy[0] = _i;
+        this.sub_i.push(copy);
+      }
+    } // Map overlay data
+    // TODO: parse() called 3 times instead of 2 for 'spx_sample.json'
+
+  }, {
+    key: "parse",
+    value: function parse(data) {
+      if (!this.ib || !this.sub[0]) return data;
+      var res = [];
+      var k = 0; // Candlestick index
+
+      var t0 = this.sub[0][0];
+      var tN = this.sub[this.sub.length - 1][0];
+
+      for (var i = 0; i < data.length; i++) {
+        var copy = toConsumableArray_default()(data[i]);
+
+        var _i = this.ss + i;
+
+        var tk = this.sub[k][0];
+        var t = data[i][0];
+        var index = this.ti_map[t];
+
+        if (index === undefined) {
+          // Linear extrapolation
+          if (t < t0 || t > tN) {
+            index = this.ss + k - (tk - t) / this.tf;
+          } // Linear interpolation
+          else {
+              var tk2 = this.sub[k + 1][0];
+              index = this.ss + k + (t - tk) / (tk2 - tk);
+            }
+        }
+
+        if (t > tk && k < this.sub.length - 2) k++;
+        copy[0] = index;
+        res.push(copy);
+      }
+
+      return res;
+    } // index => time
+
+  }, {
+    key: "i2t",
+    value: function i2t(i) {
+      if (!this.ib || !this.sub.length) return i; // Regular mode
+      // Discrete mapping
+
+      var res = this.it_map[i];
+      if (res !== undefined) return res; // Linear extrapolation
+      else if (i >= this.ss + this.sub_i.length) {
+          var di = i - (this.ss + this.sub_i.length) + 1;
+          var last = this.sub[this.sub.length - 1];
+          return last[0] + di * this.tf;
+        } else if (i < this.ss) {
+          var _di = i - this.ss;
+
+          return this.sub[0][0] + _di * this.tf;
+        } // Linear Interpolation
+
+      var i1 = Math.floor(i) - this.ss;
+      var i2 = i1 + 1;
+      var len = this.sub.length;
+      if (i2 >= len) i2 = len - 1;
+      var sub1 = this.sub[i1];
+      var sub2 = this.sub[i2];
+
+      if (sub1 && sub2) {
+        var t1 = sub1[0];
+        var t2 = sub2[0];
+        return t1 + (t2 - t1) * (i - i1 - this.ss);
+      }
+
+      return undefined;
+    } // time => index
+    // TODO: when switch from IB mode to regular tools
+    // disappear (bc there no more mapping)
+
+  }, {
+    key: "t2i",
+    value: function t2i(t) {
+      if (!this.sub.length) return undefined; // Discrete mapping
+
+      var res = this.ti_map[t];
+      if (res !== undefined) return res;
+      var t0 = this.sub[0][0];
+      var tN = this.sub[this.sub.length - 1][0]; // Linear extrapolation
+
+      if (t < t0) {
+        return this.ss - (t0 - t) / this.tf;
+      } else if (t > tN) {
+        var k = this.sub.length - 1;
+        return this.ss + k - (tN - t) / this.tf;
+      }
+
+      try {
+        var i = utils["a" /* default */].fast_nearest(this.sub, t);
+        var tk = this.sub[i[1]][0];
+        console.log('here', i);
+        return this.ss + i[1] - (tk - t) / this.tf;
+      } catch (e) {}
+
+      return undefined;
+    } // Auto detect: is it time or index?
+    // Assuming that index-based mode is ON
+
+  }, {
+    key: "smth2i",
+    value: function smth2i(smth) {
+      if (smth > MAX_ARR) {
+        return this.t2i(smth); // it was time
+      } else {
+          return smth; // it was an index
+        }
+    }
+  }]);
+
+  return TI;
+}();
+
+
 // CONCATENATED MODULE: ./node_modules/babel-loader/lib!./node_modules/vue-loader/lib??vue-loader-options!./src/components/Chart.vue?vue&type=script&lang=js&
+
 
 //
 //
@@ -11283,6 +12580,8 @@ Keyboard_component.options.__file = "src/components/Keyboard.vue"
 //
 //
 //
+//
+
 
 
 
@@ -11293,7 +12592,7 @@ Keyboard_component.options.__file = "src/components/Keyboard.vue"
 
 /* harmony default export */ var Chartvue_type_script_lang_js_ = ({
   name: 'Chart',
-  props: ['title_txt', 'data', 'width', 'height', 'font', 'colors', 'overlays', 'tv_id', 'config', 'buttons', 'toolbar'],
+  props: ['title_txt', 'data', 'width', 'height', 'font', 'colors', 'overlays', 'tv_id', 'config', 'buttons', 'toolbar', 'ib'],
   mixins: [shaders],
   components: {
     GridSection: Section,
@@ -11306,17 +12605,24 @@ Keyboard_component.options.__file = "src/components/Keyboard.vue"
 
     this.init_range();
     this.sub = this.subset();
+    utils["a" /* default */].overwrite(this.range, this.range); // Fix for IB mode
+
     this._layout = new js_layout(this); // Updates current cursor values
 
     this.updater = new updater(this);
     this.update_last_candle();
   },
   methods: {
+    chart_panned: function chart_panned() {
+      this.haveMovedChart = true;
+    },
     range_changed: function range_changed(r) {
       // Overwite & keep the original references
-      utils.overwrite(this.range, r);
-      var sub = this.subset();
-      utils.overwrite(this.sub, sub);
+      // Quick fix for IB mode (switch 2 next lines)
+      // TODO: wtf?
+      var sub = this.subset(r);
+      utils["a" /* default */].overwrite(this.range, r);
+      utils["a" /* default */].overwrite(this.sub, sub);
       this.update_layout();
       this.$emit('range-changed', r);
     },
@@ -11336,14 +12642,15 @@ Keyboard_component.options.__file = "src/components/Keyboard.vue"
     },
     calc_interval: function calc_interval() {
       if (this.ohlcv.length < 2) return;
-      this.interval = utils.detect_interval(this.ohlcv);
+      this.interval_ms = utils["a" /* default */].detect_interval(this.ohlcv);
+      this.interval = this.$props.ib ? 1 : this.interval_ms;
     },
     set_ytransform: function set_ytransform(s) {
       var obj = this.y_transforms[s.grid_id] || {};
       Object.assign(obj, s);
       this.$set(this.y_transforms, s.grid_id, obj);
       this.update_layout();
-      utils.overwrite(this.range, this.range);
+      utils["a" /* default */].overwrite(this.range, this.range);
     },
     default_range: function default_range() {
       var dl = this.$props.config.DEFAULT_LEN;
@@ -11351,21 +12658,41 @@ Keyboard_component.options.__file = "src/components/Keyboard.vue"
       var l = this.ohlcv.length - 1;
       if (this.ohlcv.length < 2) return;
 
-      if (this.ohlcv.length < dl) {
+      if (this.ohlcv.length <= dl) {
         var s = 0,
             d = ml;
       } else {
         s = l - dl, d = 0.5;
       }
 
-      utils.overwrite(this.range, [this.ohlcv[s][0] - this.interval * d, this.ohlcv[l][0] + this.interval * ml]);
+      if (!this.$props.ib) {
+        utils["a" /* default */].overwrite(this.range, [this.ohlcv[s][0] - this.interval * d, this.ohlcv[l][0] + this.interval * ml]);
+      } else {
+        utils["a" /* default */].overwrite(this.range, [s - this.interval * d, l + this.interval * ml]);
+      }
     },
     subset: function subset() {
-      return utils.fast_filter(this.ohlcv, this.range[0] - this.interval, this.range[1]);
+      var range = arguments.length > 0 && arguments[0] !== undefined ? arguments[0] : this.range;
+
+      var _this$filter = this.filter(this.ohlcv, range[0] - this.interval, range[1]),
+          _this$filter2 = slicedToArray_default()(_this$filter, 2),
+          res = _this$filter2[0],
+          index = _this$filter2[1];
+
+      this.ti_map = new ti_mapping_TI();
+
+      if (res) {
+        this.sub_start = index;
+        this.ti_map.init(this, res);
+        if (!this.$props.ib) return res || [];
+        return this.ti_map.sub_i;
+      }
+
+      return [];
     },
     common_props: function common_props() {
       return {
-        title_txt: this.$props.title_txt,
+        title_txt: this.chart.name || this.$props.title_txt,
         layout: this._layout,
         sub: this.sub,
         range: this.range,
@@ -11387,7 +12714,7 @@ Keyboard_component.options.__file = "src/components/Keyboard.vue"
         return {
           type: d.type,
           name: d.name,
-          data: utils.fast_filter(d.data, _this.range[0] - _this.interval, _this.range[1]),
+          data: _this.ti_map.parse(utils["a" /* default */].fast_filter(d.data, _this.ti_map.i2t(_this.range[0] - _this.interval), _this.ti_map.i2t(_this.range[1]))[0] || []),
           settings: d.settings || _this.settings_ov,
           grid: d.grid || {}
         };
@@ -11426,7 +12753,7 @@ Keyboard_component.options.__file = "src/components/Keyboard.vue"
     update_layout: function update_layout(clac_tf) {
       if (clac_tf) this.calc_interval();
       var lay = new js_layout(this);
-      utils.copy_layout(this._layout, lay);
+      utils["a" /* default */].copy_layout(this._layout, lay);
     },
     legend_button_click: function legend_button_click(event) {
       this.$emit('legend-button-click', event);
@@ -11440,6 +12767,7 @@ Keyboard_component.options.__file = "src/components/Keyboard.vue"
       this.$refs.keyboard.remove(event);
     },
     update_last_candle: function update_last_candle() {
+      // TODO: add last values for all overlays
       this.last_candle = this.ohlcv ? this.ohlcv[this.ohlcv.length - 1] : undefined;
     }
   },
@@ -11489,6 +12817,9 @@ Keyboard_component.options.__file = "src/components/Keyboard.vue"
     offchart: function offchart() {
       return this.$props.data.offchart || [];
     },
+    filter: function filter() {
+      return this.$props.ib ? utils["a" /* default */].fast_filter_i : utils["a" /* default */].fast_filter;
+    },
     styles: function styles() {
       var w = this.$props.toolbar ? this.$props.config.TOOLBAR : 0;
       return {
@@ -11497,7 +12828,8 @@ Keyboard_component.options.__file = "src/components/Keyboard.vue"
     },
     meta: function meta() {
       return {
-        last: this.last_candle
+        last: this.last_candle,
+        sub_start: this.sub_start
       };
     }
   },
@@ -11530,7 +12862,9 @@ Keyboard_component.options.__file = "src/components/Keyboard.vue"
       settings_ohlcv: {},
       // Default overlay settings
       settings_ov: {},
-      last_candle: []
+      // Meta data
+      last_candle: [],
+      sub_start: undefined
     };
   },
   watch: {
@@ -11540,8 +12874,26 @@ Keyboard_component.options.__file = "src/components/Keyboard.vue"
     height: function height() {
       this.update_layout();
     },
+    ib: function ib(nw) {
+      if (!nw) {
+        // Change range index => time
+        var t1 = this.ti_map.i2t(this.range[0]);
+        var t2 = this.ti_map.i2t(this.range[1]);
+        utils["a" /* default */].overwrite(this.range, [t1, t2]);
+        this.interval = this.interval_ms;
+      } else {
+        this.init_range(); // TODO: calc index range instead
+
+        utils["a" /* default */].overwrite(this.range, this.range);
+        this.interval = 1;
+      }
+
+      var sub = this.subset();
+      utils["a" /* default */].overwrite(this.sub, sub);
+      this.update_layout();
+    },
     colors: function colors() {
-      utils.overwrite(this.range, this.range);
+      utils["a" /* default */].overwrite(this.range, this.range);
     },
     data: {
       handler: function handler(n, p) {
@@ -11550,11 +12902,11 @@ Keyboard_component.options.__file = "src/components/Keyboard.vue"
         // TODO: Consider removing 'sub' from data entirely
 
         if (this.sub.length || sub.length) {
-          utils.overwrite(this.sub, sub);
+          utils["a" /* default */].overwrite(this.sub, sub);
         }
 
-        this.update_layout(utils.data_changed(n, p));
-        utils.overwrite(this.range, this.range);
+        this.update_layout(utils["a" /* default */].data_changed(n, p));
+        utils["a" /* default */].overwrite(this.range, this.range);
         this.cursor.scroll_lock = !!n.scrollLock;
 
         if (n.scrollLock && this.cursor.locked) {
@@ -11727,7 +13079,7 @@ ToolbarItemvue_type_template_id_227b3c2e_render._withStripped = true
 // CONCATENATED MODULE: ./src/components/ToolbarItem.vue?vue&type=script&lang=js&
  /* harmony default export */ var components_ToolbarItemvue_type_script_lang_js_ = (ToolbarItemvue_type_script_lang_js_); 
 // EXTERNAL MODULE: ./src/components/ToolbarItem.vue?vue&type=style&index=0&lang=css&
-var ToolbarItemvue_type_style_index_0_lang_css_ = __webpack_require__(43);
+var ToolbarItemvue_type_style_index_0_lang_css_ = __webpack_require__(54);
 
 // CONCATENATED MODULE: ./src/components/ToolbarItem.vue
 
@@ -11824,7 +13176,7 @@ ToolbarItem_component.options.__file = "src/components/ToolbarItem.vue"
 // CONCATENATED MODULE: ./src/components/Toolbar.vue?vue&type=script&lang=js&
  /* harmony default export */ var components_Toolbarvue_type_script_lang_js_ = (Toolbarvue_type_script_lang_js_); 
 // EXTERNAL MODULE: ./src/components/Toolbar.vue?vue&type=style&index=0&lang=css&
-var Toolbarvue_type_style_index_0_lang_css_ = __webpack_require__(45);
+var Toolbarvue_type_style_index_0_lang_css_ = __webpack_require__(56);
 
 // CONCATENATED MODULE: ./src/components/Toolbar.vue
 
@@ -12002,6 +13354,10 @@ Toolbar_component.options.__file = "src/components/Toolbar.vue"
       "default": function _default() {
         return [];
       }
+    },
+    indexBased: {
+      type: Boolean,
+      "default": false
     }
   },
   computed: {
@@ -12017,6 +13373,7 @@ Toolbar_component.options.__file = "src/components/Toolbar.vue"
         font: this.$props.font,
         buttons: this.$props.legendButtons,
         toolbar: this.$props.toolbar,
+        ib: this.$props.indexBased || this.index_based || false,
         colors: {}
       };
 
@@ -12041,6 +13398,17 @@ Toolbar_component.options.__file = "src/components/Toolbar.vue"
       } else {
         return data;
       }
+    },
+    index_based: function index_based() {
+      var base = this.$props.data;
+
+      if (base.chart) {
+        return base.chart.indexBased;
+      } else if (base.data) {
+        return base.data.chart.indexBased;
+      }
+
+      return false;
     }
   },
   data: function data() {
@@ -12068,12 +13436,32 @@ Toolbar_component.options.__file = "src/components/Toolbar.vue"
       }
     },
     "goto": function goto(t) {
+      if (this.chart_props.ib) {
+        var ti_map = this.$refs.chart.ti_map;
+        t = ti_map.smth2i(t);
+      }
+
       this.$refs.chart["goto"](t);
     },
     setRange: function setRange(t1, t2) {
+      if (this.chart_props.ib) {
+        var ti_map = this.$refs.chart.ti_map;
+        t1 = ti_map.smth2i(t1);
+        t2 = ti_map.smth2i(t2);
+        console.log(t1, t2);
+      }
+
       this.$refs.chart.setRange(t1, t2);
     },
     getRange: function getRange() {
+      if (this.chart_props.ib) {
+        // Time range => index range
+        var ti_map = this.$refs.chart.ti_map;
+        return this.$refs.chart.range.map(function (x) {
+          return ti_map.i2t(x);
+        });
+      }
+
       return this.$refs.chart.range;
     },
     getCursor: function getCursor() {
@@ -12135,31 +13523,38 @@ if (false) { var TradingVue_api; }
 TradingVue_component.options.__file = "src/TradingVue.vue"
 /* harmony default export */ var TradingVue = (TradingVue_component.exports);
 // EXTERNAL MODULE: ./node_modules/@babel/runtime/helpers/typeof.js
-var helpers_typeof = __webpack_require__(18);
+var helpers_typeof = __webpack_require__(21);
 var typeof_default = /*#__PURE__*/__webpack_require__.n(helpers_typeof);
 
+// EXTERNAL MODULE: ./node_modules/@babel/runtime/helpers/inherits.js
+var inherits = __webpack_require__(19);
+var inherits_default = /*#__PURE__*/__webpack_require__.n(inherits);
+
 // EXTERNAL MODULE: ./node_modules/@babel/runtime/helpers/possibleConstructorReturn.js
-var possibleConstructorReturn = __webpack_require__(15);
+var possibleConstructorReturn = __webpack_require__(20);
 var possibleConstructorReturn_default = /*#__PURE__*/__webpack_require__.n(possibleConstructorReturn);
 
 // EXTERNAL MODULE: ./node_modules/@babel/runtime/helpers/getPrototypeOf.js
-var getPrototypeOf = __webpack_require__(16);
+var getPrototypeOf = __webpack_require__(10);
 var getPrototypeOf_default = /*#__PURE__*/__webpack_require__.n(getPrototypeOf);
 
-// EXTERNAL MODULE: ./node_modules/@babel/runtime/helpers/inherits.js
-var inherits = __webpack_require__(17);
-var inherits_default = /*#__PURE__*/__webpack_require__.n(inherits);
-
 // EXTERNAL MODULE: ./node_modules/@babel/runtime/regenerator/index.js
-var regenerator = __webpack_require__(20);
+var regenerator = __webpack_require__(24);
 var regenerator_default = /*#__PURE__*/__webpack_require__.n(regenerator);
 
 // EXTERNAL MODULE: ./node_modules/@babel/runtime/helpers/asyncToGenerator.js
-var asyncToGenerator = __webpack_require__(23);
+var asyncToGenerator = __webpack_require__(30);
 var asyncToGenerator_default = /*#__PURE__*/__webpack_require__.n(asyncToGenerator);
 
 // CONCATENATED MODULE: ./src/helpers/dc_events.js
 
+
+
+function dc_events_createForOfIteratorHelper(o) { if (typeof Symbol === "undefined" || o[Symbol.iterator] == null) { if (Array.isArray(o) || (o = dc_events_unsupportedIterableToArray(o))) { var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var it, normalCompletion = true, didErr = false, err; return { s: function s() { it = o[Symbol.iterator](); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it["return"] != null) it["return"](); } finally { if (didErr) throw err; } } }; }
+
+function dc_events_unsupportedIterableToArray(o, minLen) { if (!o) return; if (typeof o === "string") return dc_events_arrayLikeToArray(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(n); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return dc_events_arrayLikeToArray(o, minLen); }
+
+function dc_events_arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) { arr2[i] = arr[i]; } return arr2; }
 
 // DataCube event handlers
 
@@ -12234,29 +13629,20 @@ var dc_events_DCEvents = /*#__PURE__*/function () {
     key: "register_tools",
     value: function register_tools(tools) {
       var preset = {};
-      var _iteratorNormalCompletion = true;
-      var _didIteratorError = false;
-      var _iteratorError = undefined;
+
+      var _iterator = dc_events_createForOfIteratorHelper(this.data.tools || []),
+          _step;
 
       try {
-        for (var _iterator = (this.data.tools || [])[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+        for (_iterator.s(); !(_step = _iterator.n()).done;) {
           var tool = _step.value;
           preset[tool.type] = tool;
           delete tool.type;
         }
       } catch (err) {
-        _didIteratorError = true;
-        _iteratorError = err;
+        _iterator.e(err);
       } finally {
-        try {
-          if (!_iteratorNormalCompletion && _iterator["return"] != null) {
-            _iterator["return"]();
-          }
-        } finally {
-          if (_didIteratorError) {
-            throw _iteratorError;
-          }
-        }
+        _iterator.f();
       }
 
       this.data.tools = [];
@@ -12264,12 +13650,12 @@ var dc_events_DCEvents = /*#__PURE__*/function () {
         type: 'Cursor',
         icon: icons['cursor.png']
       }];
-      var _iteratorNormalCompletion2 = true;
-      var _didIteratorError2 = false;
-      var _iteratorError2 = undefined;
+
+      var _iterator2 = dc_events_createForOfIteratorHelper(tools),
+          _step2;
 
       try {
-        for (var _iterator2 = tools[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
+        for (_iterator2.s(); !(_step2 = _iterator2.n()).done;) {
           var tool = _step2.value;
           var proto = Object.assign({}, tool.info);
           var type = tool.info.type || 'Default';
@@ -12289,18 +13675,9 @@ var dc_events_DCEvents = /*#__PURE__*/function () {
           }
         }
       } catch (err) {
-        _didIteratorError2 = true;
-        _iteratorError2 = err;
+        _iterator2.e(err);
       } finally {
-        try {
-          if (!_iteratorNormalCompletion2 && _iterator2["return"] != null) {
-            _iterator2["return"]();
-          }
-        } finally {
-          if (_didIteratorError2) {
-            throw _iteratorError2;
-          }
-        }
+        _iterator2.f();
       }
 
       this.tv.$set(this.data, 'tools', list);
@@ -12351,7 +13728,7 @@ var dc_events_DCEvents = /*#__PURE__*/function () {
           id: grid_id
         }
       });
-      sett.$uuid = "".concat(id, "-").concat(utils.now());
+      sett.$uuid = "".concat(id, "-").concat(utils["a" /* default */].now());
       this.tv.$set(this.data, 'selected', id);
       this.add_trash_icon();
     } // Remove selected / Remove all, etc
@@ -12440,7 +13817,7 @@ var dc_events_DCEvents = /*#__PURE__*/function () {
     value: function remove_trash_icon() {
       // TODO: Does not call Toolbar render (distr version)
       var type = 'System:Remove';
-      utils.overwrite(this.data.tools, this.data.tools.filter(function (x) {
+      utils["a" /* default */].overwrite(this.data.tools, this.data.tools.filter(function (x) {
         return x.type !== type;
       }));
     } // Clean-up unfinished business (tools)
@@ -12473,6 +13850,17 @@ var dc_events_DCEvents = /*#__PURE__*/function () {
 
 
 
+
+function dc_core_createForOfIteratorHelper(o) { if (typeof Symbol === "undefined" || o[Symbol.iterator] == null) { if (Array.isArray(o) || (o = dc_core_unsupportedIterableToArray(o))) { var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var it, normalCompletion = true, didErr = false, err; return { s: function s() { it = o[Symbol.iterator](); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it["return"] != null) it["return"](); } finally { if (didErr) throw err; } } }; }
+
+function dc_core_unsupportedIterableToArray(o, minLen) { if (!o) return; if (typeof o === "string") return dc_core_arrayLikeToArray(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(n); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return dc_core_arrayLikeToArray(o, minLen); }
+
+function dc_core_arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) { arr2[i] = arr[i]; } return arr2; }
+
+function _createSuper(Derived) { return function () { var Super = getPrototypeOf_default()(Derived), result; if (_isNativeReflectConstruct()) { var NewTarget = getPrototypeOf_default()(this).constructor; result = Reflect.construct(Super, arguments, NewTarget); } else { result = Super.apply(this, arguments); } return possibleConstructorReturn_default()(this, result); }; }
+
+function _isNativeReflectConstruct() { if (typeof Reflect === "undefined" || !Reflect.construct) return false; if (Reflect.construct.sham) return false; if (typeof Proxy === "function") return true; try { Date.prototype.toString.call(Reflect.construct(Date, [], function () {})); return true; } catch (e) { return false; } }
+
 // DataCube private methods
 
 
@@ -12480,10 +13868,12 @@ var dc_events_DCEvents = /*#__PURE__*/function () {
 var dc_core_DCCore = /*#__PURE__*/function (_DCEvents) {
   inherits_default()(DCCore, _DCEvents);
 
+  var _super = _createSuper(DCCore);
+
   function DCCore() {
     classCallCheck_default()(this, DCCore);
 
-    return possibleConstructorReturn_default()(this, getPrototypeOf_default()(DCCore).apply(this, arguments));
+    return _super.apply(this, arguments);
   }
 
   createClass_default()(DCCore, [{
@@ -12561,7 +13951,7 @@ var dc_core_DCCore = /*#__PURE__*/function (_DCEvents) {
 
                 this.loading = true;
                 _context.next = 9;
-                return utils.pause(250);
+                return utils["a" /* default */].pause(250);
 
               case 9:
                 // Load bigger chunks
@@ -12633,12 +14023,12 @@ var dc_core_DCCore = /*#__PURE__*/function (_DCEvents) {
     value: function update_ids() {
       this.data.chart.id = "chart.".concat(this.data.chart.type);
       var count = {};
-      var _iteratorNormalCompletion = true;
-      var _didIteratorError = false;
-      var _iteratorError = undefined;
+
+      var _iterator = dc_core_createForOfIteratorHelper(this.data.onchart),
+          _step;
 
       try {
-        for (var _iterator = this.data.onchart[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+        for (_iterator.s(); !(_step = _iterator.n()).done;) {
           var ov = _step.value;
 
           if (count[ov.type] === undefined) {
@@ -12651,27 +14041,18 @@ var dc_core_DCCore = /*#__PURE__*/function (_DCEvents) {
           if (!ov.settings) ov.settings = {};
         }
       } catch (err) {
-        _didIteratorError = true;
-        _iteratorError = err;
+        _iterator.e(err);
       } finally {
-        try {
-          if (!_iteratorNormalCompletion && _iterator["return"] != null) {
-            _iterator["return"]();
-          }
-        } finally {
-          if (_didIteratorError) {
-            throw _iteratorError;
-          }
-        }
+        _iterator.f();
       }
 
       count = {};
-      var _iteratorNormalCompletion2 = true;
-      var _didIteratorError2 = false;
-      var _iteratorError2 = undefined;
+
+      var _iterator2 = dc_core_createForOfIteratorHelper(this.data.offchart),
+          _step2;
 
       try {
-        for (var _iterator2 = this.data.offchart[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
+        for (_iterator2.s(); !(_step2 = _iterator2.n()).done;) {
           var ov = _step2.value;
 
           if (count[ov.type] === undefined) {
@@ -12685,18 +14066,9 @@ var dc_core_DCCore = /*#__PURE__*/function (_DCEvents) {
           if (!ov.settings) ov.settings = {};
         }
       } catch (err) {
-        _didIteratorError2 = true;
-        _iteratorError2 = err;
+        _iterator2.e(err);
       } finally {
-        try {
-          if (!_iteratorNormalCompletion2 && _iterator2["return"] != null) {
-            _iterator2["return"]();
-          }
-        } finally {
-          if (_didIteratorError2) {
-            throw _iteratorError2;
-          }
-        }
+        _iterator2.f();
       }
     } // Updates all overlays with given values.
 
@@ -12954,6 +14326,17 @@ var dc_core_DCCore = /*#__PURE__*/function (_DCEvents) {
 
 
 
+
+function datacube_createForOfIteratorHelper(o) { if (typeof Symbol === "undefined" || o[Symbol.iterator] == null) { if (Array.isArray(o) || (o = datacube_unsupportedIterableToArray(o))) { var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var it, normalCompletion = true, didErr = false, err; return { s: function s() { it = o[Symbol.iterator](); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it["return"] != null) it["return"](); } finally { if (didErr) throw err; } } }; }
+
+function datacube_unsupportedIterableToArray(o, minLen) { if (!o) return; if (typeof o === "string") return datacube_arrayLikeToArray(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(n); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return datacube_arrayLikeToArray(o, minLen); }
+
+function datacube_arrayLikeToArray(arr, len) { if (len == null || len > arr.length) len = arr.length; for (var i = 0, arr2 = new Array(len); i < len; i++) { arr2[i] = arr[i]; } return arr2; }
+
+function datacube_createSuper(Derived) { return function () { var Super = getPrototypeOf_default()(Derived), result; if (datacube_isNativeReflectConstruct()) { var NewTarget = getPrototypeOf_default()(this).constructor; result = Reflect.construct(Super, arguments, NewTarget); } else { result = Super.apply(this, arguments); } return possibleConstructorReturn_default()(this, result); }; }
+
+function datacube_isNativeReflectConstruct() { if (typeof Reflect === "undefined" || !Reflect.construct) return false; if (Reflect.construct.sham) return false; if (typeof Proxy === "function") return true; try { Date.prototype.toString.call(Reflect.construct(Date, [], function () {})); return true; } catch (e) { return false; } }
+
 // Main DataHelper class. A container for data,
 // which works as a proxy and CRUD interface
 
@@ -12962,6 +14345,8 @@ var dc_core_DCCore = /*#__PURE__*/function (_DCEvents) {
 var datacube_DataCube = /*#__PURE__*/function (_DCCore) {
   inherits_default()(DataCube, _DCCore);
 
+  var _super = datacube_createSuper(DataCube);
+
   function DataCube() {
     var _this;
 
@@ -12969,7 +14354,7 @@ var datacube_DataCube = /*#__PURE__*/function (_DCCore) {
 
     classCallCheck_default()(this, DataCube);
 
-    _this = possibleConstructorReturn_default()(this, getPrototypeOf_default()(DataCube).call(this));
+    _this = _super.call(this);
     _this.data = data;
     return _this;
   } // Add new overlay
@@ -13007,12 +14392,12 @@ var datacube_DataCube = /*#__PURE__*/function (_DCCore) {
     key: "set",
     value: function set(query, data) {
       var objects = this.get_by_query(query);
-      var _iteratorNormalCompletion = true;
-      var _didIteratorError = false;
-      var _iteratorError = undefined;
+
+      var _iterator = datacube_createForOfIteratorHelper(objects),
+          _step;
 
       try {
-        for (var _iterator = objects[Symbol.iterator](), _step; !(_iteratorNormalCompletion = (_step = _iterator.next()).done); _iteratorNormalCompletion = true) {
+        for (_iterator.s(); !(_step = _iterator.n()).done;) {
           var obj = _step.value;
           var i = obj.i !== undefined ? obj.i : obj.p.indexOf(obj.v);
 
@@ -13021,18 +14406,9 @@ var datacube_DataCube = /*#__PURE__*/function (_DCCore) {
           }
         }
       } catch (err) {
-        _didIteratorError = true;
-        _iteratorError = err;
+        _iterator.e(err);
       } finally {
-        try {
-          if (!_iteratorNormalCompletion && _iterator["return"] != null) {
-            _iterator["return"]();
-          }
-        } finally {
-          if (_didIteratorError) {
-            throw _iteratorError;
-          }
-        }
+        _iterator.f();
       }
 
       this.update_ids();
@@ -13042,12 +14418,12 @@ var datacube_DataCube = /*#__PURE__*/function (_DCCore) {
     key: "merge",
     value: function merge(query, data) {
       var objects = this.get_by_query(query);
-      var _iteratorNormalCompletion2 = true;
-      var _didIteratorError2 = false;
-      var _iteratorError2 = undefined;
+
+      var _iterator2 = datacube_createForOfIteratorHelper(objects),
+          _step2;
 
       try {
-        for (var _iterator2 = objects[Symbol.iterator](), _step2; !(_iteratorNormalCompletion2 = (_step2 = _iterator2.next()).done); _iteratorNormalCompletion2 = true) {
+        for (_iterator2.s(); !(_step2 = _iterator2.n()).done;) {
           var obj = _step2.value;
 
           if (Array.isArray(obj.v)) {
@@ -13064,18 +14440,9 @@ var datacube_DataCube = /*#__PURE__*/function (_DCCore) {
           }
         }
       } catch (err) {
-        _didIteratorError2 = true;
-        _iteratorError2 = err;
+        _iterator2.e(err);
       } finally {
-        try {
-          if (!_iteratorNormalCompletion2 && _iterator2["return"] != null) {
-            _iterator2["return"]();
-          }
-        } finally {
-          if (_didIteratorError2) {
-            throw _iteratorError2;
-          }
-        }
+        _iterator2.f();
       }
 
       this.update_ids();
@@ -13085,12 +14452,12 @@ var datacube_DataCube = /*#__PURE__*/function (_DCCore) {
     key: "del",
     value: function del(query) {
       var objects = this.get_by_query(query);
-      var _iteratorNormalCompletion3 = true;
-      var _didIteratorError3 = false;
-      var _iteratorError3 = undefined;
+
+      var _iterator3 = datacube_createForOfIteratorHelper(objects),
+          _step3;
 
       try {
-        for (var _iterator3 = objects[Symbol.iterator](), _step3; !(_iteratorNormalCompletion3 = (_step3 = _iterator3.next()).done); _iteratorNormalCompletion3 = true) {
+        for (_iterator3.s(); !(_step3 = _iterator3.n()).done;) {
           var obj = _step3.value;
           // Find current index of the field (if not defined)
           var i = obj.i !== undefined ? obj.i : obj.p.indexOf(obj.v);
@@ -13100,18 +14467,9 @@ var datacube_DataCube = /*#__PURE__*/function (_DCCore) {
           }
         }
       } catch (err) {
-        _didIteratorError3 = true;
-        _iteratorError3 = err;
+        _iterator3.e(err);
       } finally {
-        try {
-          if (!_iteratorNormalCompletion3 && _iterator3["return"] != null) {
-            _iterator3["return"]();
-          }
-        } finally {
-          if (_didIteratorError3) {
-            throw _iteratorError3;
-          }
-        }
+        _iterator3.f();
       }
 
       this.update_ids();
@@ -13120,14 +14478,19 @@ var datacube_DataCube = /*#__PURE__*/function (_DCCore) {
   }, {
     key: "update",
     value: function update(data) {
+      //console.log('offchart')
+      //console.log(this.data.offchart[0].data)
+      //console.log('onchart')
+      //console.log(this.data.chart)
+      //console.log(data)
       var ohlcv = this.data.chart.data;
       var last = ohlcv[ohlcv.length - 1];
       var tick = data['price'];
       var volume = data['volume'] || 0;
       var candle = data['candle'];
-      var tf = utils.detect_interval(ohlcv);
+      var tf = utils["a" /* default */].detect_interval(ohlcv);
       var t_next = last[0] + tf;
-      var now = utils.now();
+      var now = utils["a" /* default */].now();
       var t = now >= t_next ? now - now % tf : last[0];
 
       if (candle) {
@@ -13152,6 +14515,287 @@ var datacube_DataCube = /*#__PURE__*/function (_DCCore) {
 
       this.update_overlays(data, t);
       return t >= t_next;
+    } // Update/append data point, depending on timestamp
+
+  }, {
+    key: "customUpdate",
+    value: function customUpdate(data) {
+      var ohlcv = this.data.chart.data;
+      var last = ohlcv[ohlcv.length - 1];
+      var timestamp = data['timestamp'];
+      var tick = data['price'];
+      var volume = data['volume'] || 0;
+      var candle = data['candle'];
+      var tf = utils["a" /* default */].detect_interval(ohlcv);
+      var t_next = last[0] + tf;
+      var now = utils["a" /* default */].now();
+      var t = timestamp >= t_next ? now - now % tf : last[0];
+
+      if (candle) {
+        // Update the entire candle
+        if (candle.length >= 6) {
+          t = candle[0];
+          this.merge('chart.data', [candle]);
+        } else {
+          this.merge('chart.data', [[t].concat(toConsumableArray_default()(candle))]);
+        }
+      } else if (t >= t_next && tick !== undefined) {
+        // And new zero-height candle
+        //console.log(tick+' merge1')
+        this.merge('chart.data', [[t, tick, tick, tick, tick, volume]]);
+      } else if (tick !== undefined) {
+        // Update an existing one
+        last[2] = Math.max(tick, last[2]);
+        last[3] = Math.min(tick, last[3]);
+        last[4] = tick;
+        last[5] += volume; //console.log(last+' merge2')
+
+        this.merge('chart.data', [last]);
+      }
+
+      this.update_overlays(data, t);
+      return t >= t_next;
+    } // Update/append data point, depending on timestamp
+
+  }, {
+    key: "oiupdate",
+    value: function oiupdate(data) {
+      var ohlc = this.data.offchart[0].data;
+      var last = ohlc[ohlc.length - 1];
+      var timestamp = data['timestamp'];
+      var tick = data['oi'];
+      var tf = utils["a" /* default */].detect_interval(ohlc);
+      var t_next = last[0] + tf;
+      var now = utils["a" /* default */].now();
+      var t = timestamp >= t_next ? now - now % tf : last[0]; //console.log(ohlc)
+      //console.log(last)        
+      //console.log(tick)
+
+      if (t >= t_next && tick !== undefined) {
+        // And new zero-height candle
+        this.merge('offchart.OpenInterest.data', [[t, tick, tick, tick, tick]]);
+      } else if (tick !== undefined) {
+        // Update an existing one
+        last[2] = Math.max(tick, last[2]);
+        last[3] = Math.min(tick, last[3]);
+        last[4] = tick;
+        this.merge('offchart.OpenInterest.data', [last]);
+      }
+
+      this.update_overlays(data, t);
+      return t >= t_next;
+    }
+  }, {
+    key: "batchUpdate",
+    value: function batchUpdate(dataMap) {
+      if (dataMap.has('ohlcv')) {
+        var newOhlcv = dataMap.get('ohlcv');
+        var oldOhlcv = this.data.chart.data;
+        var last = oldOhlcv[oldOhlcv.length - 1];
+        var tf = utils["a" /* default */].detect_interval(oldOhlcv);
+        var t_next = last[0] + tf;
+        var now = utils["a" /* default */].now();
+        var newArr = [];
+        var existingCandleNeedsUpdate = false;
+        newOhlcv.forEach(function (data) {
+          var timestamp = data[0];
+          var price = data[1];
+          var volume = data[2];
+          var t = timestamp >= t_next ? now - now % tf : last[0];
+
+          if (t >= t_next && price !== undefined) {
+            // And new zero-height candle
+            if (newArr.length > 0) {
+              // Data exists in new array
+              var lastNewData = newArr[newArr.length - 1];
+
+              if (t == lastNewData[0]) {
+                // Check if last data in new array matches the new data timestamp
+                lastNewData[2] = Math.max(price, lastNewData[2]);
+                lastNewData[3] = Math.min(price, lastNewData[3]);
+                lastNewData[4] = price;
+                lastNewData[5] += volume;
+              } else {
+                newArr.push([t, price, price, price, price, volume]);
+              }
+            } else {
+              // No existing data in new array
+              newArr.push([t, price, price, price, price, volume]);
+            }
+          } else if (price !== undefined) {
+            // Update an existing one
+            existingCandleNeedsUpdate = true;
+            last[2] = Math.max(price, last[2]);
+            last[3] = Math.min(price, last[3]);
+            last[4] = price;
+            last[5] += volume;
+          }
+        });
+
+        if (existingCandleNeedsUpdate) {
+          newArr = [last].concat(toConsumableArray_default()(newArr));
+        }
+
+        this.merge('chart.data', newArr);
+      }
+
+      if (dataMap.has('oi')) {
+        var newOhlc = dataMap.get('oi');
+        var oiIndex = this.data.offchart.findIndex(function (value) {
+          return value.type == 'OpenInterest';
+        });
+
+        if (oiIndex !== -1) {
+          var oldOhlc = this.data.offchart[oiIndex].data;
+          var _last = oldOhlc[oldOhlc.length - 1];
+
+          var _tf = utils["a" /* default */].detect_interval(oldOhlc);
+
+          var _t_next = _last[0] + _tf;
+
+          var _now = utils["a" /* default */].now();
+
+          var _newArr = [];
+          var _existingCandleNeedsUpdate = false;
+          newOhlc.forEach(function (data) {
+            var timestamp = data[0];
+            var price = data[1];
+            var t = timestamp >= _t_next ? _now - _now % _tf : _last[0];
+
+            if (t >= _t_next && price !== undefined) {
+              // And new zero-height candle
+              if (_newArr.length > 0) {
+                // Data exists in new array
+                var lastNewData = _newArr[_newArr.length - 1];
+
+                if (t == lastNewData[0]) {
+                  // Check if last data in new array matches the new data timestamp
+                  lastNewData[2] = Math.max(price, lastNewData[2]);
+                  lastNewData[3] = Math.min(price, lastNewData[3]);
+                  lastNewData[4] = price;
+                } else {
+                  _newArr.push([t, price, price, price, price]);
+                }
+              } else {
+                // No existing data in new array
+                _newArr.push([t, price, price, price, price]);
+              }
+            } else if (price !== undefined) {
+              // Update an existing one
+              _existingCandleNeedsUpdate = true;
+              _last[2] = Math.max(price, _last[2]);
+              _last[3] = Math.min(price, _last[3]);
+              _last[4] = price;
+            }
+          });
+
+          if (_existingCandleNeedsUpdate) {
+            _newArr = [_last].concat(toConsumableArray_default()(_newArr));
+          }
+
+          this.merge('offchart.OpenInterest.data', _newArr);
+        }
+      }
+
+      if (dataMap.has('funding')) {
+        var newFunding = dataMap.get('funding');
+        var fundingIndex = this.data.offchart.findIndex(function (value) {
+          return value.type == 'FundingRate';
+        });
+
+        if (fundingIndex !== -1) {
+          var oldFunding = this.data.offchart[fundingIndex].data;
+          var _last2 = oldFunding[oldFunding.length - 1];
+
+          var _tf2 = utils["a" /* default */].detect_interval(oldFunding);
+
+          var _t_next2 = _last2[0] + _tf2;
+
+          var _now2 = utils["a" /* default */].now();
+
+          var _newArr2 = [];
+          newFunding.forEach(function (data) {
+            var timestamp = data[0];
+            var funding = data[1];
+            var t = timestamp >= _t_next2 ? _now2 - _now2 % _tf2 : _last2[0];
+
+            _newArr2.push([t, funding]);
+          });
+          this.merge('offchart.FundingRate.data', _newArr2);
+        }
+      }
+
+      if (dataMap.has('liq')) {
+        var newLiq = dataMap.get('liq');
+        var liqIndex = this.data.onchart.findIndex(function (value) {
+          return value.type == 'Liquidations';
+        });
+
+        if (liqIndex !== -1) {
+          var oldLiq = this.data.onchart[liqIndex].data;
+          var _last3 = oldLiq[oldLiq.length - 1];
+
+          var _tf3 = utils["a" /* default */].detect_interval(oldLiq);
+
+          var _t_next3 = _last3[0] + _tf3;
+
+          var _now3 = utils["a" /* default */].now();
+
+          var _newArr3 = [];
+          var _existingCandleNeedsUpdate2 = false;
+          newLiq.forEach(function (data) {
+            var timestamp = data[0];
+            var qty = data[1];
+            var side = data[2].toLowerCase();
+            var t = timestamp >= _t_next3 ? _now3 - _now3 % _tf3 : _last3[0];
+
+            if (t >= _t_next3 && qty !== undefined) {
+              // And new zero-height candle
+              if (_newArr3.length > 0) {
+                // Data exists in new array
+                var lastNewData = _newArr3[_newArr3.length - 1];
+
+                if (t == lastNewData[0]) {
+                  // Check if last data in new array matches the new data timestamp
+                  if (side == 'buy') {
+                    lastNewData[1] += qty;
+                  } else if (side == 'sell') {
+                    lastNewData[2] += qty;
+                  }
+                } else {
+                  if (side == 'buy') {
+                    _newArr3.push([t, qty, 0]);
+                  } else if (side == 'sell') {
+                    _newArr3.push([t, 0, qty]);
+                  }
+                }
+              } else {
+                // No existing data in new array
+                if (side == 'buy') {
+                  _newArr3.push([t, qty, 0]);
+                } else if (side == 'sell') {
+                  _newArr3.push([t, 0, qty]);
+                }
+              }
+            } else if (qty !== undefined) {
+              // Update an existing one
+              _existingCandleNeedsUpdate2 = true;
+
+              if (side == 'buy') {
+                _last3[1] += qty;
+              } else if (side == 'sell') {
+                _last3[2] += qty;
+              }
+            }
+          });
+
+          if (_existingCandleNeedsUpdate2) {
+            _newArr3 = [_last3].concat(toConsumableArray_default()(_newArr3));
+          }
+
+          this.merge('onchart.Liquidations.data', _newArr3);
+        }
+      }
     } // Lock overlays from being pulled by query_search
     // TODO: subject to review
 
@@ -13222,7 +14866,169 @@ var datacube_DataCube = /*#__PURE__*/function (_DCCore) {
 }(dc_core_DCCore);
 
 
+// CONCATENATED MODULE: ./src/components/primitives/oi_price.js
+
+
+ // OI Price bar & price line (shader)
+
+var oi_price_OIPrice = /*#__PURE__*/function () {
+  function OIPrice(comp) {
+    classCallCheck_default()(this, OIPrice);
+
+    this.comp = comp;
+    this.data = comp.$props.data;
+  } // Defines an inline shader (has access to both
+  // target & overlay's contexts)
+
+
+  createClass_default()(OIPrice, [{
+    key: "init_shader",
+    value: function init_shader() {
+      var _this = this;
+
+      var layout = this.comp.$props.layout;
+      var config = this.comp.$props.config;
+      var comp = this.comp;
+
+      var last_bar = function last_bar() {
+        return _this.last_bar();
+      };
+
+      this.comp.$emit('new-shader', {
+        target: 'sidebar',
+        draw: function draw(ctx) {
+          if (!last_bar()) return;
+          var bar = last_bar();
+          var w = ctx.canvas.width;
+          var h = config.PANHEIGHT; // let lbl = bar.price.toFixed(layout.prec)
+
+          var lbl = Math.abs(bar.price) >= 1.0e+6 ? utils["a" /* default */].changeNumberFormat(bar.price, layout.prec) : bar.price.toFixed(layout.prec);
+          ctx.fillStyle = bar.color;
+          var x = -0.5;
+          var y = bar.y - h * 0.5 - 0.5;
+          var a = 7;
+          ctx.fillRect(x - 0.5, y, w + 1, h);
+          ctx.fillStyle = comp.$props.colors.colorTextHL;
+          ctx.textAlign = 'left';
+          ctx.fillText(lbl, a, y + 15);
+        }
+      });
+      this.shader = true;
+    } // Regular draw call for overaly
+
+  }, {
+    key: "draw",
+    value: function draw(ctx) {
+      //if (!this.comp.$props.meta.last) return
+      if (!this.comp.$props.data[this.comp.$props.data.length - 1]) return;
+      if (!this.shader) this.init_shader();
+      var layout = this.comp.$props.layout;
+      var last = this.comp.$props.data[this.comp.$props.data.length - 1]; // let last = this.comp.$props.data.map(x => x[4])
+
+      var color = last[4] >= last[1] ? this.green() : this.red();
+      var y = layout.$2screen(last[4]);
+      ctx.strokeStyle = color;
+      ctx.setLineDash([1, 1]);
+      ctx.beginPath();
+      ctx.moveTo(0, y);
+      ctx.lineTo(layout.width, y);
+      ctx.stroke();
+      ctx.setLineDash([]);
+    }
+  }, {
+    key: "last_bar",
+    value: function last_bar() {
+      //if (!this.data.length) return undefined
+      if (!this.comp.$props.data[this.comp.$props.data.length - 1]) return;
+      var layout = this.comp.$props.layout;
+      var last = this.comp.$props.data[this.comp.$props.data.length - 1];
+      var y = layout.$2screen(last[4]);
+      var cndl = layout.c_magnet(last[0]);
+      return {
+        y: y,
+        price: last[4],
+        color: last[4] >= last[1] ? this.green() : this.red()
+      };
+    }
+  }, {
+    key: "last_price",
+    value: function last_price() {
+      if (!this.comp.$props.data[this.comp.$props.data.length - 1]) return;
+      return this.comp.$props.data[this.comp.$props.data.length - 1][4] ? this.comp.$props.data[this.comp.$props.data.length - 1][4] : undefined; // return this.comp.$props.data.map(x => x[4]) ?
+      // this.comp.$props.meta.last[4] : undefined
+    }
+  }, {
+    key: "green",
+    value: function green() {
+      return this.comp.colorCandleUp;
+    }
+  }, {
+    key: "red",
+    value: function red() {
+      return this.comp.colorCandleDw;
+    }
+  }]);
+
+  return OIPrice;
+}();
+
+
+// CONCATENATED MODULE: ./src/components/primitives/oi_candle.js
+
+
+
+//bitwise test ok math.floor
+// OI Candle object for OI Candles overlay
+var oi_candle_OICandleExt = /*#__PURE__*/function () {
+  function OICandleExt(overlay, ctx, data) {
+    classCallCheck_default()(this, OICandleExt);
+
+    this.ctx = ctx;
+    this.self = overlay;
+    this.style = data.raw[6] || this.self;
+    this.draw(data);
+  }
+
+  createClass_default()(OICandleExt, [{
+    key: "draw",
+    value: function draw(data) {
+      var body_color = data.c <= data.o ? this.style.colorCandleUp : this.style.colorCandleDw;
+      var wick_color = data.c <= data.o ? this.style.colorWickUp : this.style.colorWickDw;
+      var wick_color_sm = this.style.colorWickSm; //Avoid floating-point coordinates and use integers instead
+      //Saving the browser to do extra calculations to create the anti-aliasing effect. 
+
+      var w = Math.max(data.w, 1);
+      var hw = Math.max(~~(w * 0.5), 1);
+      var h = Math.abs(data.o - data.c);
+      var max_h = data.c === data.o ? 1 : 2;
+      this.ctx.strokeStyle = w > 1 ? wick_color : wick_color_sm;
+      this.ctx.beginPath();
+      this.ctx.moveTo(~~data.x - 0.5, ~~data.h);
+      this.ctx.lineTo(~~data.x - 0.5, ~~data.l);
+      this.ctx.stroke();
+
+      if (data.w > 1.5 || data.o === data.c) {
+        this.ctx.fillStyle = body_color; // TODO: Move common calculations to layout.js
+
+        var s = data.c >= data.o ? 1 : -1;
+        this.ctx.fillRect(~~(data.x - hw - 1), ~~(data.o - 1), ~~(hw * 2 + 1), ~~(s * Math.max(h, max_h)));
+      } else {
+        this.ctx.strokeStyle = body_color;
+        this.ctx.beginPath();
+        this.ctx.moveTo(~~data.x - 0.5, ~~Math.min(data.o, data.c));
+        this.ctx.lineTo(~~data.x - 0.5, ~~Math.max(data.o, data.c));
+        this.ctx.stroke();
+      }
+    }
+  }]);
+
+  return OICandleExt;
+}();
+
+
 // CONCATENATED MODULE: ./src/index.js
+
+
 
 
 
@@ -13241,13 +15047,15 @@ if (typeof window !== 'undefined' && window.Vue) {
   window.TradingVueLib = {
     TradingVue: TradingVue,
     Overlay: mixins_overlay,
-    Utils: utils,
+    Utils: utils["a" /* default */],
     Constants: constants,
     Candle: candle_CandleExt,
     Volbar: volbar_VolbarExt,
     layout_cnv: layout_cnv,
     layout_vol: layout_vol,
-    DataCube: datacube_DataCube
+    DataCube: datacube_DataCube,
+    OICandle: oi_candle_OICandleExt,
+    OIPrice: oi_price_OIPrice
   };
 }
 
