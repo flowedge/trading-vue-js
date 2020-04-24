@@ -6429,7 +6429,7 @@ function GridMaker(id, params) {
     var lens = subn.map(function (x) {
       return x[1].toFixed(self.prec).length;
     });
-    var str = '0'.repeat(Math.max.apply(Math, toConsumableArray_default()(lens))) + '    ';
+    var str = '0'.repeat(Math.max.apply(Math, toConsumableArray_default()(lens))) + '      ';
     self.sb = ctx.measureText(str).width;
     self.sb = Math.max(Math.floor(self.sb), $p.config.SBMIN);
   } // Calculate $ precision for the Y-axis
