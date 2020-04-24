@@ -15,7 +15,7 @@
             v-on:layer-meta-props="layer_meta_props"
             v-on:custom-event="emit_custom_event"
             v-on:legend-button-click="legend_button_click"
-			v-on:chart-panned="chart_panned"
+            v-on:chart-panned="chart_panned"
             >
         </grid-section>
         <botbar v-bind="botbar_props" :shaders="shaders">
@@ -66,7 +66,7 @@ export default {
 
     },
     methods: {
-	chart_panned() {
+        chart_panned() {
             this.haveMovedChart = true
         },
         range_changed(r) {
@@ -80,8 +80,10 @@ export default {
             this.$emit('range-changed', r)
         },
         goto(t) {
-            const dt = this.range[1] - this.range[0]
-            this.range_changed([t - dt, t])
+            if (!this.haveMovedChart) {
+                const dt = this.range[1] - this.range[0]
+                this.range_changed([t - dt, t])
+            }
         },
         setRange(t1, t2) {
             this.range_changed([t1, t2])
@@ -320,7 +322,8 @@ export default {
 
             // Meta data
             last_candle: [],
-            sub_start: undefined
+            sub_start: undefined,
+            haveMovedChart: false 
         }
     },
     watch: {

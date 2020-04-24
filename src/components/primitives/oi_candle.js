@@ -1,4 +1,4 @@
-//bitwise test ok math.floor
+
 // OI Candle object for OI Candles overlay
 
 export default class OICandleExt {
@@ -19,26 +19,25 @@ export default class OICandleExt {
         const wick_color = data.c <= data.o ?
             this.style.colorWickUp :
             this.style.colorWickDw
-
+            
         const wick_color_sm = this.style.colorWickSm
 
-		//Avoid floating-point coordinates and use integers instead
-		//Saving the browser to do extra calculations to create the anti-aliasing effect. 
         let w = Math.max(data.w, 1)
-        let hw = Math.max(~~(w * 0.5), 1)
+        let hw = Math.max(Math.floor(w * 0.5), 1)
         let h = Math.abs(data.o - data.c)
         let max_h = data.c === data.o ? 1 : 2
+
 
         this.ctx.strokeStyle = w > 1 ? wick_color : wick_color_sm
 
         this.ctx.beginPath()
         this.ctx.moveTo(
-            ~~(data.x) - 0.5,
-            ~~(data.h)
+            Math.floor(data.x) - 0.5,
+            Math.floor(data.h)
         )
         this.ctx.lineTo(
-            ~~(data.x) - 0.5,
-            ~~(data.l)
+            Math.floor(data.x) - 0.5,
+            Math.floor(data.l)
         )
 
         this.ctx.stroke()
@@ -50,10 +49,10 @@ export default class OICandleExt {
             // TODO: Move common calculations to layout.js
             let s = data.c >= data.o ? 1 : -1
             this.ctx.fillRect(
-                ~~(data.x - hw -1),
-                ~~(data.o - 1),
-                ~~(hw * 2 + 1),
-                ~~(s * Math.max(h, max_h))
+                Math.floor(data.x - hw -1),
+                Math.floor(data.o - 1),
+                Math.floor(hw * 2 + 1),
+                Math.floor(s * Math.max(h, max_h))
             )
 
         } else {
@@ -62,12 +61,12 @@ export default class OICandleExt {
 
             this.ctx.beginPath()
             this.ctx.moveTo(
-                ~~(data.x) - 0.5,
-                ~~(Math.min(data.o, data.c)),
+                Math.floor(data.x) - 0.5,
+                Math.floor(Math.min(data.o, data.c)),
             )
             this.ctx.lineTo(
-                ~~(data.x) - 0.5,
-                ~~(Math.max(data.o, data.c)),
+                Math.floor(data.x) - 0.5,
+                Math.floor(Math.max(data.o, data.c)),
             )
 
             this.ctx.stroke()

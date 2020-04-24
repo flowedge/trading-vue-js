@@ -40,6 +40,7 @@
 <script>
 
 import ButtonGroup from './ButtonGroup.vue'
+import Utils from '../stuff/utils.js'
 
 export default {
     name: 'ChartLegend',
@@ -49,18 +50,35 @@ export default {
     components: { ButtonGroup },
     computed: {
         ohlcv() {
-            if (!this.$props.values || !this.$props.values.ohlcv) {
-                return Array(6).fill('n/a')
-            }
             const prec = this.layout.prec
+            const format = (n, d) => parseFloat(n.toFixed(d))
 
+            if (!this.$props.values || !this.$props.values.ohlcv) {
+                const candlesIndex = this.json_data.findIndex(data => data.type == 'Candles')
+
+                if (this.json_data[candlesIndex].data.length != 0) {
+                    const candlesData = this.json_data[candlesIndex].data
+
+                    if (candlesData[candlesData.length - 1] != undefined) {
+                        return [
+                            format(candlesData[candlesData.length - 1][1], prec),
+                            format(candlesData[candlesData.length - 1][2], prec),
+                            format(candlesData[candlesData.length - 1][3], prec),
+                            format(candlesData[candlesData.length - 1][4], prec),
+                            candlesData[candlesData.length - 1][5] ? format(candlesData[candlesData.length - 1][5], 2) : '0.00'
+                        ]
+                    }
+                }
+                return Array(6).fill('n/a')                
+            }
+            
             return [
-                this.$props.values.ohlcv[1].toFixed(prec),
-                this.$props.values.ohlcv[2].toFixed(prec),
-                this.$props.values.ohlcv[3].toFixed(prec),
-                this.$props.values.ohlcv[4].toFixed(prec),
+                format(this.$props.values.ohlcv[1], prec),
+                format(this.$props.values.ohlcv[2], prec),
+                format(this.$props.values.ohlcv[3], prec),
+                format(this.$props.values.ohlcv[4], prec),
                 this.$props.values.ohlcv[5] ?
-                    this.$props.values.ohlcv[5].toFixed(2):
+                    format(this.$props.values.ohlcv[5], 2) :
                     'n/a'
             ]
         },
@@ -73,12 +91,44 @@ export default {
             ).map(x => {
                 if (!(x.type in types)) types[x.type] = 0
                 const id = x.type + `_${types[x.type]++}`
+
+                let valuesArr = this.n_a(1)
+
+                if (x.data.length != 0) {
+                    const lastData = x.data[x.data.length - 1]
+                    let lastValueArr = Object.values(lastData)
+                    lastValueArr.shift()
+
+                    if (x.type == 'OpenInterest') {
+                        valuesArr = [
+                            {
+                                value: 'Low: '+Utils.changeNumberFormat(lastValueArr[2], 2)
+                            },
+                            {
+                                value: 'High: '+Utils.changeNumberFormat(lastValueArr[1], 2)
+                            }
+                        ]
+                    } else {
+                        valuesArr = lastValueArr.map(value => {
+                            if (x.type == 'FundingRate' || x.type == 'Volatility') {
+                                return {value: `${(value * 100).toFixed(3)}%`}
+                            } else {
+                                if (Math.abs(value) >= 1.0e+6) {
+                                    return {value: Utils.changeNumberFormat(value, 2)}
+                                } else {
+                                    return {value: value.toFixed(2)}
+                                }
+                            }
+                        })
+                    }
+                }
+
                 return {
                     v: 'display' in x.settings ? x.settings.display : true,
                     name: x.name || id,
                     index: this.json_data.indexOf(x),
                     id: id,
-                    values: values ? f(id, values) : this.n_a(1),
+                    values: values ? f(id, values) : valuesArr,
                     unk: !(id in (this.$props.meta_props || {}))
                 }
             })

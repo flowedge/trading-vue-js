@@ -23,7 +23,8 @@
             v-bind:grid_id="grid_id"
             v-bind:rerender="rerender"
             v-bind:shaders="shaders"
-            v-on:sidebar-transform="sidebar_transform">
+            v-on:sidebar-transform="sidebar_transform"
+			v-on:chart-panned="chart_panned">
         </sidebar>
     </div>
 </template>
@@ -45,6 +46,9 @@ export default {
         ChartLegend
     },
     methods: {
+		chart_panned() {
+            this.$emit('chart-panned')
+        },
         range_changed(r) {
             this.$emit('range-changed', r)
         },

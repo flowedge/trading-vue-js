@@ -6105,7 +6105,13 @@ var MINUTE30 = MINUTE * 30;
 var HOUR = MINUTE * 60;
 var HOUR4 = HOUR * 4;
 var DAY = HOUR * 24;
+var DAY3 = DAY * 3;
+var DAY6 = DAY * 6;
+var DAY12 = DAY * 12;
+var DAY300 = DAY * 300;
+var DAY950 = DAY * 950;
 var WEEK = DAY * 7;
+var WEEK7 = WEEK * 7;
 var MONTH = WEEK * 4;
 var YEAR = MONTH * 12;
 var MONTHMAP = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"]; // Grid time steps
@@ -6165,7 +6171,13 @@ ChartConfig.FONT = "11px -apple-system,BlinkMacSystemFont,\n    Segoe UI,Roboto,
   HOUR: HOUR,
   HOUR4: HOUR4,
   DAY: DAY,
+  DAY3: DAY3,
+  DAY6: DAY6,
+  DAY12: DAY12,
+  DAY300: DAY300,
+  DAY950: DAY950,
   WEEK: WEEK,
+  WEEK7: WEEK7,
   MONTH: MONTH,
   YEAR: YEAR,
   MONTHMAP: MONTHMAP,
@@ -6373,13 +6385,24 @@ function GridMaker(id, params) {
       self.$_hi = y_t.range[0];
       self.$_lo = y_t.range[1];
     } else {
-      self.$_hi = hi + (hi - lo) * $p.config.EXPAND;
-      self.$_lo = lo - (hi - lo) * $p.config.EXPAND;
+      if (hi < 0 && lo < 0) {
+        self.$_hi = hi + (hi - lo) * $p.config.EXPAND;
+        self.$_lo = lo - (hi - lo) * $p.config.EXPAND;
 
-      if (self.$_hi === self.$_lo) {
-        self.$_hi *= 1.05; // Expand if height range === 0
+        if (self.$_hi === self.$_lo) {
+          self.$_hi *= 0.95; // Expand if height range === 0
 
-        self.$_lo *= 0.95;
+          self.$_lo *= 1.05;
+        }
+      } else {
+        self.$_hi = hi + (hi - lo) * $p.config.EXPAND;
+        self.$_lo = lo - (hi - lo) * $p.config.EXPAND;
+
+        if (self.$_hi === self.$_lo) {
+          self.$_hi *= 1.05; // Expand if height range === 0
+
+          self.$_lo *= 0.95;
+        }
       }
     }
   }
@@ -6415,38 +6438,29 @@ function GridMaker(id, params) {
         max_l = 0; // Get max lengths of integer and fractional parts
 
     data.forEach(function (x) {
-      var str = x[1].toString();
+      var str = x[1].toString(); // Edit: Ray (No need to check for exponential data, change all to regular format)
+      // if (x[1] < 0.000001) {
+      //     // Parsing the exponential form. Gosh this
+      //     // smells trickily
+      //     var [ls, rs] = str.split('e-')
+      //     var [l, r] = ls.split('.')
+      //     if (!r) r = ''
+      //     r = { length: r.length + parseInt(rs) || 0 }
+      // } else {
 
-      if (x[1] < 0.000001) {
-        // Parsing the exponential form. Gosh this
-        // smells trickily
-        var _str$split = str.split('e-'),
-            _str$split2 = slicedToArray_default()(_str$split, 2),
-            ls = _str$split2[0],
-            rs = _str$split2[1];
+      var _str$split = str.split('.'),
+          _str$split2 = slicedToArray_default()(_str$split, 2),
+          l = _str$split2[0],
+          r = _str$split2[1]; // }
 
-        var _ls$split = ls.split('.'),
-            _ls$split2 = slicedToArray_default()(_ls$split, 2),
-            l = _ls$split2[0],
-            r = _ls$split2[1];
-
-        if (!r) r = '';
-        r = {
-          length: r.length + parseInt(rs) || 0
-        };
-      } else {
-        var _str$split3 = str.split('.'),
-            _str$split4 = slicedToArray_default()(_str$split3, 2),
-            l = _str$split4[0],
-            r = _str$split4[1];
-      }
 
       if (r && r.length > max_r) {
         max_r = r.length;
       }
 
       if (l && l.length > max_l) {
-        max_l = l.length;
+        var absL = Math.abs(parseInt(l)).toString();
+        max_l = absL.length;
       }
     }); // Select precision scheme depending
     // on the left and right part lengths
@@ -6492,8 +6506,9 @@ function GridMaker(id, params) {
 
 
   function dollar_step() {
-    var yrange = self.$_hi - self.$_lo;
-    var m = yrange * ($p.config.GRIDY / height);
+    var yrange = self.$_hi - self.$_lo; //let m = yrange * ($p.config.GRIDY / height)
+
+    var m = Math.abs(yrange * ($p.config.GRIDY / height));
     var p = parseInt(yrange.toExponential().split('e')[1]);
     var d = Math.pow(10, p);
     var s = grid_maker_$SCALES.map(function (x) {
@@ -6570,7 +6585,13 @@ function GridMaker(id, params) {
     var m = Math.pow(10, -self.prec);
     self.$_step = Math.max(m, dollar_step());
     self.ys = [];
-    var y1 = self.$_lo - self.$_lo % self.$_step;
+    var y1 = 0;
+
+    if (self.$_lo < 0) {
+      y1 = self.$_lo + self.$_lo % self.$_step;
+    } else {
+      y1 = self.$_lo - self.$_lo % self.$_step;
+    }
 
     for (var y$ = y1; y$ <= self.$_hi; y$ += self.$_step) {
       var y = Math.floor(y$ * self.A + self.B);
@@ -6996,7 +7017,10 @@ var Sectionvue_type_template_id_8fbe9336_render = function() {
               rerender: _vm.rerender,
               shaders: _vm.shaders
             },
-            on: { "sidebar-transform": _vm.sidebar_transform }
+            on: {
+              "sidebar-transform": _vm.sidebar_transform,
+              "chart-panned": _vm.chart_panned
+            }
           },
           "sidebar",
           _vm.sidebar_props,
@@ -11689,6 +11713,7 @@ ButtonGroup_component.options.__file = "src/components/ButtonGroup.vue"
 //
 //
 
+
 /* harmony default export */ var Legendvue_type_script_lang_js_ = ({
   name: 'ChartLegend',
   props: ['common', 'values', 'grid_id', 'meta_props'],
@@ -11697,12 +11722,29 @@ ButtonGroup_component.options.__file = "src/components/ButtonGroup.vue"
   },
   computed: {
     ohlcv: function ohlcv() {
+      var prec = this.layout.prec;
+
+      var format = function format(n, d) {
+        return parseFloat(n.toFixed(d));
+      };
+
       if (!this.$props.values || !this.$props.values.ohlcv) {
+        var candlesIndex = this.json_data.findIndex(function (data) {
+          return data.type == 'Candles';
+        });
+
+        if (this.json_data[candlesIndex].data.length != 0) {
+          var candlesData = this.json_data[candlesIndex].data;
+
+          if (candlesData[candlesData.length - 1] != undefined) {
+            return [format(candlesData[candlesData.length - 1][1], prec), format(candlesData[candlesData.length - 1][2], prec), format(candlesData[candlesData.length - 1][3], prec), format(candlesData[candlesData.length - 1][4], prec), candlesData[candlesData.length - 1][5] ? format(candlesData[candlesData.length - 1][5], 2) : '0.00'];
+          }
+        }
+
         return Array(6).fill('n/a');
       }
 
-      var prec = this.layout.prec;
-      return [this.$props.values.ohlcv[1].toFixed(prec), this.$props.values.ohlcv[2].toFixed(prec), this.$props.values.ohlcv[3].toFixed(prec), this.$props.values.ohlcv[4].toFixed(prec), this.$props.values.ohlcv[5] ? this.$props.values.ohlcv[5].toFixed(2) : 'n/a'];
+      return [format(this.$props.values.ohlcv[1], prec), format(this.$props.values.ohlcv[2], prec), format(this.$props.values.ohlcv[3], prec), format(this.$props.values.ohlcv[4], prec), this.$props.values.ohlcv[5] ? format(this.$props.values.ohlcv[5], 2) : 'n/a'];
     },
     indicators: function indicators() {
       var _this = this;
@@ -11715,12 +11757,47 @@ ButtonGroup_component.options.__file = "src/components/ButtonGroup.vue"
       }).map(function (x) {
         if (!(x.type in types)) types[x.type] = 0;
         var id = x.type + "_".concat(types[x.type]++);
+
+        var valuesArr = _this.n_a(1);
+
+        if (x.data.length != 0) {
+          var lastData = x.data[x.data.length - 1];
+          var lastValueArr = Object.values(lastData);
+          lastValueArr.shift();
+
+          if (x.type == 'OpenInterest') {
+            valuesArr = [{
+              value: 'Low: ' + utils["a" /* default */].changeNumberFormat(lastValueArr[2], 2)
+            }, {
+              value: 'High: ' + utils["a" /* default */].changeNumberFormat(lastValueArr[1], 2)
+            }];
+          } else {
+            valuesArr = lastValueArr.map(function (value) {
+              if (x.type == 'FundingRate' || x.type == 'Volatility') {
+                return {
+                  value: "".concat((value * 100).toFixed(3), "%")
+                };
+              } else {
+                if (Math.abs(value) >= 1.0e+6) {
+                  return {
+                    value: utils["a" /* default */].changeNumberFormat(value, 2)
+                  };
+                } else {
+                  return {
+                    value: value.toFixed(2)
+                  };
+                }
+              }
+            });
+          }
+        }
+
         return {
           v: 'display' in x.settings ? x.settings.display : true,
           name: x.name || id,
           index: _this.json_data.indexOf(x),
           id: id,
-          values: values ? f(id, values) : _this.n_a(1),
+          values: values ? f(id, values) : valuesArr,
           unk: !(id in (_this.$props.meta_props || {}))
         };
       });
@@ -11859,6 +11936,7 @@ Legend_component.options.__file = "src/components/Legend.vue"
 //
 //
 //
+//
 
 
 
@@ -11873,6 +11951,9 @@ Legend_component.options.__file = "src/components/Legend.vue"
     ChartLegend: Legend
   },
   methods: {
+    chart_panned: function chart_panned() {
+      this.$emit('chart-panned');
+    },
     range_changed: function range_changed(r) {
       this.$emit('range-changed', r);
     },
@@ -12627,8 +12708,10 @@ var ti_mapping_TI = /*#__PURE__*/function () {
       this.$emit('range-changed', r);
     },
     "goto": function goto(t) {
-      var dt = this.range[1] - this.range[0];
-      this.range_changed([t - dt, t]);
+      if (!this.haveMovedChart) {
+        var dt = this.range[1] - this.range[0];
+        this.range_changed([t - dt, t]);
+      }
     },
     setRange: function setRange(t1, t2) {
       this.range_changed([t1, t2]);
@@ -12864,7 +12947,8 @@ var ti_mapping_TI = /*#__PURE__*/function () {
       settings_ov: {},
       // Meta data
       last_candle: [],
-      sub_start: undefined
+      sub_start: undefined,
+      haveMovedChart: false
     };
   },
   watch: {
@@ -14977,7 +15061,6 @@ var oi_price_OIPrice = /*#__PURE__*/function () {
 
 
 
-//bitwise test ok math.floor
 // OI Candle object for OI Candles overlay
 var oi_candle_OICandleExt = /*#__PURE__*/function () {
   function OICandleExt(overlay, ctx, data) {
@@ -14994,29 +15077,27 @@ var oi_candle_OICandleExt = /*#__PURE__*/function () {
     value: function draw(data) {
       var body_color = data.c <= data.o ? this.style.colorCandleUp : this.style.colorCandleDw;
       var wick_color = data.c <= data.o ? this.style.colorWickUp : this.style.colorWickDw;
-      var wick_color_sm = this.style.colorWickSm; //Avoid floating-point coordinates and use integers instead
-      //Saving the browser to do extra calculations to create the anti-aliasing effect. 
-
+      var wick_color_sm = this.style.colorWickSm;
       var w = Math.max(data.w, 1);
-      var hw = Math.max(~~(w * 0.5), 1);
+      var hw = Math.max(Math.floor(w * 0.5), 1);
       var h = Math.abs(data.o - data.c);
       var max_h = data.c === data.o ? 1 : 2;
       this.ctx.strokeStyle = w > 1 ? wick_color : wick_color_sm;
       this.ctx.beginPath();
-      this.ctx.moveTo(~~data.x - 0.5, ~~data.h);
-      this.ctx.lineTo(~~data.x - 0.5, ~~data.l);
+      this.ctx.moveTo(Math.floor(data.x) - 0.5, Math.floor(data.h));
+      this.ctx.lineTo(Math.floor(data.x) - 0.5, Math.floor(data.l));
       this.ctx.stroke();
 
       if (data.w > 1.5 || data.o === data.c) {
         this.ctx.fillStyle = body_color; // TODO: Move common calculations to layout.js
 
         var s = data.c >= data.o ? 1 : -1;
-        this.ctx.fillRect(~~(data.x - hw - 1), ~~(data.o - 1), ~~(hw * 2 + 1), ~~(s * Math.max(h, max_h)));
+        this.ctx.fillRect(Math.floor(data.x - hw - 1), Math.floor(data.o - 1), Math.floor(hw * 2 + 1), Math.floor(s * Math.max(h, max_h)));
       } else {
         this.ctx.strokeStyle = body_color;
         this.ctx.beginPath();
-        this.ctx.moveTo(~~data.x - 0.5, ~~Math.min(data.o, data.c));
-        this.ctx.lineTo(~~data.x - 0.5, ~~Math.max(data.o, data.c));
+        this.ctx.moveTo(Math.floor(data.x) - 0.5, Math.floor(Math.min(data.o, data.c)));
+        this.ctx.lineTo(Math.floor(data.x) - 0.5, Math.floor(Math.max(data.o, data.c)));
         this.ctx.stroke();
       }
     }
