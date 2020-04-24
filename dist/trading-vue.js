@@ -1,5 +1,5 @@
 /*!
- * TradingVue.JS - v0.4.5 - Fri Apr 24 2020
+ * TradingVue.JS - v0.4.5 - Sat Apr 25 2020
  *     https://github.com/C451/trading-vue-js
  *     Copyright (c) 2019 c451 Code's All Right;
  *     Licensed under the MIT license
@@ -9193,7 +9193,6 @@ Segment_component.options.__file = "src/components/overlays/Segment.vue"
 /* harmony default export */ var Segment = (Segment_component.exports);
 // CONCATENATED MODULE: ./src/components/js/layout_cnv.js
 
-//bitwise test ok math.floor
 // Claculates postions and sizes for candlestick
 // and volume bars for the given subset of data
 
@@ -9216,6 +9215,7 @@ function layout_cnv(self) {
       avg_w,
       mid,
       prev = undefined; // Subset interval against main interval
+  // TODO: interval detection can be incorrect in IB mode
 
   var interval2 = utils["a" /* default */].detect_interval(sub);
   var ratio = interval2 / $p.interval;
@@ -9231,8 +9231,8 @@ function layout_cnv(self) {
       prev = null;
     }
 
-    x1 = prev || ~~(mid - px_step2 * 0.5);
-    x2 = ~~(mid + px_step2 * 0.5) - 0.5;
+    x1 = prev || Math.floor(mid - px_step2 * 0.5);
+    x2 = Math.floor(mid + px_step2 * 0.5) - 0.5;
     candles.push({
       x: mid,
       w: layout.px_step * $p.config.CANDLEW * ratio,
@@ -9297,8 +9297,8 @@ function layout_vol(self) {
       prev = null;
     }
 
-    x1 = prev || ~~(mid - px_step2 * 0.5);
-    x2 = ~~(mid + px_step2 * 0.5) - 0.5;
+    x1 = prev || Math.floor(mid - px_step2 * 0.5);
+    x2 = Math.floor(mid + px_step2 * 0.5) - 0.5;
     volume.push({
       x1: x1,
       x2: x2,
@@ -9346,8 +9346,8 @@ function layout_liq_bar(self) {
       prev = null;
     }
 
-    x1 = prev || ~~(mid - px_step2 * 0.5);
-    x2 = ~~(mid + px_step2 * 0.5) - 0.5;
+    x1 = prev || Math.floor(mid - px_step2 * 0.5);
+    x2 = Math.floor(mid + px_step2 * 0.5) - 0.5;
     volume.push({
       x1: x1,
       x2: x2,
