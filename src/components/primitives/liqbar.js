@@ -16,18 +16,6 @@ export default class LiqbarExt {
         let h1 = data.h1
         let h2 = data.h2
 
-        let top = h1 > h2 ? h1 : h2
-
-        this.ctx.strokeStyle = "white"
-        this.ctx.lineWidth = 0.5
-
-        this.ctx.strokeRect(
-            data.x1,
-            y0 - top - 1,
-            w * 2 + 1,
-            top + 1
-        )
-
         // this.ctx.fillStyle = data.green ?
         //     this.style.colorVolUp :
         //     this.style.colorVolDw
@@ -35,18 +23,18 @@ export default class LiqbarExt {
         this.ctx.fillStyle = this.style.colorVolUp
 
         this.ctx.fillRect(
-            data.x1 + 0.5,
+            data.x1,
             y0 - h1 - 0.5,
-            w - 0.5,
+            w,
             h1 + 1
         )
 
         this.ctx.fillStyle = this.style.colorVolDw
 
         this.ctx.fillRect(
-            data.x1 + w,
+            data.x2 - w,
             y0 - h2 - 0.5,
-            w - 0.5,
+            w,
             h2 + 1
         )
     }
