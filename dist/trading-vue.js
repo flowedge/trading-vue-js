@@ -1,5 +1,5 @@
 /*!
- * TradingVue.JS - v0.4.5 - Sun Apr 26 2020
+ * TradingVue.JS - v0.4.5 - Mon Apr 27 2020
  *     https://github.com/C451/trading-vue-js
  *     Copyright (c) 2019 c451 Code's All Right;
  *     Licensed under the MIT license
@@ -6494,7 +6494,7 @@ function GridMaker(id, params) {
     self.startx = (sub[0][0] - range[0]) * r; // Candle Y-transform: (A = scale, B = shift)
 
     self.A = -height / (self.$_hi - self.$_lo);
-    self.B = -self.$_hi * self.A;
+    self.B = -self.$_hi * self.A + 5;
   } // Select nearest good-loking t step (m is target scale)
 
 
@@ -6941,7 +6941,7 @@ var updater_CursorUpdater = /*#__PURE__*/function () {
       return {
         x: Math.floor(xs[i]) - 0.5,
         y: Math.floor(e.y - 2) - 0.5 - grid.offset,
-        y$: grid.screen2$(e.y - 2 - grid.offset),
+        y$: grid.screen2$(e.y - 2 - grid.offset - 5),
         t: (data[i] || [])[0],
         values: Object.assign({
           ohlcv: grid.id === 0 ? data[i] : undefined
