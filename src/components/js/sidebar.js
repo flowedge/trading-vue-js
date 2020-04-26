@@ -134,7 +134,7 @@ export default class Sidebar {
 
         for (var p of points) {
 
-            if (p[0] > this.layout.height) continue
+            if (p[0] > this.layout.height - 20 || p[0] < 20) continue
 
             var x1 = side === 'left' ? w - 0.5 : x - 0.5
             var x2 = side === 'left' ? x1 - 4.5 : x1 + 4.5

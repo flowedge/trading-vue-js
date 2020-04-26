@@ -1,5 +1,5 @@
 /*!
- * TradingVue.JS - v0.4.5 - Sat Apr 25 2020
+ * TradingVue.JS - v0.4.5 - Sun Apr 26 2020
  *     https://github.com/C451/trading-vue-js
  *     Copyright (c) 2019 c451 Code's All Right;
  *     Licensed under the MIT license
@@ -11236,7 +11236,7 @@ var sidebar_Sidebar = /*#__PURE__*/function () {
       try {
         for (_iterator.s(); !(_step = _iterator.n()).done;) {
           var p = _step.value;
-          if (p[0] > this.layout.height) continue;
+          if (p[0] > this.layout.height - 20 || p[0] < 20) continue;
           var x1 = side === 'left' ? w - 0.5 : x - 0.5;
           var x2 = side === 'left' ? x1 - 4.5 : x1 + 4.5;
           this.ctx.moveTo(x1, p[0] - 0.5);
