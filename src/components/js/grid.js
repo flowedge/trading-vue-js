@@ -198,6 +198,8 @@ export default class Grid {
 		//we dont need grid lines
         //this.grid()
 		
+		this.ctx.imageSmoothingEnabled = false; 
+		
 		let dpr = window.devicePixelRatio || 1
 		if (dpr < 1) dpr = 1
 
