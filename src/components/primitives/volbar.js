@@ -14,6 +14,8 @@ export default class VolbarExt {
         let w = data.x2 - data.x1
         let h = Math.floor(data.h)
 
+        this.ctx.save()
+        this.ctx.globalAlpha = 0.5
         this.ctx.fillStyle = data.green ?
             this.style.colorVolUp :
             this.style.colorVolDw
@@ -24,6 +26,7 @@ export default class VolbarExt {
             Math.floor(w),
             Math.floor(h + 1)
         )
+        this.ctx.restore()
 
     }
 

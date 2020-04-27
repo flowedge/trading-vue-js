@@ -1,5 +1,5 @@
 /*!
- * TradingVue.JS - v0.4.5 - Mon Apr 27 2020
+ * TradingVue.JS - v0.4.5 - Tue Apr 28 2020
  *     https://github.com/C451/trading-vue-js
  *     Copyright (c) 2019 c451 Code's All Right;
  *     Licensed under the MIT license
@@ -3427,6 +3427,11 @@ function applyToTag (styleElement, obj) {
           preserveDrawingBuffer: false
         });
         ctx.scale(dpr, dpr);
+        ctx.imageSmoothingEnabled = false;
+        ctx.webkitImageSmoothingEnabled = false;
+        ctx.mozImageSmoothingEnabled = false;
+        ctx.msImageSmoothingEnabled = false;
+        ctx.oImageSmoothingEnabled = false; //console.log(ctx)				
 
         _this.redraw();
       });
@@ -7078,6 +7083,12 @@ var grid_Grid = /*#__PURE__*/function () {
       desynchronized: true,
       preserveDrawingBuffer: false
     });
+    this.ctx.mozImageSmoothingEnabled = false;
+    this.ctx.oImageSmoothingEnabled = false;
+    this.ctx.webkitImageSmoothingEnabled = false;
+    this.ctx.msImageSmoothingEnabled = false;
+    this.ctx.imageSmoothingEnabled = false; //console.log(this.ctx)		
+
     this.comp = comp;
     this.$p = comp.$props;
     this.data = this.$p.sub;
@@ -9431,8 +9442,11 @@ var volbar_VolbarExt = /*#__PURE__*/function () {
       var y0 = this.$p.layout.height;
       var w = data.x2 - data.x1;
       var h = Math.floor(data.h);
+      this.ctx.save();
+      this.ctx.globalAlpha = 0.5;
       this.ctx.fillStyle = data.green ? this.style.colorVolUp : this.style.colorVolDw;
       this.ctx.fillRect(Math.floor(data.x1), Math.floor(y0 - h - 0.5), Math.floor(w), Math.floor(h + 1));
+      this.ctx.restore();
     }
   }]);
 
@@ -11112,6 +11126,12 @@ var sidebar_Sidebar = /*#__PURE__*/function () {
       desynchronized: true,
       preserveDrawingBuffer: false
     });
+    this.ctx.mozImageSmoothingEnabled = false;
+    this.ctx.oImageSmoothingEnabled = false;
+    this.ctx.webkitImageSmoothingEnabled = false;
+    this.ctx.msImageSmoothingEnabled = false;
+    this.ctx.imageSmoothingEnabled = false; //console.log(this.ctx)		
+
     this.comp = comp;
     this.$p = comp.$props;
     this.data = this.$p.sub;
@@ -12181,6 +12201,12 @@ var botbar_Botbar = /*#__PURE__*/function () {
       desynchronized: true,
       preserveDrawingBuffer: true
     });
+    this.ctx.mozImageSmoothingEnabled = false;
+    this.ctx.oImageSmoothingEnabled = false;
+    this.ctx.webkitImageSmoothingEnabled = false;
+    this.ctx.msImageSmoothingEnabled = false;
+    this.ctx.imageSmoothingEnabled = false; //console.log(this.ctx)		
+
     this.comp = comp;
     this.$p = comp.$props;
     this.data = this.$p.sub;
