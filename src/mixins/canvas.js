@@ -16,7 +16,13 @@ export default {
                 canvas.width = rect.width * dpr
                 canvas.height = rect.height * dpr
                 const ctx = canvas.getContext('2d', { alpha: true, desynchronized: true, preserveDrawingBuffer: false });
-                ctx.scale(dpr, dpr)
+                ctx.scale(dpr, dpr)				
+				ctx.imageSmoothingEnabled       = false
+				ctx.webkitImageSmoothingEnabled = false
+				ctx.mozImageSmoothingEnabled    = false
+				ctx.msImageSmoothingEnabled     = false
+				ctx.oImageSmoothingEnabled      = false
+				//console.log(ctx)				
                 this.redraw()
             })
         },

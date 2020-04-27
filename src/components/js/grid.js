@@ -17,6 +17,12 @@ export default class Grid {
 
         this.canvas = canvas
         this.ctx = canvas.getContext('2d', { alpha: true, desynchronized: true, preserveDrawingBuffer: false });
+		this.ctx.mozImageSmoothingEnabled    = false;
+		this.ctx.oImageSmoothingEnabled      = false;
+		this.ctx.webkitImageSmoothingEnabled = false;
+		this.ctx.msImageSmoothingEnabled     = false;
+		this.ctx.imageSmoothingEnabled       = false;
+		//console.log(this.ctx)		
         this.comp = comp
         this.$p = comp.$props
         this.data = this.$p.sub
@@ -28,7 +34,7 @@ export default class Grid {
         this.offset_x = 0
         this.offset_y = 0
         this.deltas = 0 // Wheel delta events
-
+		
         this.listeners()
         this.overlays = []
 
@@ -198,7 +204,6 @@ export default class Grid {
 		//we dont need grid lines
         //this.grid()
 		
-		this.ctx.imageSmoothingEnabled = false; 
 		
 		let dpr = window.devicePixelRatio || 1
 		if (dpr < 1) dpr = 1

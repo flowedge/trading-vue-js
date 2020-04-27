@@ -11,6 +11,12 @@ export default class Sidebar {
 
         this.canvas = canvas
         this.ctx = canvas.getContext('2d', { alpha: true, desynchronized: true, preserveDrawingBuffer: false });
+		this.ctx.mozImageSmoothingEnabled    = false;
+		this.ctx.oImageSmoothingEnabled      = false;
+		this.ctx.webkitImageSmoothingEnabled = false;
+		this.ctx.msImageSmoothingEnabled     = false;
+		this.ctx.imageSmoothingEnabled       = false;
+		//console.log(this.ctx)		
         this.comp = comp
         this.$p = comp.$props
         this.data = this.$p.sub
