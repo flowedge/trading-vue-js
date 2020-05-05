@@ -44,10 +44,6 @@ export default {
     },
     mounted() {
         window.addEventListener('resize', this.onResize)
-        setTimeout(() => {
-            // Async data setup
-            this.$set(this, 'chart', Data)
-        }, 0)
         this.onResize()
     },
     computed: {
@@ -64,15 +60,15 @@ export default {
     },
     data() {
         return {
-            chart: {}, // Data will be here,
+            chart: Data,
             width: window.innerWidth,
             height: window.innerHeight,
             buttons: [
                 'display', 'settings', 'remove'
             ]
-        };
+        }
     }
-};
+}
 </script>
 
 <style>

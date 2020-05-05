@@ -10,7 +10,6 @@
 <script>
 import TradingVue from '../../src/TradingVue.vue'
 import Data from '../data/data_btc.json'
-import Utils from '../../src/stuff/utils.js'
 import DataCube from '../../src/helpers/datacube.js'
 
 export default {
@@ -28,12 +27,8 @@ export default {
     },
     mounted() {
         window.addEventListener('resize', this.onResize)
-        // TODO: simplify the data setup
-        setTimeout(() => {
-            // Async data setup
-            this.$set(this, 'chart', new DataCube(Data))
-        }, 0)
         this.onResize()
+        window.dc = this.chart
     },
     computed: {
         colors() {
@@ -49,12 +44,12 @@ export default {
     },
     data() {
         return {
-            chart: {}, // Data will be here,
+            chart: new DataCube(Data),
             width: window.innerWidth,
             height: window.innerHeight
-        };
+        }
     }
-};
+}
 </script>
 
 <style>
