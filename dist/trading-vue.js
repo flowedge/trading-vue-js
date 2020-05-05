@@ -1,5 +1,5 @@
 /*!
- * TradingVue.JS - v0.5.0 - Thu May 21 2020
+ * TradingVue.JS - v0.5.0 - Mon Jun 01 2020
  *     https://github.com/tvjsx/trading-vue-js
  *     Copyright (c) 2019 C451 Code's All Right;
  *     Licensed under the MIT license
@@ -8062,11 +8062,11 @@ var grid_Grid = /*#__PURE__*/function () {
       this.layout = this.$p.layout.grids[this.id];
       this.interval = this.$p.interval;
       if (!this.layout) return; //we dont need grid lines
-      //this.grid()
-      //chrome 81 not working
-      //var bgcolor = this.$p.colors.colorBack
-      //this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height, bgcolor)
 
+      this.grid(); //chrome 81 not working
+
+      var bgcolor = this.$p.colors.colorBack;
+      this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height, bgcolor);
       this.ctx.fillStyle = this.$p.colors.colorBack;
       this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
       this.overlays.slice(0) // copy
@@ -8318,14 +8318,11 @@ var grid_Grid = /*#__PURE__*/function () {
       if (dpr < 1) dpr = 1; // Realy ? That's it? Issue #63
 
       this.$nextTick(function () {
-        var ctx = canvas.getContext('2d', {
-          alpha: false,
-          desynchronized: true,
-          preserveDrawingBuffer: false
-        });
+        //const ctx = canvas.getContext('2d', { alpha: false, desynchronized: true, preserveDrawingBuffer: false });
         var rect = canvas.getBoundingClientRect();
         canvas.width = rect.width * dpr;
         canvas.height = rect.height * dpr;
+        var ctx = canvas.getContext('2d');
         ctx.scale(dpr, dpr);
         ctx.imageSmoothingEnabled = false;
         ctx.webkitImageSmoothingEnabled = false;
@@ -10395,7 +10392,7 @@ var volbar_VolbarExt = /*#__PURE__*/function () {
       //this.ctx.globalAlpha = 0.5        
 
       this.ctx.fillStyle = data.green ? this.style.colorVolUp : this.style.colorVolDw;
-      this.ctx.fillRect(Math.floor(data.x1), Math.floor(y0 - h), Math.floor(w), Math.floor(h + 1)); //this.ctx.restore()
+      this.ctx.fillRect(Math.floor(data.x1), Math.floor(y0 - h - 0.5), Math.floor(w), Math.floor(h + 1)); //this.ctx.restore()
     }
   }]);
 
@@ -10440,10 +10437,10 @@ var price_Price = /*#__PURE__*/function () {
           var h = config.PANHEIGHT;
           var lbl = bar.price.toFixed(layout.prec);
           ctx.fillStyle = bar.color;
-          var x = -0;
-          var y = bar.y - h * 0.5;
+          var x = -0.5;
+          var y = bar.y - h * 0.5 - 0.5;
           var a = 7;
-          ctx.fillRect(x, y, w + 1, h);
+          ctx.fillRect(x - 0.5, y, w + 1, h);
           ctx.fillStyle = comp.$props.colors.colorTextHL;
           ctx.textAlign = 'left';
           ctx.fillText(lbl, a, y + 15);
@@ -10479,7 +10476,7 @@ var price_Price = /*#__PURE__*/function () {
       var y = layout.$2screen(last[4]);
       var cndl = layout.c_magnet(last[0]);
       return {
-        y: Math.floor(cndl.c),
+        y: Math.floor(cndl.c) - 0.5,
         price: last[4],
         color: last[4] >= last[1] ? this.green() : this.red()
       };
@@ -10492,12 +10489,12 @@ var price_Price = /*#__PURE__*/function () {
   }, {
     key: "green",
     value: function green() {
-      return this.comp.colorPriceUp;
+      return this.comp.colorCandleUp;
     }
   }, {
     key: "red",
     value: function red() {
-      return this.comp.colorPriceDw;
+      return this.comp.colorCandleDw;
     }
   }]);
 
@@ -12008,17 +12005,7 @@ var sidebar_Sidebar = /*#__PURE__*/function () {
 
     PANHEIGHT = comp.config.PANHEIGHT;
     this.canvas = canvas;
-    this.ctx = canvas.getContext('2d', {
-      alpha: false,
-      desynchronized: false,
-      preserveDrawingBuffer: false
-    });
-    this.ctx.mozImageSmoothingEnabled = false;
-    this.ctx.oImageSmoothingEnabled = false;
-    this.ctx.webkitImageSmoothingEnabled = false;
-    this.ctx.msImageSmoothingEnabled = false;
-    this.ctx.imageSmoothingEnabled = false; //console.log(this.ctx)		
-
+    this.ctx = canvas.getContext('2d');
     this.comp = comp;
     this.$p = comp.$props;
     this.data = this.$p.sub;
@@ -12097,7 +12084,6 @@ var sidebar_Sidebar = /*#__PURE__*/function () {
   }, {
     key: "update",
     value: function update() {
-      //Utils.doubleRaf(() => {
       // Update reference to the grid
       this.layout = this.$p.layout.grids[this.id];
       var points = this.layout.ys;
@@ -12108,7 +12094,7 @@ var sidebar_Sidebar = /*#__PURE__*/function () {
           side = this.side;
       var sb = this.layout.sb;
       this.ctx.fillStyle = this.$p.colors.colorBack;
-      this.ctx.font = "13px -apple-system,BlinkMacSystemFont, Segoe UI,Roboto,Oxygen,Ubuntu,Cantarell, Fira Sans,Droid Sans,Helvetica Neue, sans-serif";
+      this.ctx.font = this.$p.font;
 
       switch (side) {
         case 'left':
@@ -12147,18 +12133,15 @@ var sidebar_Sidebar = /*#__PURE__*/function () {
       try {
         for (_iterator.s(); !(_step = _iterator.n()).done;) {
           var p = _step.value;
-          if (p[0] > this.layout.height - 20 || p[0] < 20) continue;
+          if (p[0] > this.layout.height) continue;
           var x1 = side === 'left' ? w - 0.5 : x - 0.5;
           var x2 = side === 'left' ? x1 - 4.5 : x1 + 4.5;
           this.ctx.moveTo(x1, p[0] - 0.5);
           this.ctx.lineTo(x2, p[0] - 0.5);
           var offst = side === 'left' ? -10 : 10;
-          this.ctx.textAlign = side === 'left' ? 'end' : 'start'; //let d = this.layout.prec
-
-          var d = this.layout.prec >= 3 ? 3 : this.layout.prec; // Limit to 3 decimal places at most
-
-          var yValue = Math.abs(p[1]) >= 1.0e+6 ? utils["a" /* default */].changeNumberFormat(p[1], d) : p[1].toFixed(d);
-          this.ctx.fillText(yValue, x1 + offst, p[0] + 4);
+          this.ctx.textAlign = side === 'left' ? 'end' : 'start';
+          var d = this.layout.prec;
+          this.ctx.fillText(p[1].toFixed(d), x1 + offst, p[0] + 4);
         }
       } catch (err) {
         _iterator.e(err);
@@ -12169,7 +12152,7 @@ var sidebar_Sidebar = /*#__PURE__*/function () {
       this.ctx.stroke();
       if (this.$p.grid_id) this.upper_border();
       this.apply_shaders();
-      if (this.$p.cursor.y && this.$p.cursor.y$) this.panel(); //})
+      if (this.$p.cursor.y && this.$p.cursor.y$) this.panel();
     }
   }, {
     key: "apply_shaders",
@@ -12207,10 +12190,7 @@ var sidebar_Sidebar = /*#__PURE__*/function () {
         return;
       }
 
-      var d = this.layout.prec >= 3 ? 3 : this.layout.prec; // Limit to 3 decimal places at most
-      //let lbl = this.$p.cursor.y$.toFixed(this.layout.prec)
-
-      var lbl = Math.abs(this.$p.cursor.y$) >= 1.0e+6 ? utils["a" /* default */].changeNumberFormat(this.$p.cursor.y$, d) : this.$p.cursor.y$.toFixed(d);
+      var lbl = this.$p.cursor.y$.toFixed(this.layout.prec);
       this.ctx.fillStyle = this.$p.colors.colorPanel;
       var panwidth = this.layout.sb + 1;
       var x = -0.5;
@@ -12252,9 +12232,9 @@ var sidebar_Sidebar = /*#__PURE__*/function () {
 
         var f = function f(y) {
           return math.exp((y - _this2.drug.B) / _this2.drug.A);
-        }; //let copy = range.slice()
+        };
 
-
+        var copy = range.slice();
         range[0] = f(new_hi);
         range[1] = f(new_lo);
       }
@@ -16075,8 +16055,9 @@ var oi_price_OIPrice = /*#__PURE__*/function () {
       var layout = this.comp.$props.layout;
       var last = this.comp.$props.data[this.comp.$props.data.length - 1]; // let last = this.comp.$props.data.map(x => x[4])
 
-      var color = last[4] >= last[1] ? this.green() : this.red();
-      var y = layout.$2screen(last[4]);
+      var dir = last[4] >= last[1];
+      var color = dir ? this.green() : this.red();
+      var y = layout.$2screen(last[4]) + (dir ? 1 : 0);
       ctx.strokeStyle = color;
       ctx.setLineDash([1, 1]);
       ctx.beginPath();
@@ -16089,7 +16070,7 @@ var oi_price_OIPrice = /*#__PURE__*/function () {
     key: "last_bar",
     value: function last_bar() {
       //if (!this.data.length) return undefined
-      if (!this.comp.$props.data[this.comp.$props.data.length - 1]) return;
+      if (!this.comp.$props.data[this.comp.$props.data.length - 1]) return undefined;
       var layout = this.comp.$props.layout;
       var last = this.comp.$props.data[this.comp.$props.data.length - 1];
       var y = layout.$2screen(last[4]);
@@ -16127,7 +16108,8 @@ var oi_price_OIPrice = /*#__PURE__*/function () {
 
 
 
-// OI Candle object for OI Candles overlay
+//from https://github.com/hn4002/xcharts/blob/master/src/components/primitives/xcandle.js
+// Candle object for Candles overlay
 var oi_candle_OICandleExt = /*#__PURE__*/function () {
   function OICandleExt(overlay, ctx, data) {
     classCallCheck_default()(this, OICandleExt);
@@ -16141,25 +16123,55 @@ var oi_candle_OICandleExt = /*#__PURE__*/function () {
   createClass_default()(OICandleExt, [{
     key: "draw",
     value: function draw(data) {
-      var body_color = data.c <= data.o ? this.style.colorCandleUp : this.style.colorCandleDw;
-      var wick_color = data.c <= data.o ? this.style.colorWickUp : this.style.colorWickDw;
+      // Line width = 1 or 2?
+      var line_width = this.style.lineWidth;
+      var up_hollow = this.style.upCandleHollow; // body color
+
+      var body_color = data.c <= data.o ? this.style.colorCandleUp : this.style.colorCandleDw; // wick color
+
+      var wick_color = data.c <= data.o ? this.style.colorWickUp : this.style.colorWickDw; // what is this?
+
       var wick_color_sm = this.style.colorWickSm;
-      var w = Math.max(data.w, 1);
-      var hw = Math.max(Math.floor(w * 0.5), 1);
-      var h = Math.abs(data.o - data.c);
-      var max_h = data.c === data.o ? 1 : 2;
-      this.ctx.strokeStyle = w > 1.5 ? wick_color : wick_color_sm;
-      this.ctx.beginPath();
+      var width = Math.max(data.w, 1);
+      var halfwidth = Math.max(Math.floor(width * 0.5), 1);
+      var height = Math.abs(data.o - data.c);
+      var max_h = data.c === data.o ? 1 : 2; // Draw the wick from low to high of 1px wide as a line
+
+      this.ctx.strokeStyle = width > 1.5 ? wick_color : wick_color_sm;
+      this.ctx.lineWidth = line_width;
+      this.ctx.beginPath(); // Higher wick
+
       this.ctx.moveTo(Math.floor(data.x) - 0.5, Math.floor(data.h));
+      this.ctx.lineTo(Math.floor(data.x) - 0.5, Math.floor(Math.min(data.o, data.c))); // Lower wick
+
+      this.ctx.moveTo(Math.floor(data.x) - 0.5, Math.floor(Math.max(data.o, data.c)));
       this.ctx.lineTo(Math.floor(data.x) - 0.5, Math.floor(data.l));
-      this.ctx.stroke();
+      this.ctx.stroke(); // Draw the body
 
       if (data.w > 1.5) {
-        this.ctx.fillStyle = body_color; // TODO: Move common calculations to layout.js
+        // Draw a body as a rectangle if it is thick (>1.5).
+        var hollow = false;
+        if (up_hollow && data.c <= data.o) hollow = true;
 
-        var s = data.c >= data.o ? 1 : -1;
-        this.ctx.fillRect(Math.floor(data.x - hw - 1), Math.floor(data.o - 1), Math.floor(hw * 2 + 1), Math.floor(s * Math.max(h, max_h)));
+        if (hollow) {
+          this.ctx.strokeStyle = body_color;
+          this.ctx.lineWidth = line_width;
+          var s = data.c >= data.o ? 1 : -1;
+          this.ctx.translate(0.5, 0.5);
+          this.ctx.beginPath();
+          this.ctx.rect(Math.floor(data.x - halfwidth - line_width), Math.floor(data.o), Math.floor(halfwidth * 2 + line_width), Math.floor(s * Math.max(height, max_h)));
+          this.ctx.stroke();
+          this.ctx.translate(-0.5, -0.5);
+        } else {
+          this.ctx.fillStyle = body_color;
+
+          var _s = data.c >= data.o ? 1 : -1;
+
+          this.ctx.fillRect(Math.floor(data.x - halfwidth - line_width), Math.floor(data.o), Math.floor(halfwidth * 2 + line_width), Math.floor(_s * Math.max(height, max_h)));
+        }
       } else {
+        // Draw a body as a line if it is too thin.
+        // The line will be drawn of wick_width.
         this.ctx.strokeStyle = body_color;
         this.ctx.beginPath();
         this.ctx.moveTo(Math.floor(data.x) - 0.5, Math.floor(data.h));

@@ -28,10 +28,10 @@ export default class Price {
                 let lbl = bar.price.toFixed(layout.prec)
                 ctx.fillStyle = bar.color
 
-                let x = - 0
-                let y = bar.y - h * 0.5
-                let a = 7                
-                ctx.fillRect(x, y, w + 1, h)
+                let x = - 0.5
+                let y = bar.y - h * 0.5 - 0.5
+                let a = 7
+                ctx.fillRect(x - 0.5, y, w + 1, h)
                 ctx.fillStyle = comp.$props.colors.colorTextHL
                 ctx.textAlign = 'left'
                 ctx.fillText(lbl, a, y + 15)
@@ -70,7 +70,7 @@ export default class Price {
         let y = layout.$2screen(last[4])
         let cndl = layout.c_magnet(last[0])
         return {
-            y: Math.floor(cndl.c),
+            y: Math.floor(cndl.c) - 0.5,
             price: last[4],
             color: last[4] >= last[1] ? this.green() : this.red()
         }
@@ -82,11 +82,11 @@ export default class Price {
     }
 
     green() {
-        return this.comp.colorPriceUp
+        return this.comp.colorCandleUp
     }
 
     red() {
-        return this.comp.colorPriceDw
+        return this.comp.colorCandleDw
     }
 
 }

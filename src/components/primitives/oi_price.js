@@ -51,8 +51,9 @@ export default class OIPrice {
 		
         // let last = this.comp.$props.data.map(x => x[4])
 
-        let color = last[4] >= last[1] ? this.green() : this.red()
-        let y = layout.$2screen(last[4])
+        let dir = last[4] >= last[1]
+        let color = dir ? this.green() : this.red()
+        let y = layout.$2screen(last[4]) + (dir ? 1 : 0)
 
         ctx.strokeStyle = color
         ctx.setLineDash([1, 1])
@@ -66,7 +67,7 @@ export default class OIPrice {
     last_bar() {
 
         //if (!this.data.length) return undefined
-		if (!this.comp.$props.data[this.comp.$props.data.length - 1]) return
+		if (!this.comp.$props.data[this.comp.$props.data.length - 1]) return undefined
         let layout = this.comp.$props.layout
         let last = this.comp.$props.data[this.comp.$props.data.length - 1]
         let y = layout.$2screen(last[4])

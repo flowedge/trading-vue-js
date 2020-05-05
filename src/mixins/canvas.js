@@ -12,10 +12,11 @@ export default {
             canvas.style.height = `${this._attrs.height}px`
             if (dpr < 1) dpr = 1 // Realy ? That's it? Issue #63
             this.$nextTick(() => {
-                const ctx = canvas.getContext('2d', { alpha: false, desynchronized: true, preserveDrawingBuffer: false });
+                //const ctx = canvas.getContext('2d', { alpha: false, desynchronized: true, preserveDrawingBuffer: false });
                 var rect = canvas.getBoundingClientRect()
                 canvas.width = rect.width * dpr
                 canvas.height = rect.height * dpr
+                const ctx = canvas.getContext('2d')
                 ctx.scale(dpr, dpr)
                 ctx.imageSmoothingEnabled = false
                 ctx.webkitImageSmoothingEnabled = false

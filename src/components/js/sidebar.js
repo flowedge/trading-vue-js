@@ -105,7 +105,8 @@ export default class Sidebar {
         var sb = this.layout.sb
 
         this.ctx.fillStyle = this.$p.colors.colorBack
-        this.ctx.font = "13px -apple-system,BlinkMacSystemFont, Segoe UI,Roboto,Oxygen,Ubuntu,Cantarell, Fira Sans,Droid Sans,Helvetica Neue, sans-serif"
+        this.ctx.font = this.$p.font
+        //this.ctx.font = "13px -apple-system,BlinkMacSystemFont, Segoe UI,Roboto,Oxygen,Ubuntu,Cantarell, Fira Sans,Droid Sans,Helvetica Neue, sans-serif"
 
         switch (side) {
             case 'left':
@@ -236,13 +237,13 @@ export default class Sidebar {
         } else {
 
             let px_mid = this.layout.height / 2
-            let new_hi = px_mid - px_mid * (1 / z)
-            let new_lo = px_mid + px_mid * (1 / z)
+            let new_hi = px_mid - px_mid * (1/z)
+            let new_lo = px_mid + px_mid * (1/z)
 
             // Use old mapping to get a new range
             let f = y => math.exp((y - this.drug.B) / this.drug.A)
 
-            //let copy = range.slice()
+            let copy = range.slice()
             range[0] = f(new_hi)
             range[1] = f(new_lo)
 

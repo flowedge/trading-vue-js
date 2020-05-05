@@ -213,11 +213,11 @@ export default class Grid {
         if (!this.layout) return
 
         //we dont need grid lines
-        //this.grid()
+        this.grid()
 
         //chrome 81 not working
-        //var bgcolor = this.$p.colors.colorBack
-        //this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height, bgcolor)
+        var bgcolor = this.$p.colors.colorBack
+        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height, bgcolor)
 
         this.ctx.fillStyle = this.$p.colors.colorBack
         this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height)

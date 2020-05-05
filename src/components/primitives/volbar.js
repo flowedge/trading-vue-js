@@ -23,7 +23,7 @@ export default class VolbarExt {
 
         this.ctx.fillRect(
             Math.floor(data.x1),
-            Math.floor(y0 - h),
+            Math.floor(y0 - h - 0.5),
             Math.floor(w),
             Math.floor(h + 1)
         )
