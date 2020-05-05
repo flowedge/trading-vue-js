@@ -54,7 +54,8 @@ export default {
         this.$emit('custom-event', {
             event: 'register-tools', args: tools
         })
-        this.$on('custom-event', this.emit_ux_event)
+        this.$on('custom-event', e =>
+            this.on_ux_event(e, 'grid'))
     },
     mounted() {
         const el = this.$refs['canvas']
@@ -132,7 +133,8 @@ export default {
                         cls: comp,
                         type: d.type,
                         data: d.data,
-                        settings: d.settings
+                        settings: d.settings,
+                        tf: d.tf
                     })
                     count[d.type] = 0
                 }
@@ -144,6 +146,7 @@ export default {
                         type: x.type,
                         data: x.data,
                         settings: x.settings,
+                        tf: x.tf,
                         num: i,
                         grid_id: this.$props.grid_id,
                         meta: this.$props.meta
@@ -163,7 +166,8 @@ export default {
             }
         },
         emit_ux_event(e) {
-            this.on_ux_event(e, 'grid')
+            let e_pass = this.on_ux_event(e, 'grid')
+            if (e_pass) this.$emit('custom-event', e)
         }
     },
     computed: {
@@ -216,7 +220,7 @@ export default {
                     this.renderer.propagate('keyup', event)
                 },
                 'keydown': event => {
-                    if (!this.is_active) return
+                    if (!this.is_active) return // TODO: is this neeeded?
                     this.renderer.propagate('keydown', event)
                 },
                 'keypress': event => {

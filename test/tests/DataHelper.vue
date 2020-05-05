@@ -14,8 +14,9 @@ import DataCube from '../../src/helpers/datacube.js'
 import Stream from './DataHelper/stream.js'
 
 // Gettin' data through webpeck proxy
-const URL = 'http://localhost:8080/api/v1/klines?symbol='
-const WSS = 'ws://localhost:8080/ws/btcusdt@aggTrade'
+const PORT = location.port
+const URL = `http://localhost:${PORT}/api/v1/klines?symbol=`
+const WSS = `ws://localhost:${PORT}/ws/btcusdt@aggTrade`
 
 export default {
     name: 'DataHelper',
@@ -43,7 +44,7 @@ export default {
             this.chart.onrange(this.load_chunk)
             this.stream = new Stream(WSS)
             this.stream.ontrades = this.on_trades
-            window.DataCube = this.chart // Debug
+            window.dc = this.chart // Debug
         })
 
     },
@@ -124,7 +125,7 @@ export default {
             chart: {},
             width: window.innerWidth,
             height: window.innerHeight
-        };
+        }
     }
-};
+}
 </script>

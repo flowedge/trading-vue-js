@@ -1,26 +1,21 @@
 <template>
-<span>
-    <trading-vue :data="chart" :width="this.width" :height="this.height"
-            :index-based="index_based"
-            :color-back="colors.colorBack"
-            :color-grid="colors.colorGrid"
-            :color-text="colors.colorText">
-    </trading-vue>
-    <span class="gc-mode">
-        <input type="checkbox" v-model="index_based">
-        <label>Index Based</label>
-    </span>
-</span>
+<trading-vue :data="chart" :width="this.width" :height="this.height"
+        :chart-config="{DEFAULT_LEN: 200}"
+        :toolbar="true"
+        :color-back="colors.colorBack"
+        :color-grid="colors.colorGrid"
+        :color-text="colors.colorText">
+</trading-vue>
 </template>
 
 <script>
 import TradingVue from '../../src/TradingVue.vue'
-import Data from '../data/data_aapl.json'
-import Utils from '../../src/stuff/utils.js'
+import Data from '../data/data_renko.json'
+import DataCube from '../../src/helpers/datacube.js'
 
 export default {
-    name: 'Stocks',
-    description: 'Should correctly display dates and hide weekend gaps',
+    name: 'Renko',
+    description: 'Just Renko, what did you expect?',
     props: ['night'],
     components: {
         TradingVue
@@ -33,11 +28,8 @@ export default {
     },
     mounted() {
         window.addEventListener('resize', this.onResize)
-        setTimeout(() => {
-            // Async data setup
-            this.$set(this, 'chart', Data)
-        }, 0)
         this.onResize()
+        window.dc = this.chart
     },
     computed: {
         colors() {
@@ -53,14 +45,14 @@ export default {
     },
     data() {
         return {
-            chart: {}, // Data will be here,
+            chart: new DataCube(Data),
             width: window.innerWidth,
-            height: window.innerHeight,
-            index_based: true
-        };
+            height: window.innerHeight
+        }
     }
-};
+}
 </script>
 
 <style>
+
 </style>

@@ -12,6 +12,7 @@ export default class DCEvents {
             case 'register-tools': this.register_tools(args)
                 break
             case 'tool-selected':
+                if (!args[0]) break // TODO: Quick fix, investigate
                 if (args[0].split(':')[0] === 'System') {
                     this.system_tool(args[0].split(':')[1])
                     break
@@ -122,7 +123,7 @@ export default class DCEvents {
 
         sett.$uuid = `${id}-${Utils.now()}`
 
-        this.tv.$set(this.data, 'selected', id)
+        this.tv.$set(this.data, 'selected', sett.$uuid)
         this.add_trash_icon()
     }
 
@@ -145,8 +146,7 @@ export default class DCEvents {
         let settings = args[0]
         delete settings.id
         let grid_id = args[1]
-        let q = this.layer_query(args[1], args[2])
-        this.merge(`${q}.settings`, settings)
+        this.merge(`${args[3]}.settings`, settings)
     }
 
     // Lock the scrolling mechanism
@@ -170,18 +170,12 @@ export default class DCEvents {
 
         if (!args.length) return
 
-        var q = this.layer_query(args[0], args[1])
-        this.tv.$set(this.data, 'selected', q)
-        this.merge(`${q}.settings`, {
+        this.tv.$set(this.data, 'selected', args[2])
+        this.merge(`${args[2]}.settings`, {
             $selected: true
         })
-        this.add_trash_icon()
-    }
 
-    // Form query for given grid and layer id
-    layer_query(grid_id, id) {
-        let side = grid_id ? 'offchart' : 'onchart'
-        return `${side}.${id.replace('_', '')}`
+        this.add_trash_icon()
     }
 
     add_trash_icon() {
