@@ -139,8 +139,7 @@ export function layout_liq_bar(self) {
     var x1, x2, mid, prev = undefined
 
     // Subset interval against main interval
-    let interval2 = Utils.detect_interval(sub)
-    let ratio = interval2 / $p.interval
+    var [interval2, ratio] = new_interval(layout, $p, sub)
     let px_step2 = layout.px_step * ratio
 
     let splitter = px_step2 > 5 ? 1 : 0

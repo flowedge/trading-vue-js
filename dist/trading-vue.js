@@ -1,5 +1,5 @@
 /*!
- * TradingVue.JS - v0.5.0 - Tue May 05 2020
+ * TradingVue.JS - v0.5.0 - Thu May 07 2020
  *     https://github.com/tvjsx/trading-vue-js
  *     Copyright (c) 2019 C451 Code's All Right;
  *     Licensed under the MIT license
@@ -9708,8 +9708,11 @@ function layout_liq_bar(self) {
       mid,
       prev = undefined; // Subset interval against main interval
 
-  var interval2 = utils["a" /* default */].detect_interval(sub);
-  var ratio = interval2 / $p.interval;
+  var _new_interval5 = new_interval(layout, $p, sub),
+      _new_interval6 = slicedToArray_default()(_new_interval5, 2),
+      interval2 = _new_interval6[0],
+      ratio = _new_interval6[1];
+
   var px_step2 = layout.px_step * ratio;
   var splitter = px_step2 > 5 ? 1 : 0; // A & B are current chart tranformations:
   // A === scale,  B === Y-axis shift
@@ -15040,7 +15043,8 @@ var datacube_DataCube = /*#__PURE__*/function (_DCCore) {
       var tick = data['price'];
       var volume = data['volume'] || 0;
       var candle = data['candle'];
-      var tf = utils["a" /* default */].detect_interval(ohlcv);
+      var tfx = utils["a" /* default */].parse_tf(this.data.chart.tf);
+      var tf = tfx || utils["a" /* default */].detect_interval(ohlcv);
       var t_next = last[0] + tf;
       var now = utils["a" /* default */].now();
       var t = timestamp >= t_next ? now - now % tf : last[0];
@@ -15078,7 +15082,8 @@ var datacube_DataCube = /*#__PURE__*/function (_DCCore) {
       var last = ohlc[ohlc.length - 1];
       var timestamp = data['timestamp'];
       var tick = data['oi'];
-      var tf = utils["a" /* default */].detect_interval(ohlc);
+      var tfx = utils["a" /* default */].parse_tf(this.data.chart.tf);
+      var tf = tfx || utils["a" /* default */].detect_interval(ohlc);
       var t_next = last[0] + tf;
       var now = utils["a" /* default */].now();
       var t = timestamp >= t_next ? now - now % tf : last[0]; //console.log(ohlc)
@@ -15106,7 +15111,8 @@ var datacube_DataCube = /*#__PURE__*/function (_DCCore) {
         var newOhlcv = dataMap.get('ohlcv');
         var oldOhlcv = this.data.chart.data;
         var last = oldOhlcv[oldOhlcv.length - 1];
-        var tf = utils["a" /* default */].detect_interval(oldOhlcv);
+        var tfx = utils["a" /* default */].parse_tf(this.data.chart.tf);
+        var tf = tfx || utils["a" /* default */].detect_interval(oldOhlcv);
         var t_next = last[0] + tf;
         var now = utils["a" /* default */].now();
         var newArr = [];
@@ -15163,7 +15169,9 @@ var datacube_DataCube = /*#__PURE__*/function (_DCCore) {
           var oldOhlc = this.data.offchart[oiIndex].data;
           var _last = oldOhlc[oldOhlc.length - 1];
 
-          var _tf = utils["a" /* default */].detect_interval(oldOhlc);
+          var _tfx = utils["a" /* default */].parse_tf(this.data.chart.tf);
+
+          var _tf = _tfx || utils["a" /* default */].detect_interval(oldOhlc);
 
           var _t_next = _last[0] + _tf;
 
@@ -15221,7 +15229,9 @@ var datacube_DataCube = /*#__PURE__*/function (_DCCore) {
           var oldFunding = this.data.offchart[fundingIndex].data;
           var _last2 = oldFunding[oldFunding.length - 1];
 
-          var _tf2 = utils["a" /* default */].detect_interval(oldFunding);
+          var _tfx2 = utils["a" /* default */].parse_tf(this.data.chart.tf);
+
+          var _tf2 = _tfx2 || utils["a" /* default */].detect_interval(oldFunding);
 
           var _t_next2 = _last2[0] + _tf2;
 
@@ -15249,7 +15259,9 @@ var datacube_DataCube = /*#__PURE__*/function (_DCCore) {
           var oldLiq = this.data.onchart[liqIndex].data;
           var _last3 = oldLiq[oldLiq.length - 1];
 
-          var _tf3 = utils["a" /* default */].detect_interval(oldLiq);
+          var _tfx3 = utils["a" /* default */].parse_tf(this.data.chart.tf);
+
+          var _tf3 = _tfx3 || utils["a" /* default */].detect_interval(oldLiq);
 
           var _t_next3 = _last3[0] + _tf3;
 

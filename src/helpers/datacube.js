@@ -154,7 +154,8 @@ export default class DataCube extends DCCore {
         let tick = data['price']
         let volume = data['volume'] || 0
         let candle = data['candle']
-        let tf = Utils.detect_interval(ohlcv)
+        let tfx = Utils.parse_tf(this.data.chart.tf)
+        let tf = tfx || Utils.detect_interval(ohlcv)
         let t_next = last[0] + tf
         let now = Utils.now()
         let t = timestamp >= t_next ? (now - now % tf) : last[0]
@@ -192,7 +193,8 @@ export default class DataCube extends DCCore {
         let last = ohlc[ohlc.length - 1]
         let timestamp = data['timestamp']
         let tick = data['oi']
-        let tf = Utils.detect_interval(ohlc)
+        let tfx = Utils.parse_tf(this.data.chart.tf)
+        let tf = tfx || Utils.detect_interval(ohlc)
         let t_next = last[0] + tf
         let now = Utils.now()
         let t = timestamp >= t_next ? (now - now % tf) : last[0]
@@ -224,7 +226,8 @@ export default class DataCube extends DCCore {
             let oldOhlcv = this.data.chart.data
 
             let last = oldOhlcv[oldOhlcv.length - 1]
-            let tf = Utils.detect_interval(oldOhlcv)
+            let tfx = Utils.parse_tf(this.data.chart.tf)
+            let tf = tfx || Utils.detect_interval(oldOhlcv)
             let t_next = last[0] + tf
             let now = Utils.now()
             
@@ -282,7 +285,8 @@ export default class DataCube extends DCCore {
                 const oldOhlc = this.data.offchart[oiIndex].data
 
                 let last = oldOhlc[oldOhlc.length - 1]
-                let tf = Utils.detect_interval(oldOhlc)
+                let tfx = Utils.parse_tf(this.data.chart.tf)
+                let tf = tfx || Utils.detect_interval(oldOhlc)
                 let t_next = last[0] + tf
                 let now = Utils.now()
                 
@@ -338,7 +342,8 @@ export default class DataCube extends DCCore {
                 const oldFunding = this.data.offchart[fundingIndex].data
 
                 let last = oldFunding[oldFunding.length - 1]
-                let tf = Utils.detect_interval(oldFunding)
+                let tfx = Utils.parse_tf(this.data.chart.tf)
+                let tf = tfx || Utils.detect_interval(oldFunding)
                 let t_next = last[0] + tf
                 let now = Utils.now()
                 
@@ -365,7 +370,8 @@ export default class DataCube extends DCCore {
                 const oldLiq = this.data.onchart[liqIndex].data
 
                 let last = oldLiq[oldLiq.length - 1]
-                let tf = Utils.detect_interval(oldLiq)
+                let tfx = Utils.parse_tf(this.data.chart.tf)
+                let tf = tfx || Utils.detect_interval(oldLiq)
                 let t_next = last[0] + tf
                 let now = Utils.now()
                 
