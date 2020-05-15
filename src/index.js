@@ -19,7 +19,7 @@ import Seg from './components/primitives/seg.js'
 import { layout_cnv, layout_vol, layout_liq_bar } from './components/js/layout_cnv.js'
 
 const primitives = {
-    Candle, Volbar, Line, Pin, Price, Ray, Seg
+    Candle, Volbar, Line, Pin, Price, Ray, Seg, Liqbar
 }
 
 TradingVue.install = function (Vue) {
@@ -30,8 +30,8 @@ if (typeof window !== 'undefined' && window.Vue) {
     window.Vue.use(TradingVue)
     window.TradingVueLib = {
         TradingVue, Overlay, Utils, Constants,
-        Candle, Volbar, layout_cnv, layout_vol,
-        DataCube, Tool, Interface, primitives, OICandle, OIPrice
+        Candle, Volbar, layout_cnv, layout_vol, layout_liq_bar,
+        DataCube, Tool, Interface, primitives, OICandle, OIPrice, Liqbar
     }
 }
 
@@ -39,6 +39,6 @@ export default TradingVue
 
 export {
     TradingVue, Overlay, Utils, Constants,
-    Candle, Volbar, layout_cnv, layout_vol,
-    DataCube, Tool, Interface, primitives,  OICandle, OIPrice
+    Candle, Volbar, layout_cnv, layout_vol, layout_liq_bar,
+    DataCube, Tool, Interface, primitives,  OICandle, OIPrice, Liqbar
 }

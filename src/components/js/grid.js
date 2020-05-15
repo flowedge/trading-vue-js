@@ -349,15 +349,13 @@ export default class Grid {
 
         if (this.drug.y_r && this.$p.y_transform &&
             !this.$p.y_transform.auto) {
-            doubleRaf(() => {
-                this.comp.$emit('sidebar-transform', {
-                    grid_id: this.id,
-                    range: ls ? (range || this.drug.y_r) : [
-                        this.drug.y_r[0] - offset,
-                        this.drug.y_r[1] - offset,
-                    ]
-                })
-            });
+            this.comp.$emit('sidebar-transform', {
+                grid_id: this.id,
+                range: ls ? (range || this.drug.y_r) : [
+                    this.drug.y_r[0] - offset,
+                    this.drug.y_r[1] - offset,
+                ]
+            })
         }
 
         this.range[0] = this.drug.r[0] + dt
