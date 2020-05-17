@@ -95,7 +95,15 @@ export default {
         colorVolDw() {
             return this.sett.colorVolDw ||
             this.$props.colors.colorVolDw
-        }
+        },
+        upCandleHollow() {
+            return this.sett.upCandleHollow ?
+            this.sett.upCandleHollow : false
+        },
+        lineWidth() {
+            return this.sett.lineWidth ?
+            this.sett.lineWidth : 1
+        },
     },
     data() {
         return { price: {} }

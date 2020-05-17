@@ -1,6 +1,5 @@
 // Interactive canvas-based component
 // Should implement: mousemove, mouseout, mouseup, mousedown, click
-import Utils from '../stuff/utils.js'
 
 export default {
     methods: {
@@ -11,12 +10,12 @@ export default {
             canvas.style.width = `${this._attrs.width}px`
             canvas.style.height = `${this._attrs.height}px`
             if (dpr < 1) dpr = 1 // Realy ? That's it? Issue #63
-            setImmediate(() => {
+            this.$nextTick(() => {
+                const ctx = canvas.getContext('2d', { alpha: true, desynchronized: true, preserveDrawingBuffer: false });
                 var rect = canvas.getBoundingClientRect()
                 canvas.width = rect.width * dpr
                 canvas.height = rect.height * dpr
-                const ctx = canvas.getContext('2d', { alpha: true, desynchronized: true, preserveDrawingBuffer: false });
-                ctx.scale(dpr, dpr)				
+                ctx.scale(dpr, dpr)
 				ctx.imageSmoothingEnabled       = false
 				ctx.webkitImageSmoothingEnabled = false
 				ctx.mozImageSmoothingEnabled    = false

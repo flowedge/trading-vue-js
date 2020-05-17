@@ -31,7 +31,8 @@ export default class Grid {
         this.ctx.webkitImageSmoothingEnabled = false;
         this.ctx.msImageSmoothingEnabled = false;
         this.ctx.imageSmoothingEnabled = false;
-        //console.log(this.ctx)		
+        //console.log(this.ctx)
+
         this.comp = comp
         this.$p = comp.$props
         this.data = this.$p.sub
@@ -135,8 +136,11 @@ export default class Grid {
         })
 
         window.addEventListener("gestureend", event => {
-            event.preventDefault()
+            event.preventDefault(),
+                { passive: false }
         })
+
+        window.addEventListener('touchmove', () => { }, { passive: false });
 
     }
 
@@ -213,10 +217,16 @@ export default class Grid {
             if (!this.layout) return
 
             //we dont need grid lines
-            //this.grid()		
+            this.grid()		
 
             let dpr = window.devicePixelRatio || 1
             if (dpr < 1) dpr = 1
+            var rect = this.canvas.getBoundingClientRect()
+            this.canvas.width = rect.width * dpr
+            this.canvas.height = rect.height * dpr
+
+            //console.log(this.ctx)		
+            this.ctx.scale(dpr, dpr)
 
             //chrome 81 not working
             var bgcolor = this.$p.colors.colorBack
@@ -233,6 +243,8 @@ export default class Grid {
 
             overlays.forEach(l => {
                 if (!l.display) return
+                //trick to have sharp drawing
+                //this.ctx.translate(0.5, 0.5);
                 this.ctx.save()
                 let r = l.renderer
                 //me: what is post_draw/pre_draw for?
@@ -242,6 +254,7 @@ export default class Grid {
                 r.draw(this.ctx)
                 //if (r.post_draw) r.post_draw(this.ctx)	
                 this.ctx.restore()
+                //this.ctx.translate(-0.5, -0.5);
             })
 
             if (this.crosshair) {
@@ -424,6 +437,8 @@ export default class Grid {
         // the lag. No smooth movement and it's annoying.
         // Solution: we could try to calc the layout immediatly
         // somewhere here. Still will hurt the sidebar & bottombar
+
+        //doubleraf fix lag
         doubleRaf(() => {
             this.comp.$emit('range-changed', range)
         });
@@ -432,18 +447,20 @@ export default class Grid {
 
     // Propagate mouse event to overlays
     propagate(name, event) {
-        for (var layer of this.overlays) {
-            if (layer.renderer[name]) {
-                layer.renderer[name](event)
+        doubleRaf(() => {
+            for (var layer of this.overlays) {
+                if (layer.renderer[name]) {
+                    layer.renderer[name](event)
+                }
+                const mouse = layer.renderer.mouse
+                const keys = layer.renderer.keys
+                if (mouse.listeners) {
+                    mouse.emit(name, event)
+                }
+                if (keys && keys.listeners) {
+                    keys.emit(name, event)
+                }
             }
-            const mouse = layer.renderer.mouse
-            const keys = layer.renderer.keys
-            if (mouse.listeners) {
-                mouse.emit(name, event)
-            }
-            if (keys && keys.listeners) {
-                keys.emit(name, event)
-            }
-        }
+        });
     }
 }
