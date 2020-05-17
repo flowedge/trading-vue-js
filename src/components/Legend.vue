@@ -102,10 +102,10 @@ export default {
                     if (x.type == 'OpenInterest') {
                         valuesArr = [
                             {
-                                value: 'Low: '+Utils.changeNumberFormat(lastValueArr[2], 2)
+                                value: 'L ' + Utils.changeNumberFormat(lastValueArr[2], 2)
                             },
                             {
-                                value: 'High: '+Utils.changeNumberFormat(lastValueArr[1], 2)
+                                value: 'H ' + Utils.changeNumberFormat(lastValueArr[1], 2)
                             }
                         ]
                     } else {

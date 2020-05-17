@@ -12272,9 +12272,9 @@ ButtonGroup_component.options.__file = "src/components/ButtonGroup.vue"
 
           if (x.type == 'OpenInterest') {
             valuesArr = [{
-              value: 'Low: ' + utils["a" /* default */].changeNumberFormat(lastValueArr[2], 2)
+              value: 'L ' + utils["a" /* default */].changeNumberFormat(lastValueArr[2], 2)
             }, {
-              value: 'High: ' + utils["a" /* default */].changeNumberFormat(lastValueArr[1], 2)
+              value: 'H ' + utils["a" /* default */].changeNumberFormat(lastValueArr[1], 2)
             }];
           } else {
             valuesArr = lastValueArr.map(function (value) {
