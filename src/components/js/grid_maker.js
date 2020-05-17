@@ -97,7 +97,7 @@ function GridMaker(id, params, master_grid = null) {
         let lens = subn.map(x => x[1].toFixed(self.prec).length)
         lens.push(self.$_hi.toFixed(self.prec).length)
         lens.push(self.$_lo.toFixed(self.prec).length)
-        let str = '0'.repeat(Math.max(...lens)) + '    '
+        let str = '0'.repeat(Math.max(...lens)) + '      ' // Edit: Ray - We need more spaces here so that the sidebar doesnt look so compressed 
         self.sb = ctx.measureText(str).width
         self.sb = Math.max(Math.floor(self.sb), $p.config.SBMIN)
 
@@ -168,7 +168,7 @@ function GridMaker(id, params, master_grid = null) {
         // Candle Y-transform: (A = scale, B = shift)
         if (!grid.logScale) {
             self.A = - height / (self.$_hi - self.$_lo)
-            self.B = - self.$_hi * self.A
+            self.B = (- self.$_hi * self.A) + 10 // Edit: Ray - So that chart doesnt block legend values
         } else {
             self.A = - height / (math.log(self.$_hi) -
                        math.log(self.$_lo))
@@ -312,6 +312,15 @@ function GridMaker(id, params, master_grid = null) {
         self.ys = []
 
         let y1 = self.$_lo - self.$_lo % self.$_step
+
+        if (self.$_lo == 0) {
+            // Edit: Ray - We need this for liquidation bar, so that it doesnt show negative values on sidebar
+            y1 = self.$_step
+        } else if (self.$_lo < 0) {
+            y1 = self.$_lo + self.$_lo % self.$_step
+        } else {
+            y1 = self.$_lo - self.$_lo % self.$_step
+        }
 
         for (var y$ = y1; y$ <= self.$_hi; y$ += self.$_step) {
             let y = Math.floor(y$ * self.A + self.B)
