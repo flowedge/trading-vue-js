@@ -11,13 +11,13 @@ export default class Sidebar {
         PANHEIGHT = comp.config.PANHEIGHT
 
         this.canvas = canvas
-        this.ctx = canvas.getContext('2d', { alpha: true, desynchronized: true, preserveDrawingBuffer: false });
-		this.ctx.mozImageSmoothingEnabled    = false;
-		this.ctx.oImageSmoothingEnabled      = false;
-		this.ctx.webkitImageSmoothingEnabled = false;
-		this.ctx.msImageSmoothingEnabled     = false;
-		this.ctx.imageSmoothingEnabled       = false;
-		//console.log(this.ctx)		
+        this.ctx = canvas.getContext('2d', { alpha: false, desynchronized: false, preserveDrawingBuffer: false });
+        this.ctx.mozImageSmoothingEnabled = false;
+        this.ctx.oImageSmoothingEnabled = false;
+        this.ctx.webkitImageSmoothingEnabled = false;
+        this.ctx.msImageSmoothingEnabled = false;
+        this.ctx.imageSmoothingEnabled = false;
+        //console.log(this.ctx)		
         this.comp = comp
         this.$p = comp.$props
         this.data = this.$p.sub
@@ -37,7 +37,7 @@ export default class Sidebar {
             threshold: 1
         }))
 
-        mc.add( new Hammer.Tap({ event: 'doubletap', taps: 2 }) );
+        mc.add(new Hammer.Tap({ event: 'doubletap', taps: 2 }));
 
         mc.on('panstart', event => {
             if (this.$p.y_transform) {
@@ -95,6 +95,7 @@ export default class Sidebar {
     }
 
     update() {
+        //Utils.doubleRaf(() => {
 
         // Update reference to the grid
         this.layout = this.$p.layout.grids[this.id]
@@ -106,7 +107,7 @@ export default class Sidebar {
         this.ctx.fillStyle = this.$p.colors.colorBack
         this.ctx.font = "13px -apple-system,BlinkMacSystemFont, Segoe UI,Roboto,Oxygen,Ubuntu,Cantarell, Fira Sans,Droid Sans,Helvetica Neue, sans-serif"
 
-        switch(side) {
+        switch (side) {
             case 'left':
                 x = 0
                 y = 0
@@ -167,15 +168,16 @@ export default class Sidebar {
         this.apply_shaders()
 
         if (this.$p.cursor.y && this.$p.cursor.y$) this.panel()
+        //})
 
     }
 
     apply_shaders() {
-        for (var s of this.$p.shaders) {
-            this.ctx.save()
-            s.draw(this.ctx)
-            this.ctx.restore()
-        }
+            for (var s of this.$p.shaders) {
+                this.ctx.save()
+                s.draw(this.ctx)
+                this.ctx.restore()
+            }
     }
 
     upper_border() {
@@ -234,13 +236,13 @@ export default class Sidebar {
         } else {
 
             let px_mid = this.layout.height / 2
-            let new_hi = px_mid - px_mid * (1/z)
-            let new_lo = px_mid + px_mid * (1/z)
+            let new_hi = px_mid - px_mid * (1 / z)
+            let new_lo = px_mid + px_mid * (1 / z)
 
             // Use old mapping to get a new range
             let f = y => math.exp((y - this.drug.B) / this.drug.A)
 
-            let copy = range.slice()
+            //let copy = range.slice()
             range[0] = f(new_hi)
             range[1] = f(new_lo)
 

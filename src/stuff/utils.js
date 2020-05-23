@@ -18,7 +18,7 @@ export default {
     // Start of the day (zero millisecond)
     day_start(t) {
         let start = new Date(t)
-        start.setHours(0,0,0,0)
+        start.setHours(0, 0, 0, 0)
         return start.getTime()
     },
 
@@ -76,21 +76,23 @@ export default {
 
     // Copy layout in reactive way
     copy_layout(obj, new_obj) {
-        for (var k in obj) {
-            if (Array.isArray(obj[k])) {
-                // (some offchart indicators are added/removed)
-                // we need to update layout in a reactive way
-                if (obj[k].length !== new_obj[k].length) {
-                    this.overwrite(obj[k], new_obj[k])
-                    continue
+        this.doubleRaf(() => {
+            for (var k in obj) {
+                if (Array.isArray(obj[k])) {
+                    // (some offchart indicators are added/removed)
+                    // we need to update layout in a reactive way
+                    if (obj[k].length !== new_obj[k].length) {
+                        this.overwrite(obj[k], new_obj[k])
+                        continue
+                    }
+                    for (var m in obj[k]) {
+                        Object.assign(obj[k][m], new_obj[k][m])
+                    }
+                } else {
+                    Object.assign(obj[k], new_obj[k])
                 }
-                for (var m in obj[k]) {
-                    Object.assign(obj[k][m], new_obj[k][m])
-                }
-            } else {
-                Object.assign(obj[k], new_obj[k])
             }
-        }
+        })
     },
 
     // Checks if the ohlcv data is changed (given the new
@@ -106,7 +108,7 @@ export default {
         let len = Math.min(ohlcv.length - 1, 99)
         let min = Infinity
         ohlcv.slice(0, len).forEach((x, i) => {
-            let d = ohlcv[i+1][0] - x[0]
+            let d = ohlcv[i + 1][0] - x[0]
             if (d === d && d < min) min = d
         })
         return min
@@ -124,7 +126,7 @@ export default {
             let ia = new IndexedArray(arr, "0")
             let res = ia.getRange(t1, t2)
             return [res]
-        } catch(e) {
+        } catch (e) {
             // Something wrong with fancy slice lib
             // Fast fix: fallback to filter
             return [arr.filter(x =>
@@ -136,9 +138,9 @@ export default {
     // Fast filter (index-based)
     fast_filter_i(arr, t1, t2) {
         if (!arr.length) return arr
-        let i1 =  Math.floor(t1)
+        let i1 = Math.floor(t1)
         if (i1 < 0) i1 = 0
-        let i2 =  Math.floor(t2 + 1)
+        let i2 = Math.floor(t2 + 1)
         let res = arr.slice(i1, i2)
         return [res, i1]
     },
@@ -183,34 +185,34 @@ export default {
             c += n.toString(16)
         }
         return c
-	},
+    },
     countDecimals(value) {
-        if((value|0) === value) return 0;
-        return value.toString().split(".")[1].length || 0; 
-	},
-	
+        if ((value | 0) === value) return 0;
+        return value.toString().split(".")[1].length || 0;
+    },
+
     changeNumberFormat(value, precision) {
         // Nine Zeroes for Billions
         return Math.abs(Number(value)) >= 1.0e+9
-		
-        ? (Number(value) / 1.0e+9).toFixed(precision) + "B"
-        // Six Zeroes for Millions 
-        : Math.abs(Number(value)) >= 1.0e+6
-		
-        ? (Number(value) / 1.0e+6).toFixed(precision) + "M"
-		
-        : Number(value);
-		
+
+            ? (Number(value) / 1.0e+9).toFixed(precision) + "B"
+            // Six Zeroes for Millions 
+            : Math.abs(Number(value)) >= 1.0e+6
+
+                ? (Number(value) / 1.0e+6).toFixed(precision) + "M"
+
+                : Number(value);
+
     },
-    
+
     numberWithCommas(x) {
         return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");
     },
-	
-	setImmediatePromise() {
-		return new Promise((resolve) => {
-			setImmediate(() => resolve());
-		});
+
+    setImmediatePromise() {
+        return new Promise((resolve) => {
+            setImmediate(() => resolve());
+        });
     },
 
     // Parse timeframe or return value in ms
@@ -220,7 +222,14 @@ export default {
         } else {
             return smth
         }
-    }
+    },
+
+    doubleRaf(callback) {
+        //console.log('doubleRaf');
+        requestAnimationFrame(() => {
+            requestAnimationFrame(callback);
+        });
+    },
 
 }
 

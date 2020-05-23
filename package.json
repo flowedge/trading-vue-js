@@ -62,8 +62,9 @@
   "dependencies": {
     "@babel/runtime": "^7.9.2",
     "@kensingtontech/hamsterjs": "git+https://github.com/KensingtonTech/hamster.js.git",
+    "@squadette/hammerjs": "git+https://github.com/squadette/hammer.js.git",
     "arrayslicer": "^1.2.3",
-    "hammerjs": "^2.0.8",
+    "hammerjs": "git+https://github.com/henkkelder/hammer.js.git",
     "moment": "^2.24.0",
     "vue": "^2.6.11"
   }

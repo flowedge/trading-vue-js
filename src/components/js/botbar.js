@@ -9,13 +9,13 @@ export default class Botbar {
     constructor(canvas, comp) {
 
         this.canvas = canvas
-        this.ctx = canvas.getContext('2d', { alpha: false, desynchronized: true, preserveDrawingBuffer: true });
-		this.ctx.mozImageSmoothingEnabled    = false;
-		this.ctx.oImageSmoothingEnabled      = false;
-		this.ctx.webkitImageSmoothingEnabled = false;
-		this.ctx.msImageSmoothingEnabled     = false;
-		this.ctx.imageSmoothingEnabled       = false;
-		//console.log(this.ctx)		
+        this.ctx = canvas.getContext('2d', { alpha: false, desynchronized: false, preserveDrawingBuffer: false });
+        this.ctx.mozImageSmoothingEnabled = false;
+        this.ctx.oImageSmoothingEnabled = false;
+        this.ctx.webkitImageSmoothingEnabled = false;
+        this.ctx.msImageSmoothingEnabled = false;
+        this.ctx.imageSmoothingEnabled = false;
+        //console.log(this.ctx)		
         this.comp = comp
         this.$p = comp.$props
         this.data = this.$p.sub
@@ -25,6 +25,7 @@ export default class Botbar {
     }
 
     update() {
+        //Utils.doubleRaf(() => {
 
         this.grid_0 = this.layout.grids[0]
 
@@ -69,33 +70,33 @@ export default class Botbar {
         this.apply_shaders()
         if (this.$p.cursor.x && this.$p.cursor.t !== undefined)
             this.panel()
+        //})
 
     }
 
     apply_shaders() {
-        for (var s of this.$p.shaders) {
-            this.ctx.save()
-            s.draw(this.ctx)
-            this.ctx.restore()
-        }
+            for (var s of this.$p.shaders) {
+                this.ctx.save()
+                s.draw(this.ctx)
+                this.ctx.restore()
+            }
     }
 
     panel() {
+            let lbl = this.format_cursor_x()
+            this.ctx.fillStyle = this.$p.colors.colorPanel
 
-        let lbl = this.format_cursor_x()
-        this.ctx.fillStyle = this.$p.colors.colorPanel
+            let measure = this.ctx.measureText(lbl + '    ')
+            let panwidth = Math.floor(measure.width)
+            let cursor = this.$p.cursor.x
+            let x = Math.floor(cursor - panwidth * 0.5)
+            let y = - 0.5
+            let panheight = this.comp.config.PANHEIGHT
+            this.ctx.fillRect(x, y, panwidth, panheight + 0.5)
 
-        let measure = this.ctx.measureText(lbl + '    ')
-        let panwidth = Math.floor(measure.width)
-        let cursor = this.$p.cursor.x
-        let x = Math.floor(cursor - panwidth * 0.5)
-        let y = - 0.5
-        let panheight = this.comp.config.PANHEIGHT
-        this.ctx.fillRect(x, y, panwidth, panheight + 0.5)
-
-        this.ctx.fillStyle = this.$p.colors.colorTextHL
-        this.ctx.textAlign = 'center'
-        this.ctx.fillText(lbl, cursor, y + 16)
+            this.ctx.fillStyle = this.$p.colors.colorTextHL
+            this.ctx.textAlign = 'center'
+            this.ctx.fillText(lbl, cursor, y + 16)
 
     }
 

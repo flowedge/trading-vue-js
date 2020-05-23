@@ -109,6 +109,7 @@ function GridMaker(id, params, master_grid = null) {
         var max_r = 0, max_l = 0
 
         // Get max lengths of integer and fractional parts
+        if (!data.length) return
         data.forEach(x => {
             var str = x[1].toString()
             // Edit: Ray (No need to check for exponential data, change all to regular format)
@@ -252,7 +253,7 @@ function GridMaker(id, params, master_grid = null) {
 
             for (var i = 0; i < sub.length; i++) {
                 let p = sub[i]
-                if (p[0] % self.t_step === 0) {
+                if (p[0] % self.t_step === 0) {                    
                     let x = Math.floor((p[0] - range[0]) * r)
                     self.xs.push([x, p])
                 }
@@ -280,7 +281,7 @@ function GridMaker(id, params, master_grid = null) {
 
         let t = self.xs[0][1][0]
         while (true) {
-            t -= self.t_step
+            t -= self.t_step            
             let x = Math.floor((t  - range[0]) * r)
             if (x < 0) break
             if (t % interval === 0) {
@@ -295,7 +296,7 @@ function GridMaker(id, params, master_grid = null) {
 
         let t = self.xs[self.xs.length - 1][1][0]
         while (true) {
-            t += self.t_step
+            t += self.t_step            
             let x = Math.floor((t  - range[0]) * r)
             if (x > self.spacex) break
             if (t % interval === 0) {
@@ -449,8 +450,7 @@ function GridMaker(id, params, master_grid = null) {
                 self.master_grid = master_grid
             }
 
-            self.grid = grid // Grid params
-
+            self.grid = grid // Grid params            
             // Here we add some helpful functions for
             // plugin creators
             return layout_fn(self, range)
