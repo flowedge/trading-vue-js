@@ -57,7 +57,15 @@ export default {
         },
         colorBack: {
             type: String,
-            default: '#121826'
+            default: '#151515'
+        },
+        colorBackSidebar: {
+            type: String,
+            default: '#151515'
+        },
+        colorBackBotbar: {
+            type: String,
+            default: '#151515'
         },
         colorGrid: {
             type: String,
@@ -112,7 +120,8 @@ export default {
             default: '#565c68'
         },
         colorTbBack: {
-            type: String
+            type: String,
+            default: '#151515'
         },
         colorTbBorder: {
             type: String,

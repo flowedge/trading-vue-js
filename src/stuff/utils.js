@@ -230,6 +230,6 @@ export default {
             requestAnimationFrame(callback);
         });
     },
-
+    
 }
 

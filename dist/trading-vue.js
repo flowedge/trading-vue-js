@@ -1,5 +1,5 @@
 /*!
- * TradingVue.JS - v0.5.0 - Mon Jun 01 2020
+ * TradingVue.JS - v0.5.0 - Wed Jun 03 2020
  *     https://github.com/tvjsx/trading-vue-js
  *     Copyright (c) 2019 C451 Code's All Right;
  *     Licensed under the MIT license
@@ -7828,6 +7828,7 @@ var hamster_default = /*#__PURE__*/__webpack_require__.n(hamsterjs_hamster);
 
 
 
+
 function grid_createForOfIteratorHelper(o) { if (typeof Symbol === "undefined" || o[Symbol.iterator] == null) { if (Array.isArray(o) || (o = grid_unsupportedIterableToArray(o))) { var i = 0; var F = function F() {}; return { s: F, n: function n() { if (i >= o.length) return { done: true }; return { done: false, value: o[i++] }; }, e: function e(_e) { throw _e; }, f: F }; } throw new TypeError("Invalid attempt to iterate non-iterable instance.\nIn order to be iterable, non-array objects must have a [Symbol.iterator]() method."); } var it, normalCompletion = true, didErr = false, err; return { s: function s() { it = o[Symbol.iterator](); }, n: function n() { var step = it.next(); normalCompletion = step.done; return step; }, e: function e(_e2) { didErr = true; err = _e2; }, f: function f() { try { if (!normalCompletion && it["return"] != null) it["return"](); } finally { if (didErr) throw err; } } }; }
 
 function grid_unsupportedIterableToArray(o, minLen) { if (!o) return; if (typeof o === "string") return grid_arrayLikeToArray(o, minLen); var n = Object.prototype.toString.call(o).slice(8, -1); if (n === "Object" && o.constructor) n = o.constructor.name; if (n === "Map" || n === "Set") return Array.from(n); if (n === "Arguments" || /^(?:Ui|I)nt(?:8|16|32)(?:Clamped)?Array$/.test(n)) return grid_arrayLikeToArray(o, minLen); }
@@ -7852,17 +7853,12 @@ var grid_Grid = /*#__PURE__*/function () {
     this.MIN_ZOOM = comp.config.MIN_ZOOM;
     this.MAX_ZOOM = comp.config.MAX_ZOOM;
     this.canvas = canvas;
-    this.ctx = canvas.getContext('2d', {
-      alpha: false,
-      desynchronized: false,
-      preserveDrawingBuffer: false
-    });
+    this.ctx = canvas.getContext('2d');
     this.ctx.mozImageSmoothingEnabled = false;
     this.ctx.oImageSmoothingEnabled = false;
     this.ctx.webkitImageSmoothingEnabled = false;
     this.ctx.msImageSmoothingEnabled = false;
-    this.ctx.imageSmoothingEnabled = false; //console.log(this.ctx)
-
+    this.ctx.imageSmoothingEnabled = false;
     this.comp = comp;
     this.$p = comp.$props;
     this.data = this.$p.sub;
@@ -7884,10 +7880,9 @@ var grid_Grid = /*#__PURE__*/function () {
     value: function listeners() {
       var _this = this;
 
-      var hamster = hamster_default()(this.canvas, false); //hamster.wheel((event, delta) => this.mousezoom(-delta * 50, event))
-
+      var hamster = hamster_default()(this.canvas, false);
       hamster.wheel(function (event, delta) {
-        return _this.mousezoom(delta * -80, event);
+        return _this.mousezoom(-delta * 50, event);
       });
       var mc = new hammer["Manager"](this.canvas);
       mc.add(new hammer["Pan"]());
@@ -7899,7 +7894,7 @@ var grid_Grid = /*#__PURE__*/function () {
       mc.on('panstart', function (event) {
         if (_this.cursor.scroll_lock) return;
         var tfrm = _this.$p.y_transform;
-        _this.drag = {
+        _this.drug = {
           x: event.center.x + _this.offset_x,
           y: event.center.y + _this.offset_y,
           r: _this.range.slice(),
@@ -7920,8 +7915,8 @@ var grid_Grid = /*#__PURE__*/function () {
         _this.comp.$emit('chart-panned');
       });
       mc.on('panmove', function (event) {
-        if (_this.drag !== null) {
-          _this.mousedrag(_this.drag.x + event.deltaX, _this.drag.y + event.deltaY);
+        if (_this.drug) {
+          _this.mousedrag(_this.drug.x + event.deltaX, _this.drug.y + event.deltaY);
 
           _this.comp.$emit('cursor-changed', {
             grid_id: _this.id,
@@ -7931,7 +7926,7 @@ var grid_Grid = /*#__PURE__*/function () {
         }
       });
       mc.on('panend', function () {
-        _this.drag = null;
+        _this.drug = null;
 
         _this.comp.$emit('cursor-locked', false);
       });
@@ -7942,9 +7937,7 @@ var grid_Grid = /*#__PURE__*/function () {
           y: event.center.y + _this.offset_y
         });
 
-        utils["a" /* default */].doubleRaf(function () {
-          return _this.update();
-        }); //this.update()
+        _this.update();
       });
       mc.on('pinchstart', function () {
         _this.pinch = {
@@ -7965,26 +7958,26 @@ var grid_Grid = /*#__PURE__*/function () {
         event.preventDefault();
       });
       window.addEventListener("gestureend", function (event) {
-        event.preventDefault(), {
-          passive: false
-        };
+        event.preventDefault();
       });
     }
   }, {
     key: "mousemove",
     value: function mousemove(event) {
-      //doubleRaf(() => {
-      this.comp.$emit('cursor-changed', {
-        grid_id: this.id,
-        x: event.layerX,
-        y: event.layerY + this.layout.offset
-      }); //});
-      // TODO: Temp solution, need to implement
-      // a proper way to get the chart el offset
+      if (!this.mousemoving) {
+        this.mousemoving = true;
+        this.comp.$emit('cursor-changed', {
+          grid_id: this.id,
+          x: event.layerX,
+          y: event.layerY + this.layout.offset
+        }); // TODO: Temp solution, need to implement
+        // a proper way to get the chart el offset
 
-      this.offset_x = event.layerX - event.pageX + window.scrollX;
-      this.offset_y = event.layerY - event.pageY + this.layout.offset + window.scrollY;
-      this.propagate('mousemove', event);
+        this.offset_x = event.layerX - event.pageX + window.scrollX;
+        this.offset_y = event.layerY - event.pageY + this.layout.offset + window.scrollY;
+        this.propagate('mousemove', event);
+        this.mousemoving = false;
+      }
     }
   }, {
     key: "mouseout",
@@ -7995,7 +7988,7 @@ var grid_Grid = /*#__PURE__*/function () {
   }, {
     key: "mouseup",
     value: function mouseup(event) {
-      this.drag = null; //    this.pinch = null
+      this.drug = null; //    this.pinch = null
 
       this.comp.$emit('cursor-locked', false);
       this.propagate('mouseup', event);
@@ -8019,29 +8012,21 @@ var grid_Grid = /*#__PURE__*/function () {
   }, {
     key: "new_layer",
     value: function new_layer(layer) {
-      var _this2 = this;
-
       if (layer.name === 'crosshair') {
         this.crosshair = layer;
       } else {
         this.overlays.push(layer);
       }
 
-      utils["a" /* default */].doubleRaf(function () {
-        return _this2.update();
-      });
+      this.update();
     }
   }, {
     key: "del_layer",
     value: function del_layer(id) {
-      var _this3 = this;
-
       this.overlays = this.overlays.filter(function (x) {
         return x.id !== id;
       });
-      utils["a" /* default */].doubleRaf(function () {
-        return _this3.update();
-      });
+      this.update();
     }
   }, {
     key: "show_hide_layer",
@@ -8054,48 +8039,46 @@ var grid_Grid = /*#__PURE__*/function () {
   }, {
     key: "update",
     value: function update() {
-      var _this4 = this;
-
-      //doubleRaf(() => {
       // Update reference to the grid
       // TODO: check what happens if data changes interval
       this.layout = this.$p.layout.grids[this.id];
       this.interval = this.$p.interval;
-      if (!this.layout) return; //we dont need grid lines
+      if (!this.layout) return;
+      this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+      this.grid();
+      var overlays = [];
+      overlays.push.apply(overlays, toConsumableArray_default()(this.overlays)); // z-index sorting
 
-      this.grid(); //chrome 81 not working
-
-      var bgcolor = this.$p.colors.colorBack;
-      this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height, bgcolor);
-      this.ctx.fillStyle = this.$p.colors.colorBack;
-      this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height);
-      this.overlays.slice(0) // copy
-      .sort(function (l1, l2) {
+      overlays.sort(function (l1, l2) {
         return l1.z - l2.z;
-      }) // z-index sorting
-      .forEach(function (l) {
-        if (!l.display) return;
-
-        _this4.ctx.save();
-
-        var r = l.renderer; //if (!r.length) return todo
-        //me: what is post_draw/pre_draw for?
-        //c4: just in case for now (for overlay devs)                    
-
-        if (r.pre_draw) r.pre_draw(_this4.ctx); //console.log(r)
-        //console.log(this.ctx)
-
-        r.draw(_this4.ctx);
-        if (r.post_draw) r.post_draw(_this4.ctx);
-
-        _this4.ctx.restore();
       });
+
+      for (var i = 0; i < overlays.length; i++) {
+        //console.log(overlays[i])
+        this.ctx.save();
+        var r = overlays[i].renderer;
+        r.draw(this.ctx);
+        this.ctx.restore();
+      }
+      /*
+      // z-index sorting
+      overlays.sort((l1, l2) => l1.z - l2.z)
+       overlays.forEach(l => {
+          if (!l.display) return
+          this.ctx.save()
+          let r = l.renderer
+          //if (r.pre_draw) r.pre_draw(this.ctx)
+          r.draw(this.ctx)
+          //if (r.post_draw) r.post_draw(this.ctx)
+          this.ctx.restore()
+      }) 
+      */
+
 
       if (this.crosshair) {
         this.crosshair.renderer.draw(this.ctx);
-      } //});
-
-    } // Actually draws the grid (for real)    
+      }
+    } // Actually draws the grid (for real)
 
   }, {
     key: "grid",
@@ -8195,28 +8178,28 @@ var grid_Grid = /*#__PURE__*/function () {
   }, {
     key: "mousedrag",
     value: function mousedrag(x, y) {
-      var dt = this.drag.t * (this.drag.x - x) / this.layout.width;
+      var dt = this.drug.t * (this.drug.x - x) / this.layout.width;
       var d$ = this.layout.$_hi - this.layout.$_lo;
-      d$ *= (this.drag.y - y) / this.layout.height;
-      var offset = this.drag.o + d$;
+      d$ *= (this.drug.y - y) / this.layout.height;
+      var offset = this.drug.o + d$;
       var ls = this.layout.grid.logScale;
 
-      if (ls && this.drag.y_r) {
-        var dy = this.drag.y - y;
-        var range = this.drag.y_r.slice();
-        range[0] = math.exp((0 - this.drag.B + dy) / this.layout.A);
-        range[1] = math.exp((this.layout.height - this.drag.B + dy) / this.layout.A);
+      if (ls && this.drug.y_r) {
+        var dy = this.drug.y - y;
+        var range = this.drug.y_r.slice();
+        range[0] = math.exp((0 - this.drug.B + dy) / this.layout.A);
+        range[1] = math.exp((this.layout.height - this.drug.B + dy) / this.layout.A);
       }
 
-      if (this.drag.y_r && this.$p.y_transform && !this.$p.y_transform.auto) {
+      if (this.drug.y_r && this.$p.y_transform && !this.$p.y_transform.auto) {
         this.comp.$emit('sidebar-transform', {
           grid_id: this.id,
-          range: ls ? range || this.drag.y_r : [this.drag.y_r[0] - offset, this.drag.y_r[1] - offset]
+          range: ls ? range || this.drug.y_r : [this.drug.y_r[0] - offset, this.drug.y_r[1] - offset]
         });
       }
 
-      this.range[0] = this.drag.r[0] + dt;
-      this.range[1] = this.drag.r[1] + dt;
+      this.range[0] = this.drug.r[0] + dt;
+      this.range[1] = this.drug.r[1] + dt;
       this.change_range();
     }
   }, {
@@ -8246,8 +8229,7 @@ var grid_Grid = /*#__PURE__*/function () {
       // and keep scrolling,
       // the chart continues to scale down a little.
       // Solution: I don't know yet
-      if (!this.range.length || this.data.length < 2) return; //doubleRaf(() => {
-
+      if (!this.range.length || this.data.length < 2) return;
       var l = this.data.length - 1;
       var data = this.data;
       var range = this.range;
@@ -8260,8 +8242,9 @@ var grid_Grid = /*#__PURE__*/function () {
       // the lag. No smooth movement and it's annoying.
       // Solution: we could try to calc the layout immediatly
       // somewhere here. Still will hurt the sidebar & bottombar
+      //this.comp.$emit('range-changed', range)
 
-      this.comp.$emit('range-changed', [Math.round(range[0]), Math.round(range[1])]); //});
+      this.comp.$emit('range-changed', [Math.round(range[0]), Math.round(range[1])]);
     } // Propagate mouse event to overlays
 
   }, {
@@ -8318,12 +8301,12 @@ var grid_Grid = /*#__PURE__*/function () {
       if (dpr < 1) dpr = 1; // Realy ? That's it? Issue #63
 
       this.$nextTick(function () {
-        //const ctx = canvas.getContext('2d', { alpha: false, desynchronized: true, preserveDrawingBuffer: false });
         var rect = canvas.getBoundingClientRect();
         canvas.width = rect.width * dpr;
         canvas.height = rect.height * dpr;
-        var ctx = canvas.getContext('2d');
-        ctx.scale(dpr, dpr);
+        var ctx = canvas.getContext('2d'); //dont scale if not UHD/retina
+
+        if (dpr > 1) ctx.scale(dpr, dpr);
         ctx.imageSmoothingEnabled = false;
         ctx.webkitImageSmoothingEnabled = false;
         ctx.mozImageSmoothingEnabled = false;
@@ -8372,7 +8355,7 @@ var grid_Grid = /*#__PURE__*/function () {
 
       if (!this.renderer) return;
       utils["a" /* default */].doubleRaf(function () {
-        _this3.renderer.update(); //sidebar , botbar, grid
+        _this3.renderer.update(); //sidebar , botbar, grid                                                
 
       });
     }
@@ -8494,7 +8477,7 @@ var crosshair_Crosshair = /*#__PURE__*/function () {
 
       if (this.$p.cursor.grid_id === this.layout.id) {
         ctx.moveTo(0, this.y);
-        ctx.lineTo(this.layout.width - 0.5, this.y);
+        ctx.lineTo(this.layout.width, this.y);
       }
 
       ctx.stroke();
@@ -11770,7 +11753,7 @@ function Gridvue_type_script_lang_js_arrayLikeToArray(arr, len) { if (len == nul
         overflow: 'hidden'
       },
       style: {
-        backgroundColor: this.$props.colors.colorBack
+        background: this.$props.colors.colorBack
       },
       hs: [h(components_Crosshair, {
         props: this.common_props(),
@@ -12006,6 +11989,12 @@ var sidebar_Sidebar = /*#__PURE__*/function () {
     PANHEIGHT = comp.config.PANHEIGHT;
     this.canvas = canvas;
     this.ctx = canvas.getContext('2d');
+    this.ctx.mozImageSmoothingEnabled = false;
+    this.ctx.oImageSmoothingEnabled = false;
+    this.ctx.webkitImageSmoothingEnabled = false;
+    this.ctx.msImageSmoothingEnabled = false;
+    this.ctx.imageSmoothingEnabled = false; //console.log(this.ctx)		
+
     this.comp = comp;
     this.$p = comp.$props;
     this.data = this.$p.sub;
@@ -12084,6 +12073,7 @@ var sidebar_Sidebar = /*#__PURE__*/function () {
   }, {
     key: "update",
     value: function update() {
+      //Utils.doubleRaf(() => {
       // Update reference to the grid
       this.layout = this.$p.layout.grids[this.id];
       var points = this.layout.ys;
@@ -12093,8 +12083,8 @@ var sidebar_Sidebar = /*#__PURE__*/function () {
           h,
           side = this.side;
       var sb = this.layout.sb;
-      this.ctx.fillStyle = this.$p.colors.colorBack;
-      this.ctx.font = this.$p.font;
+      this.ctx.fillStyle = this.$p.colors.colorBackSidebar;
+      this.ctx.font = "13px -apple-system,BlinkMacSystemFont, Segoe UI,Roboto,Oxygen,Ubuntu,Cantarell, Fira Sans,Droid Sans,Helvetica Neue, sans-serif";
 
       switch (side) {
         case 'left':
@@ -12133,15 +12123,18 @@ var sidebar_Sidebar = /*#__PURE__*/function () {
       try {
         for (_iterator.s(); !(_step = _iterator.n()).done;) {
           var p = _step.value;
-          if (p[0] > this.layout.height) continue;
+          if (p[0] > this.layout.height - 20 || p[0] < 20) continue;
           var x1 = side === 'left' ? w - 0.5 : x - 0.5;
           var x2 = side === 'left' ? x1 - 4.5 : x1 + 4.5;
           this.ctx.moveTo(x1, p[0] - 0.5);
           this.ctx.lineTo(x2, p[0] - 0.5);
           var offst = side === 'left' ? -10 : 10;
-          this.ctx.textAlign = side === 'left' ? 'end' : 'start';
-          var d = this.layout.prec;
-          this.ctx.fillText(p[1].toFixed(d), x1 + offst, p[0] + 4);
+          this.ctx.textAlign = side === 'left' ? 'end' : 'start'; //let d = this.layout.prec
+
+          var d = this.layout.prec >= 3 ? 3 : this.layout.prec; // Limit to 3 decimal places at most
+
+          var yValue = Math.abs(p[1]) >= 1.0e+6 ? utils["a" /* default */].changeNumberFormat(p[1], d) : p[1].toFixed(d);
+          this.ctx.fillText(yValue, x1 + offst, p[0] + 4);
         }
       } catch (err) {
         _iterator.e(err);
@@ -12152,7 +12145,7 @@ var sidebar_Sidebar = /*#__PURE__*/function () {
       this.ctx.stroke();
       if (this.$p.grid_id) this.upper_border();
       this.apply_shaders();
-      if (this.$p.cursor.y && this.$p.cursor.y$) this.panel();
+      if (this.$p.cursor.y && this.$p.cursor.y$) this.panel(); //})
     }
   }, {
     key: "apply_shaders",
@@ -12190,7 +12183,10 @@ var sidebar_Sidebar = /*#__PURE__*/function () {
         return;
       }
 
-      var lbl = this.$p.cursor.y$.toFixed(this.layout.prec);
+      var d = this.layout.prec >= 3 ? 3 : this.layout.prec; // Limit to 3 decimal places at most
+      //let lbl = this.$p.cursor.y$.toFixed(this.layout.prec)
+
+      var lbl = Math.abs(this.$p.cursor.y$) >= 1.0e+6 ? utils["a" /* default */].changeNumberFormat(this.$p.cursor.y$, d) : this.$p.cursor.y$.toFixed(d);
       this.ctx.fillStyle = this.$p.colors.colorPanel;
       var panwidth = this.layout.sb + 1;
       var x = -0.5;
@@ -12287,7 +12283,7 @@ var sidebar_Sidebar = /*#__PURE__*/function () {
         height: layout.height
       },
       style: {
-        backgroundColor: this.$props.colors.colorBack
+        backgroundColor: this.$props.colors.colorBackSidebar
       }
     });
   },
@@ -13085,11 +13081,7 @@ var botbar_Botbar = /*#__PURE__*/function () {
     classCallCheck_default()(this, Botbar);
 
     this.canvas = canvas;
-    this.ctx = canvas.getContext('2d', {
-      alpha: false,
-      desynchronized: false,
-      preserveDrawingBuffer: false
-    });
+    this.ctx = canvas.getContext('2d');
     this.ctx.mozImageSmoothingEnabled = false;
     this.ctx.oImageSmoothingEnabled = false;
     this.ctx.webkitImageSmoothingEnabled = false;
@@ -13111,7 +13103,7 @@ var botbar_Botbar = /*#__PURE__*/function () {
       var width = this.layout.botbar.width;
       var height = this.layout.botbar.height;
       var sb = this.layout.grids[0].sb;
-      this.ctx.fillStyle = this.$p.colors.colorBack;
+      this.ctx.fillStyle = this.$p.colors.colorBackBotbar;
       this.ctx.font = "13px -apple-system,BlinkMacSystemFont, Segoe UI,Roboto,Oxygen,Ubuntu,Cantarell, Fira Sans,Droid Sans,Helvetica Neue, sans-serif";
       this.ctx.fillRect(0, 0, width, height);
       this.ctx.strokeStyle = this.$p.colors.colorScale;
@@ -13291,7 +13283,7 @@ var botbar_Botbar = /*#__PURE__*/function () {
         height: sett.height
       },
       style: {
-        backgroundColor: this.$props.colors.colorBack
+        backgroundColor: this.$props.colors.colorBackBotbar
       }
     });
   },
@@ -14323,7 +14315,15 @@ Toolbar_component.options.__file = "src/components/Toolbar.vue"
     },
     colorBack: {
       type: String,
-      "default": '#121826'
+      "default": '#151515'
+    },
+    colorBackSidebar: {
+      type: String,
+      "default": '#151515'
+    },
+    colorBackBotbar: {
+      type: String,
+      "default": '#151515'
     },
     colorGrid: {
       type: String,
@@ -14378,7 +14378,8 @@ Toolbar_component.options.__file = "src/components/Toolbar.vue"
       "default": '#565c68'
     },
     colorTbBack: {
-      type: String
+      type: String,
+      "default": '#151515'
     },
     colorTbBorder: {
       type: String,

@@ -2,6 +2,7 @@
 // Should implement: mousemove, mouseout, mouseup, mousedown, click
 import Utils from '../stuff/utils.js'
 
+
 export default {
     methods: {
         setup() {
@@ -12,12 +13,12 @@ export default {
             canvas.style.height = `${this._attrs.height}px`
             if (dpr < 1) dpr = 1 // Realy ? That's it? Issue #63
             this.$nextTick(() => {
-                //const ctx = canvas.getContext('2d', { alpha: false, desynchronized: true, preserveDrawingBuffer: false });
                 var rect = canvas.getBoundingClientRect()
                 canvas.width = rect.width * dpr
                 canvas.height = rect.height * dpr
-                const ctx = canvas.getContext('2d')
-                ctx.scale(dpr, dpr)
+                const ctx = canvas.getContext('2d');
+                //dont scale if not UHD/retina
+                if (dpr > 1) ctx.scale(dpr, dpr)
                 ctx.imageSmoothingEnabled = false
                 ctx.webkitImageSmoothingEnabled = false
                 ctx.mozImageSmoothingEnabled = false
@@ -55,10 +56,10 @@ export default {
         },
         redraw() {
             if (!this.renderer) return
-            Utils.doubleRaf(() => {
-                this.renderer.update() //sidebar , botbar, grid
-            })
-        }
+                Utils.doubleRaf(() => {                    
+                    this.renderer.update() //sidebar , botbar, grid                                                
+                })
+            }        
     },
     watch: {
         width(val) {

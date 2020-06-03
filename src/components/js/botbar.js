@@ -9,7 +9,7 @@ export default class Botbar {
     constructor(canvas, comp) {
 
         this.canvas = canvas
-        this.ctx = canvas.getContext('2d', { alpha: false, desynchronized: false, preserveDrawingBuffer: false });
+        this.ctx = canvas.getContext('2d');
         this.ctx.mozImageSmoothingEnabled = false;
         this.ctx.oImageSmoothingEnabled = false;
         this.ctx.webkitImageSmoothingEnabled = false;
@@ -34,7 +34,7 @@ export default class Botbar {
 
         const sb = this.layout.grids[0].sb
 
-        this.ctx.fillStyle = this.$p.colors.colorBack
+        this.ctx.fillStyle = this.$p.colors.colorBackBotbar
         this.ctx.font = "13px -apple-system,BlinkMacSystemFont, Segoe UI,Roboto,Oxygen,Ubuntu,Cantarell, Fira Sans,Droid Sans,Helvetica Neue, sans-serif"
         this.ctx.fillRect(0, 0, width, height)
 

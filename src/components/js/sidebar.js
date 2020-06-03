@@ -11,12 +11,12 @@ export default class Sidebar {
         PANHEIGHT = comp.config.PANHEIGHT
 
         this.canvas = canvas
-        this.ctx = canvas.getContext('2d', { alpha: false, desynchronized: false, preserveDrawingBuffer: false });
+        this.ctx = canvas.getContext('2d');
         this.ctx.mozImageSmoothingEnabled = false;
         this.ctx.oImageSmoothingEnabled = false;
         this.ctx.webkitImageSmoothingEnabled = false;
         this.ctx.msImageSmoothingEnabled = false;
-        this.ctx.imageSmoothingEnabled = false;
+        this.ctx.imageSmoothingEnabled = false;        
         //console.log(this.ctx)		
         this.comp = comp
         this.$p = comp.$props
@@ -104,9 +104,8 @@ export default class Sidebar {
         var x, y, w, h, side = this.side
         var sb = this.layout.sb
 
-        this.ctx.fillStyle = this.$p.colors.colorBack
-        this.ctx.font = this.$p.font
-        //this.ctx.font = "13px -apple-system,BlinkMacSystemFont, Segoe UI,Roboto,Oxygen,Ubuntu,Cantarell, Fira Sans,Droid Sans,Helvetica Neue, sans-serif"
+        this.ctx.fillStyle = this.$p.colors.colorBackSidebar
+        this.ctx.font = "13px -apple-system,BlinkMacSystemFont, Segoe UI,Roboto,Oxygen,Ubuntu,Cantarell, Fira Sans,Droid Sans,Helvetica Neue, sans-serif"
 
         switch (side) {
             case 'left':

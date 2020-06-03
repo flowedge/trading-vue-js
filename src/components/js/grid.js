@@ -21,14 +21,13 @@ export default class Grid {
         this.MIN_ZOOM = comp.config.MIN_ZOOM
         this.MAX_ZOOM = comp.config.MAX_ZOOM
 
-        this.canvas = canvas
-        this.ctx = canvas.getContext('2d', { alpha: false, desynchronized: false, preserveDrawingBuffer: false });
+        this.canvas = canvas        
+        this.ctx = canvas.getContext('2d')
         this.ctx.mozImageSmoothingEnabled = false;
         this.ctx.oImageSmoothingEnabled = false;
         this.ctx.webkitImageSmoothingEnabled = false;
         this.ctx.msImageSmoothingEnabled = false;
         this.ctx.imageSmoothingEnabled = false;
-        //console.log(this.ctx)
 
         this.comp = comp
         this.$p = comp.$props
@@ -50,8 +49,7 @@ export default class Grid {
     listeners() {
 
         var hamster = Hamster(this.canvas, false)
-       //hamster.wheel((event, delta) => this.mousezoom(-delta * 50, event))
-        hamster.wheel((event, delta) => this.mousezoom(delta * -80, event))
+        hamster.wheel((event, delta) => this.mousezoom(-delta * 50, event))        
 
         var mc = new Hammer.Manager(this.canvas)
         mc.add(new Hammer.Pan())
@@ -62,7 +60,7 @@ export default class Grid {
         mc.on('panstart', event => {
             if (this.cursor.scroll_lock) return
             let tfrm = this.$p.y_transform
-            this.drag = {
+            this.drug = {
                 x: event.center.x + this.offset_x,
                 y: event.center.y + this.offset_y,
                 r: this.range.slice(),
@@ -83,10 +81,10 @@ export default class Grid {
         })
 
         mc.on('panmove', event => {
-            if (this.drag !== null) {
+            if (this.drug) {
                 this.mousedrag(
-                    this.drag.x + event.deltaX,
-                    this.drag.y + event.deltaY,
+                    this.drug.x + event.deltaX,
+                    this.drug.y + event.deltaY,
                 )
                 this.comp.$emit('cursor-changed', {
                     grid_id: this.id,
@@ -97,7 +95,7 @@ export default class Grid {
         })
 
         mc.on('panend', () => {
-            this.drag = null
+            this.drug = null
             this.comp.$emit('cursor-locked', false)
         })
 
@@ -107,8 +105,7 @@ export default class Grid {
                 x: event.center.x + this.offset_x,
                 y: event.center.y + this.offset_y
             })
-            Utils.doubleRaf(() => this.update())
-            //this.update()
+            this.update()
         })
 
         mc.on('pinchstart', () => {
@@ -135,28 +132,30 @@ export default class Grid {
         })
 
         window.addEventListener("gestureend", event => {
-            event.preventDefault(),
-                { passive: false }
+            event.preventDefault()
         })
+
     }
 
     mousemove(event) {
-        //doubleRaf(() => {
-        this.comp.$emit('cursor-changed', {
-            grid_id: this.id,
-            x: event.layerX,
-            y: event.layerY + this.layout.offset
-        })
-        //});
-        // TODO: Temp solution, need to implement
-        // a proper way to get the chart el offset
-        this.offset_x = event.layerX - event.pageX
-            + window.scrollX
-        this.offset_y = event.layerY - event.pageY
-            + this.layout.offset
-            + window.scrollY
+        if (!this.mousemoving) {
+            this.mousemoving = true;            
+                this.comp.$emit('cursor-changed', {
+                    grid_id: this.id,
+                    x: event.layerX,
+                    y: event.layerY + this.layout.offset
+                })
+                // TODO: Temp solution, need to implement
+                // a proper way to get the chart el offset
+                this.offset_x = event.layerX - event.pageX
+                    + window.scrollX
+                this.offset_y = event.layerY - event.pageY
+                    + this.layout.offset
+                    + window.scrollY
 
-        this.propagate('mousemove', event)
+                this.propagate('mousemove', event)
+                this.mousemoving = false;            
+        }
     }
 
     mouseout(event) {
@@ -165,7 +164,7 @@ export default class Grid {
     }
 
     mouseup(event) {
-        this.drag = null
+        this.drug = null
         //    this.pinch = null
         this.comp.$emit('cursor-locked', false)
         this.propagate('mouseup', event)
@@ -190,12 +189,12 @@ export default class Grid {
         } else {
             this.overlays.push(layer)
         }
-        Utils.doubleRaf(() => this.update())
+        this.update()
     }
 
     del_layer(id) {
         this.overlays = this.overlays.filter(x => x.id !== id)
-        Utils.doubleRaf(() => this.update())
+        this.update()
     }
 
     show_hide_layer(event) {
@@ -204,7 +203,7 @@ export default class Grid {
     }
 
     update() {
-        //doubleRaf(() => {
+
         // Update reference to the grid
         // TODO: check what happens if data changes interval
         this.layout = this.$p.layout.grids[this.id]
@@ -212,42 +211,47 @@ export default class Grid {
 
         if (!this.layout) return
 
-        //we dont need grid lines
+        
+        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height)
+
         this.grid()
 
-        //chrome 81 not working
-        var bgcolor = this.$p.colors.colorBack
-        this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height, bgcolor)
+        let overlays = []
+        overlays.push(...this.overlays)
+        // z-index sorting
+        overlays.sort((l1, l2) => l1.z - l2.z)
 
-        this.ctx.fillStyle = this.$p.colors.colorBack
-        this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height)
+        for (let i = 0; i < overlays.length; i++) {
+            //console.log(overlays[i])
+            this.ctx.save()
+            let r = overlays[i].renderer
+            r.draw(this.ctx)
+            this.ctx.restore()
+        }
 
-        this.overlays.slice(0)  // copy
-            .sort((l1, l2) => l1.z - l2.z)  // z-index sorting
-            .forEach(l => {
-                if (!l.display) return
-                this.ctx.save()
-                let r = l.renderer
-                //if (!r.length) return todo
-                //me: what is post_draw/pre_draw for?
-                //c4: just in case for now (for overlay devs)                    
-                if (r.pre_draw) r.pre_draw(this.ctx)
-                //console.log(r)
-                //console.log(this.ctx)
-                r.draw(this.ctx)
-                if (r.post_draw) r.post_draw(this.ctx)
-                this.ctx.restore()
-            })
+       
+        /*
+        // z-index sorting
+        overlays.sort((l1, l2) => l1.z - l2.z)
 
+        overlays.forEach(l => {
+            if (!l.display) return
+            this.ctx.save()
+            let r = l.renderer
+            //if (r.pre_draw) r.pre_draw(this.ctx)
+            r.draw(this.ctx)
+            //if (r.post_draw) r.post_draw(this.ctx)
+            this.ctx.restore()
+        }) 
+        */
         if (this.crosshair) {
             this.crosshair.renderer.draw(this.ctx)
         }
-        //});
     }
 
-    // Actually draws the grid (for real)    
+    // Actually draws the grid (for real)
     grid() {
-        
+
 
         this.ctx.strokeStyle = this.$p.colors.colorGrid
         this.ctx.beginPath()
@@ -325,37 +329,37 @@ export default class Grid {
 
     mousedrag(x, y) {
 
-        let dt = this.drag.t * (this.drag.x - x) / this.layout.width
+        let dt = this.drug.t * (this.drug.x - x) / this.layout.width
 
         let d$ = this.layout.$_hi - this.layout.$_lo
-        d$ *= (this.drag.y - y) / this.layout.height
-        let offset = this.drag.o + d$
+        d$ *= (this.drug.y - y) / this.layout.height
+        let offset = this.drug.o + d$
 
         let ls = this.layout.grid.logScale
 
-        if (ls && this.drag.y_r) {
-            let dy = this.drag.y - y
-            var range = this.drag.y_r.slice()
-            range[0] = math.exp((0 - this.drag.B + dy) /
+        if (ls && this.drug.y_r) {
+            let dy = this.drug.y - y
+            var range = this.drug.y_r.slice()
+            range[0] = math.exp((0 - this.drug.B + dy) /
                 this.layout.A)
             range[1] = math.exp(
-                (this.layout.height - this.drag.B + dy) /
+                (this.layout.height - this.drug.B + dy) /
                 this.layout.A)
         }
 
-        if (this.drag.y_r && this.$p.y_transform &&
+        if (this.drug.y_r && this.$p.y_transform &&
             !this.$p.y_transform.auto) {
             this.comp.$emit('sidebar-transform', {
                 grid_id: this.id,
-                range: ls ? (range || this.drag.y_r) : [
-                    this.drag.y_r[0] - offset,
-                    this.drag.y_r[1] - offset,
+                range: ls ? (range || this.drug.y_r) : [
+                    this.drug.y_r[0] - offset,
+                    this.drug.y_r[1] - offset,
                 ]
             })
         }
 
-        this.range[0] = this.drag.r[0] + dt
-        this.range[1] = this.drag.r[1] + dt
+        this.range[0] = this.drug.r[0] + dt
+        this.range[1] = this.drug.r[1] + dt
 
         this.change_range()
 
@@ -397,7 +401,7 @@ export default class Grid {
         // Solution: I don't know yet
 
         if (!this.range.length || this.data.length < 2) return
-        //doubleRaf(() => {
+
         let l = this.data.length - 1
         let data = this.data
         let range = this.range
@@ -420,9 +424,8 @@ export default class Grid {
         // the lag. No smooth movement and it's annoying.
         // Solution: we could try to calc the layout immediatly
         // somewhere here. Still will hurt the sidebar & bottombar
-
+        //this.comp.$emit('range-changed', range)
         this.comp.$emit('range-changed', [Math.round(range[0]), Math.round(range[1])])
-        //});
     }
 
     // Propagate mouse event to overlays

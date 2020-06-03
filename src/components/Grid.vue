@@ -78,7 +78,7 @@ export default {
                 overflow: 'hidden'
             },
             style: {
-                backgroundColor: this.$props.colors.colorBack
+                background: this.$props.colors.colorBack
             },
             hs: [
                 h(Crosshair, {
