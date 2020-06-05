@@ -51,7 +51,7 @@ export default {
     computed: {
         ohlcv() {
             const prec = this.layout.prec
-            const format = (n, d) => parseFloat(n.toFixed(d))
+            //const format = (n, d) => parseFloat(n.toFixed(d)) 
 
             if (!this.$props.values || !this.$props.values.ohlcv) {
                 const candlesIndex = this.json_data.findIndex(data => data.type == 'Candles')
@@ -61,30 +61,50 @@ export default {
 
                     if (candlesData[candlesData.length - 1] != undefined) {
                         return [
-                            format(candlesData[candlesData.length - 1][1], prec),
-                            format(candlesData[candlesData.length - 1][2], prec),
-                            format(candlesData[candlesData.length - 1][3], prec),
-                            format(candlesData[candlesData.length - 1][4], prec),
-                            candlesData[candlesData.length - 1][5] ? format(candlesData[candlesData.length - 1][5], 2) : '0.00'
+                            (candlesData[candlesData.length - 1][1].toFixed(prec)),
+                            (candlesData[candlesData.length - 1][2].toFixed(prec)),
+                            (candlesData[candlesData.length - 1][3].toFixed(prec)),
+                            (candlesData[candlesData.length - 1][4].toFixed(prec)),
+                            candlesData[candlesData.length - 1][5] ? (candlesData[candlesData.length - 1][5].toFixed(2)) : '0.00'
                         ]
                     }
                 }
                 return Array(6).fill('n/a')                
             }
             
+
+            let volumeDisplay = 'n/a'
+            if (this.$props.values.ohlcv[5]) {
+                let volume = this.$props.values.ohlcv[5]
+                if (volume > 1000*1000*1000) {
+                    volumeDisplay = (volume / 1000000000.0).toFixed(2) + " B"
+                } else if (volume > 100*1000*1000) {
+                        volumeDisplay = (volume / 1000000.0).toFixed(0) + " M"
+                } else if (volume > 10*1000*1000) {
+                    volumeDisplay = (volume / 1000000.0).toFixed(1) + " M"
+                } else if (volume > 1000*1000) {
+                    volumeDisplay = (volume / 1000000.0).toFixed(2) + " M"
+                } else if (volume > 100*1000) {
+                    volumeDisplay = (volume / 1000.0).toFixed(0) + " K"
+                } else if (volume > 10*1000) {
+                    volumeDisplay = (volume / 1000.0).toFixed(1) + " K"
+                } else if (volume > 1000) {
+                    volumeDisplay = (volume / 1000.0).toFixed(2) + " K"
+                } else {
+                    volumeDisplay = volume.toFixed(0)
+                }
+            }
+
             return [
-                format(this.$props.values.ohlcv[1], prec),
-                format(this.$props.values.ohlcv[2], prec),
-                format(this.$props.values.ohlcv[3], prec),
-                format(this.$props.values.ohlcv[4], prec),
-                this.$props.values.ohlcv[5] ?
-                    format(this.$props.values.ohlcv[5], 2) :
-                    'n/a'
+                this.$props.values.ohlcv[1].toFixed(prec),
+                this.$props.values.ohlcv[2].toFixed(prec),
+                this.$props.values.ohlcv[3].toFixed(prec),
+                this.$props.values.ohlcv[4].toFixed(prec),
+                volumeDisplay
             ]
         },
         indicators() {
             const values = this.$props.values
-            const f = this.format
             var types = {}
             return this.json_data.filter(
                 x => x.settings.legend !== false && !x.main
@@ -128,7 +148,7 @@ export default {
                     name: x.name || id,
                     index: this.json_data.indexOf(x),
                     id: id,
-                    values: values ? f(id, values) : valuesArr,
+                    values: values ? this.format(id, values) : valuesArr,
                     unk: !(id in (this.$props.meta_props || {}))
                 }
             })
