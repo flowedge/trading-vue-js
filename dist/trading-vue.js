@@ -293,7 +293,7 @@ return /******/ (function(modules) { // webpackBootstrap
   changeNumberFormat: function changeNumberFormat(value, precision) {
     // Nine Zeroes for Billions
     return Math.abs(Number(value)) >= 1.0e+9 ? (Number(value) / 1.0e+9).toFixed(precision) + "B" // Six Zeroes for Millions 
-    : Math.abs(Number(value)) >= 1.0e+6 ? (Number(value) / 1.0e+6).toFixed(precision) + "M" : Number(value);
+    : Math.abs(Number(value)) >= 1.0e+6 ? (Number(value) / 1.0e+6).toFixed(precision) + "M" : Number(value).toFixed(precision);
   },
   numberWithCommas: function numberWithCommas(x) {
     return x.toString().replace(/\B(?=(\d{3})+(?!\d))/g, ",");

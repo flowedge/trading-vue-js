@@ -201,7 +201,7 @@ export default {
 
                 ? (Number(value) / 1.0e+6).toFixed(precision) + "M"
 
-                : Number(value);
+                : Number(value).toFixed(precision);
 
     },
 
