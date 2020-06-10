@@ -96,6 +96,7 @@ export default {
     MINUTE30: MINUTE30,
     HOUR: HOUR,
     HOUR4: HOUR4,
+    HOUR12: HOUR12,
     DAY: DAY,
     DAY3: DAY3,
     DAY6: DAY6,
