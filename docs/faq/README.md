@@ -15,12 +15,12 @@ Set a new value in the overlay settings object:
 Add this prop to the TradingVue component:
 
 ```html
-<trading-vue chart-config=" { DEFAULT_LEN: 200 } "/>
+<trading-vue :chart-config=" { DEFAULT_LEN: 200 } "/>
 ```
 
 ## My chart looks ugly / glitchy, what can I do?
 
-In 99% cases there is a problem with you data, check that candles are **sorted by time** and have **unique timestamps** (if it's not the index-based mode)
+In 99% cases there is a problem with you data, check that candles are **sorted by time**, have **unique timestamps** and the **timeframe stays the same** (if it's not the index-based mode)
 
 ## What is the index-based (IB) rendering mode?
 
