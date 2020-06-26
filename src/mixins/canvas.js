@@ -17,10 +17,8 @@ export default {
                 canvas.height = rect.height * dpr
                 const ctx = canvas.getContext('2d')
                 //dont scale if not UHD/retina
-                if (dpr > 1) {
-                    ctx.save()
-                    ctx.scale(dpr, dpr)
-                    ctx.restore()
+                if (dpr > 1) {                    
+                    ctx.scale(dpr, dpr)                    
                 }
                 ctx.imageSmoothingEnabled = false
                 ctx.webkitImageSmoothingEnabled = false

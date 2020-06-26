@@ -7842,9 +7842,7 @@ var grid_Grid = /*#__PURE__*/function () {
         var ctx = canvas.getContext('2d'); //dont scale if not UHD/retina
 
         if (dpr > 1) {
-          ctx.save();
           ctx.scale(dpr, dpr);
-          ctx.restore();
         }
 
         ctx.imageSmoothingEnabled = false;
@@ -11819,10 +11817,14 @@ var sidebar_Sidebar = /*#__PURE__*/function () {
   props: ['sub', 'layout', 'range', 'interval', 'cursor', 'colors', 'font', 'width', 'height', 'grid_id', 'rerender', 'y_transform', 'tv_id', 'config', 'shaders'],
   mixins: [mixins_canvas],
   mounted: function mounted() {
+    var _this = this;
+
     var el = this.$refs['canvas'];
     this.renderer = new sidebar_Sidebar(el, this);
     this.setup();
-    this.redraw();
+    this.$nextTick(function () {
+      return _this.redraw();
+    });
   },
   render: function render(h) {
     var id = this.$props.grid_id;
@@ -11856,10 +11858,10 @@ var sidebar_Sidebar = /*#__PURE__*/function () {
       deep: true
     },
     rerender: function rerender() {
-      var _this = this;
+      var _this2 = this;
 
       this.$nextTick(function () {
-        return _this.redraw();
+        return _this2.redraw();
       });
     }
   }
@@ -12839,10 +12841,14 @@ var botbar_Botbar = /*#__PURE__*/function () {
   props: ['sub', 'layout', 'range', 'interval', 'cursor', 'colors', 'font', 'width', 'height', 'rerender', 'tv_id', 'config', 'shaders'],
   mixins: [mixins_canvas],
   mounted: function mounted() {
+    var _this = this;
+
     var el = this.$refs['canvas'];
     this.renderer = new botbar_Botbar(el, this);
     this.setup();
-    this.redraw();
+    this.$nextTick(function () {
+      return _this.redraw();
+    });
   },
   render: function render(h) {
     var sett = this.$props.layout.botbar;
@@ -12875,10 +12881,10 @@ var botbar_Botbar = /*#__PURE__*/function () {
       deep: true
     },
     rerender: function rerender() {
-      var _this = this;
+      var _this2 = this;
 
       this.$nextTick(function () {
-        return _this.redraw();
+        return _this2.redraw();
       });
     }
   }
