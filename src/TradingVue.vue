@@ -95,6 +95,14 @@ export default {
             type: String,
             default: '#e54150'
         },
+        colorPriceUp: {
+            type: String,
+            default: '#23a776'
+        },
+        colorPriceDw: {
+            type: String,
+            default: '#e54150'
+        },
         colorWickUp: {
             type: String,
             default: '#23a77688'

@@ -76,6 +76,14 @@ export default {
             return this.sett.colorCandleDw ||
             this.$props.colors.colorCandleDw
         },
+        colorPriceUp() {
+            return this.sett.colorPriceUp ||
+            this.$props.colors.colorPriceUp
+        },
+        colorPriceDw() {
+            return this.sett.colorPriceDw ||
+            this.$props.colors.colorPriceDw
+        },
         colorWickUp() {
             return this.sett.colorWickUp ||
             this.$props.colors.colorWickUp
