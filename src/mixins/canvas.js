@@ -2,7 +2,6 @@
 // Should implement: mousemove, mouseout, mouseup, mousedown, click
 import Utils from '../stuff/utils.js'
 
-
 export default {
     methods: {
         setup() {
@@ -16,9 +15,13 @@ export default {
                 var rect = canvas.getBoundingClientRect()
                 canvas.width = rect.width * dpr
                 canvas.height = rect.height * dpr
-                const ctx = canvas.getContext('2d');
+                const ctx = canvas.getContext('2d')
                 //dont scale if not UHD/retina
-                if (dpr > 1) ctx.scale(dpr, dpr)
+                if (dpr > 1) {
+                    ctx.save()
+                    ctx.scale(dpr, dpr)
+                    ctx.restore()
+                }
                 ctx.imageSmoothingEnabled = false
                 ctx.webkitImageSmoothingEnabled = false
                 ctx.mozImageSmoothingEnabled = false
@@ -31,35 +34,54 @@ export default {
         create_canvas(h, id, props) {
             this._id = id
             this._attrs = props.attrs
-            return h('div', {
-                class: `trading-vue-${id}`,
-                style: {
-                    left: props.position.x + 'px',
-                    top: props.position.y + 'px',
-                    position: 'absolute',
-                }
-            }, [
-                h('canvas', {
-                    on: {
-                        mousemove: e => this.renderer.mousemove(e),
-                        mouseout: e => this.renderer.mouseout(e),
-                        mouseup: e => this.renderer.mouseup(e),
-                        mousedown: e => this.renderer.mousedown(e)
+            return h(
+                'div',
+                {
+                    class: `trading-vue-${id}`,
+                    style: {
+                        left: props.position.x + 'px',
+                        top: props.position.y + 'px',
+                        position: 'absolute',
                     },
-                    attrs: Object.assign({
-                        id: `${this.$props.tv_id}-${id}-canvas`
-                    }, props.attrs),
-                    ref: 'canvas',
-                    style: props.style,
-                })
-            ].concat(props.hs || []))
+                },
+                [
+                    h('canvas', {
+                        on: {
+                            mousemove: e => this.renderer.mousemove(e),
+                            mouseout: e => this.renderer.mouseout(e),
+                            mouseup: e => this.renderer.mouseup(e),
+                            mousedown: e => this.renderer.mousedown(e),
+                        },
+                        attrs: Object.assign(
+                            {
+                                id: `${this.$props.tv_id}-${id}-canvas`,
+                            },
+                            props.attrs
+                        ),
+                        ref: 'canvas',
+                        style: props.style,
+                    }),
+                ].concat(props.hs || [])
+            )
         },
         redraw() {
             if (!this.renderer) return
-                Utils.doubleRaf(() => {                    
-                    this.renderer.update() //sidebar , botbar, grid                                                
+
+            //fps test
+            var before, now, fps
+            before = Date.now()
+            fps = 0
+
+            requestAnimationFrame(() => {
+                now = Date.now()
+                fps = Math.round(1000 / (now - before))
+                before = now
+                requestAnimationFrame(() => {
+                    this.renderer.update()
                 })
-            }        
+                //console.log('fps', fps)
+            })
+        },
     },
     watch: {
         width(val) {
@@ -69,6 +91,6 @@ export default {
         height(val) {
             this._attrs.height = val
             this.setup()
-        }
-    }
+        },
+    },
 }
