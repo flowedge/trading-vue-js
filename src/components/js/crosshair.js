@@ -25,12 +25,14 @@ export default class Crosshair {
 
         // Adjust x here cuz there is a delay between
         // update() and draw()
-        this.x = this.$p.cursor.x
+		this.x = this.$p.cursor.x
+		ctx.lineWidth = 1
+        ctx.lineCap = 'butt'
 
         ctx.save()
         ctx.strokeStyle = this.$p.colors.colorCross
         ctx.beginPath()
-        ctx.setLineDash([5])
+        ctx.setLineDash([2])
 
         // H
         if (this.$p.cursor.grid_id === this.layout.id) {

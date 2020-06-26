@@ -7,7 +7,7 @@ class CursorUpdater {
 
     constructor(comp) {
         this.comp = comp, this.grids = comp._layout.grids,
-        this.cursor = comp.cursor
+            this.cursor = comp.cursor
     }
 
     sync(e) {
@@ -65,12 +65,12 @@ class CursorUpdater {
             x: Math.floor(xs[i]) - 0.5,
             y: Math.floor(e.y - 2) - 0.5 - grid.offset,
             //y$: grid.screen2$(e.y - 2 - grid.offset - 10), //revert , causing price mis aligned with sidebar
-            y$: grid.screen2$(e.y - 2 - grid.offset,
+            y$: grid.screen2$(e.y - 2 - grid.offset),
             t: (data[i] || [])[0],
             values: Object.assign({
-                ohlcv: grid.id === 0 ? data[i] : undefined
-            },
-            this.overlay_data(grid, e))
+                    ohlcv: grid.id === 0 ? data[i] : undefined
+                },
+                this.overlay_data(grid, e))
         }
     }
 
