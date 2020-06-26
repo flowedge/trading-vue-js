@@ -1,5 +1,5 @@
 /*!
- * TradingVue.JS - v0.5.0 - Wed Jun 10 2020
+ * TradingVue.JS - v0.5.0 - Fri Jun 26 2020
  *     https://github.com/tvjsx/trading-vue-js
  *     Copyright (c) 2019 C451 Code's All Right;
  *     Licensed under the MIT license
@@ -7233,7 +7233,8 @@ var updater_CursorUpdater = /*#__PURE__*/function () {
       return {
         x: Math.floor(xs[i]) - 0.5,
         y: Math.floor(e.y - 2) - 0.5 - grid.offset,
-        y$: grid.screen2$(e.y - 2 - grid.offset - 10),
+        //y$: grid.screen2$(e.y - 2 - grid.offset - 10), //revert , causing price mis aligned with sidebar
+        y$: grid.screen2$(e.y - 2 - grid.offset),
         t: (data[i] || [])[0],
         values: Object.assign({
           ohlcv: grid.id === 0 ? data[i] : undefined
@@ -7466,13 +7467,13 @@ var grid_Grid = /*#__PURE__*/function () {
       mc.on('pinch', function (event) {
         if (_this.pinch) _this.pinchzoom(event.scale);
       });
-      window.addEventListener("gesturestart", function (event) {
+      window.addEventListener('gesturestart', function (event) {
         event.preventDefault();
       });
-      window.addEventListener("gesturechange", function (event) {
+      window.addEventListener('gesturechange', function (event) {
         event.preventDefault();
       });
-      window.addEventListener("gestureend", function (event) {
+      window.addEventListener('gestureend', function (event) {
         event.preventDefault();
       });
     }
@@ -7554,45 +7555,65 @@ var grid_Grid = /*#__PURE__*/function () {
   }, {
     key: "update",
     value: function update() {
+      var _this2 = this;
+
       // Update reference to the grid
       // TODO: check what happens if data changes interval
       this.layout = this.$p.layout.grids[this.id];
       this.interval = this.$p.interval;
       if (!this.layout) return;
-      this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
-      this.grid();
-      var overlays = [];
-      overlays.push.apply(overlays, toConsumableArray_default()(this.overlays)); // z-index sorting
+      utils["a" /* default */].doubleRaf(function () {
+        //this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height)
+        _this2.ctx.save();
 
-      overlays.sort(function (l1, l2) {
-        return l1.z - l2.z;
+        _this2.ctx.globalCompositeOperation = 'copy';
+        _this2.ctx.fillStyle = 'transparent';
+
+        _this2.ctx.fillRect(0, 0, _this2.canvas.width, _this2.canvas.height);
+
+        _this2.ctx.restore();
+
+        if (_this2.$p.colors.colorGrid !== 'transparent') {
+          //console.log('im a grid')
+          _this2.grid();
+        }
+
+        if (_this2.$p.grid_id) _this2.upper_border();
+        var overlays = [];
+        overlays.push.apply(overlays, toConsumableArray_default()(_this2.overlays)); // z-index sorting
+
+        overlays.sort(function (l1, l2) {
+          return l1.z - l2.z;
+        });
+
+        for (var i = 0; i < overlays.length; i++) {
+          //console.log(overlays[i])
+          _this2.ctx.save();
+
+          var r = overlays[i].renderer;
+          r.draw(_this2.ctx);
+
+          _this2.ctx.restore();
+        }
+        /*
+        // z-index sorting
+        overlays.sort((l1, l2) => l1.z - l2.z)
+         overlays.forEach(l => {
+            if (!l.display) return
+            this.ctx.save()
+            let r = l.renderer
+            //if (r.pre_draw) r.pre_draw(this.ctx)
+            r.draw(this.ctx)
+            //if (r.post_draw) r.post_draw(this.ctx)
+            this.ctx.restore()
+        }) 
+        */
+
+
+        if (_this2.crosshair) {
+          _this2.crosshair.renderer.draw(_this2.ctx);
+        }
       });
-
-      for (var i = 0; i < overlays.length; i++) {
-        //console.log(overlays[i])
-        this.ctx.save();
-        var r = overlays[i].renderer;
-        r.draw(this.ctx);
-        this.ctx.restore();
-      }
-      /*
-      // z-index sorting
-      overlays.sort((l1, l2) => l1.z - l2.z)
-       overlays.forEach(l => {
-          if (!l.display) return
-          this.ctx.save()
-          let r = l.renderer
-          //if (r.pre_draw) r.pre_draw(this.ctx)
-          r.draw(this.ctx)
-          //if (r.post_draw) r.post_draw(this.ctx)
-          this.ctx.restore()
-      }) 
-      */
-
-
-      if (this.crosshair) {
-        this.crosshair.renderer.draw(this.ctx);
-      }
     } // Actually draws the grid (for real)
 
   }, {
@@ -7638,8 +7659,7 @@ var grid_Grid = /*#__PURE__*/function () {
         _iterator2.f();
       }
 
-      this.ctx.stroke();
-      if (this.$p.grid_id) this.upper_border();
+      this.ctx.stroke(); //if (this.$p.grid_id) this.upper_border() //moved up
     }
   }, {
     key: "upper_border",
@@ -7821,7 +7841,12 @@ var grid_Grid = /*#__PURE__*/function () {
         canvas.height = rect.height * dpr;
         var ctx = canvas.getContext('2d'); //dont scale if not UHD/retina
 
-        if (dpr > 1) ctx.scale(dpr, dpr);
+        if (dpr > 1) {
+          ctx.save();
+          ctx.scale(dpr, dpr);
+          ctx.restore();
+        }
+
         ctx.imageSmoothingEnabled = false;
         ctx.webkitImageSmoothingEnabled = false;
         ctx.mozImageSmoothingEnabled = false;
@@ -7868,10 +7893,18 @@ var grid_Grid = /*#__PURE__*/function () {
     redraw: function redraw() {
       var _this3 = this;
 
-      if (!this.renderer) return;
-      utils["a" /* default */].doubleRaf(function () {
-        _this3.renderer.update(); //sidebar , botbar, grid                                                
+      if (!this.renderer) return; //fps test
 
+      var before, now, fps;
+      before = Date.now();
+      fps = 0;
+      requestAnimationFrame(function () {
+        now = Date.now();
+        fps = Math.round(1000 / (now - before));
+        before = now;
+        requestAnimationFrame(function () {
+          _this3.renderer.update();
+        }); //console.log('fps', fps)
       });
     }
   },
@@ -7985,14 +8018,16 @@ var crosshair_Crosshair = /*#__PURE__*/function () {
       // update() and draw()
 
       this.x = this.$p.cursor.x;
+      ctx.lineWidth = 1;
+      ctx.lineCap = 'butt';
       ctx.save();
       ctx.strokeStyle = this.$p.colors.colorCross;
       ctx.beginPath();
-      ctx.setLineDash([5]); // H
+      ctx.setLineDash([2]); // H
 
       if (this.$p.cursor.grid_id === this.layout.id) {
         ctx.moveTo(0, this.y);
-        ctx.lineTo(this.layout.width, this.y);
+        ctx.lineTo(this.layout.width - 0.5, this.y);
       }
 
       ctx.stroke();
@@ -8001,7 +8036,7 @@ var crosshair_Crosshair = /*#__PURE__*/function () {
       ctx.save();
       ctx.beginPath();
       ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)';
-      ctx.lineWidth = 5;
+      ctx.lineWidth = 3;
       ctx.moveTo(this.x, 0);
       ctx.lineTo(this.x, this.layout.height);
       ctx.stroke();
@@ -9788,7 +9823,6 @@ function new_interval(layout, $p, sub) {
 
 
 
-//from https://github.com/hn4002/xcharts/blob/master/src/components/primitives/xcandle.js
 // Candle object for Candles overlay
 var candle_CandleExt = /*#__PURE__*/function () {
   function CandleExt(overlay, ctx, data) {
@@ -9803,60 +9837,60 @@ var candle_CandleExt = /*#__PURE__*/function () {
   createClass_default()(CandleExt, [{
     key: "draw",
     value: function draw(data) {
-      // Line width = 1 or 2?
-      var line_width = this.style.lineWidth;
+      if (data === null || data.o === null || data.c === null) {
+        return;
+      }
+
+      var wickWidth = 1;
+      var lineWidth = this.style.lineWidth;
       var up_hollow = this.style.upCandleHollow; // body color
 
       var body_color = data.c <= data.o ? this.style.colorCandleUp : this.style.colorCandleDw; // wick color
 
       var wick_color = data.c <= data.o ? this.style.colorWickUp : this.style.colorWickDw; // what is this?
+      //const wick_color_sm = this.style.colorWickSm;
 
-      var wick_color_sm = this.style.colorWickSm;
+      var top = Math.min(data.o, data.c);
+      var bottom = Math.max(data.o, data.c);
+      var height = bottom - top;
+      var high = data.h;
+      var low = data.l;
+      var left = ~~data.x;
       var width = Math.max(data.w, 1);
-      var halfwidth = Math.max(Math.floor(width * 0.5), 1);
-      var height = Math.abs(data.o - data.c);
-      var max_h = data.c === data.o ? 1 : 2; // Draw the wick from low to high of 1px wide as a line
+      var halfwidth = Math.max(~~(width * 0.5), 1);
+      var x = ~~(data.x - halfwidth);
+      var w = ~~(halfwidth * 2); //wick
 
-      this.ctx.strokeStyle = width > 1.5 ? wick_color : wick_color_sm;
-      this.ctx.lineWidth = line_width;
-      this.ctx.beginPath(); // Higher wick
+      this.ctx.fillStyle = wick_color;
+      this.ctx.fillRect(data.x - 1, high, wickWidth, top - high);
+      this.ctx.fillRect(data.x - 1, bottom, wickWidth, low - bottom);
 
-      this.ctx.moveTo(Math.floor(data.x) - 0.5, Math.floor(data.h));
-      this.ctx.lineTo(Math.floor(data.x) - 0.5, Math.floor(Math.min(data.o, data.c))); // Lower wick
-
-      this.ctx.moveTo(Math.floor(data.x) - 0.5, Math.floor(Math.max(data.o, data.c)));
-      this.ctx.lineTo(Math.floor(data.x) - 0.5, Math.floor(data.l));
-      this.ctx.stroke(); // Draw the body
-
-      if (data.w > 1.5) {
-        // Draw a body as a rectangle if it is thick (>1.5).
+      if (data.w > 2.5) {
+        //drawing is 27% faster with fillrect vs using beginpath with stroke
         var hollow = false;
         if (up_hollow && data.c <= data.o) hollow = true;
 
         if (hollow) {
-          this.ctx.strokeStyle = body_color;
-          this.ctx.lineWidth = line_width;
-          var s = data.c >= data.o ? 1 : -1;
-          this.ctx.translate(0.5, 0.5);
-          this.ctx.beginPath();
-          this.ctx.rect(Math.floor(data.x - halfwidth - line_width), Math.floor(data.o), Math.floor(halfwidth * 2 + line_width), Math.floor(s * Math.max(height, max_h)));
-          this.ctx.stroke();
-          this.ctx.translate(-0.5, -0.5);
+          this.ctx.fillStyle = body_color;
+          this.ctx.translate(-1, -1); //left
+
+          this.ctx.fillRect(x, top, lineWidth, height); //right
+
+          this.ctx.fillRect(x + w, top, lineWidth, height); //top
+
+          this.ctx.fillRect(x, top, w, lineWidth); //bottom
+
+          this.ctx.fillRect(x, top + height, w + 1, lineWidth); //
+
+          this.ctx.translate(1, 1);
         } else {
           this.ctx.fillStyle = body_color;
-
-          var _s = data.c >= data.o ? 1 : -1;
-
-          this.ctx.fillRect(Math.floor(data.x - halfwidth - line_width), Math.floor(data.o), Math.floor(halfwidth * 2 + line_width), Math.floor(_s * Math.max(height, max_h)));
+          this.ctx.fillRect(x - 1, top, w + 1, height);
         }
       } else {
-        // Draw a body as a line if it is too thin.
-        // The line will be drawn of wick_width.
-        this.ctx.strokeStyle = body_color;
-        this.ctx.beginPath();
-        this.ctx.moveTo(Math.floor(data.x) - 0.5, Math.floor(data.h));
-        this.ctx.lineTo(Math.floor(data.x) - 0.5, Math.floor(data.l));
-        this.ctx.stroke();
+        // zoom-out lines
+        this.ctx.fillStyle = wick_color;
+        this.ctx.fillRect(left - 1, top, wickWidth, Math.max(bottom - top, 1));
       }
     }
   }]);
@@ -9987,12 +10021,12 @@ var price_Price = /*#__PURE__*/function () {
   }, {
     key: "green",
     value: function green() {
-      return this.comp.colorCandleUp;
+      return this.comp.colorPriceUp;
     }
   }, {
     key: "red",
     value: function red() {
-      return this.comp.colorCandleDw;
+      return this.comp.colorPriceDw;
     }
   }]);
 
@@ -10101,6 +10135,12 @@ function Candlesvue_type_script_lang_js_arrayLikeToArray(arr, len) { if (len == 
     },
     colorCandleDw: function colorCandleDw() {
       return this.sett.colorCandleDw || this.$props.colors.colorCandleDw;
+    },
+    colorPriceUp: function colorPriceUp() {
+      return this.sett.colorPriceUp || this.$props.colors.colorPriceUp;
+    },
+    colorPriceDw: function colorPriceDw() {
+      return this.sett.colorPriceDw || this.$props.colors.colorPriceDw;
     },
     colorWickUp: function colorWickUp() {
       return this.sett.colorWickUp || this.$props.colors.colorWickUp;
@@ -13887,6 +13927,14 @@ Toolbar_component.options.__file = "src/components/Toolbar.vue"
       type: String,
       "default": '#e54150'
     },
+    colorPriceUp: {
+      type: String,
+      "default": '#23a776'
+    },
+    colorPriceDw: {
+      type: String,
+      "default": '#e54150'
+    },
     colorWickUp: {
       type: String,
       "default": '#23a77688'
@@ -15567,7 +15615,7 @@ var oi_price_OIPrice = /*#__PURE__*/function () {
           var w = ctx.canvas.width;
           var h = config.PANHEIGHT; // let lbl = bar.price.toFixed(layout.prec)
 
-          var lbl = Math.abs(bar.price) >= 1.0e+6 ? utils["a" /* default */].changeNumberFormat(bar.price, layout.prec) : bar.price.toFixed(layout.prec);
+          var lbl = Math.abs(bar.price) >= 1.0e6 ? utils["a" /* default */].changeNumberFormat(bar.price, layout.prec) : bar.price.toFixed(layout.prec);
           ctx.fillStyle = bar.color;
           var x = -0.5;
           var y = bar.y - h * 0.5 - 0.5;
@@ -15608,10 +15656,10 @@ var oi_price_OIPrice = /*#__PURE__*/function () {
       if (!this.comp.$props.data[this.comp.$props.data.length - 1]) return undefined;
       var layout = this.comp.$props.layout;
       var last = this.comp.$props.data[this.comp.$props.data.length - 1];
-      var y = layout.$2screen(last[4]);
-      var cndl = layout.c_magnet(last[0]);
+      var y = layout.$2screen(last[4]); //let cndl = layout.c_magnet(last[0])
+
       return {
-        y: y,
+        y: Math.floor(y) - 0.5,
         price: last[4],
         color: last[4] >= last[1] ? this.green() : this.red()
       };
@@ -15626,12 +15674,12 @@ var oi_price_OIPrice = /*#__PURE__*/function () {
   }, {
     key: "green",
     value: function green() {
-      return this.comp.colorCandleUp;
+      return this.comp.colorPriceUp;
     }
   }, {
     key: "red",
     value: function red() {
-      return this.comp.colorCandleDw;
+      return this.comp.colorPriceDw;
     }
   }]);
 
@@ -15643,7 +15691,6 @@ var oi_price_OIPrice = /*#__PURE__*/function () {
 
 
 
-//from https://github.com/hn4002/xcharts/blob/master/src/components/primitives/xcandle.js
 // Candle object for Candles overlay
 var oi_candle_OICandleExt = /*#__PURE__*/function () {
   function OICandleExt(overlay, ctx, data) {
@@ -15658,60 +15705,60 @@ var oi_candle_OICandleExt = /*#__PURE__*/function () {
   createClass_default()(OICandleExt, [{
     key: "draw",
     value: function draw(data) {
-      // Line width = 1 or 2?
-      var line_width = this.style.lineWidth;
+      if (data === null || data.o === null || data.c === null) {
+        return;
+      }
+
+      var wickWidth = 1;
+      var lineWidth = this.style.lineWidth;
       var up_hollow = this.style.upCandleHollow; // body color
 
       var body_color = data.c <= data.o ? this.style.colorCandleUp : this.style.colorCandleDw; // wick color
 
       var wick_color = data.c <= data.o ? this.style.colorWickUp : this.style.colorWickDw; // what is this?
+      //const wick_color_sm = this.style.colorWickSm;
 
-      var wick_color_sm = this.style.colorWickSm;
+      var top = Math.min(data.o, data.c);
+      var bottom = Math.max(data.o, data.c);
+      var height = bottom - top;
+      var high = data.h;
+      var low = data.l;
+      var left = ~~data.x;
       var width = Math.max(data.w, 1);
-      var halfwidth = Math.max(Math.floor(width * 0.5), 1);
-      var height = Math.abs(data.o - data.c);
-      var max_h = data.c === data.o ? 1 : 2; // Draw the wick from low to high of 1px wide as a line
+      var halfwidth = Math.max(~~(width * 0.5), 1);
+      var x = ~~(data.x - halfwidth);
+      var w = ~~(halfwidth * 2); //wick
 
-      this.ctx.strokeStyle = width > 1.5 ? wick_color : wick_color_sm;
-      this.ctx.lineWidth = line_width;
-      this.ctx.beginPath(); // Higher wick
+      this.ctx.fillStyle = wick_color;
+      this.ctx.fillRect(data.x - 1, high, wickWidth, top - high);
+      this.ctx.fillRect(data.x - 1, bottom, wickWidth, low - bottom);
 
-      this.ctx.moveTo(Math.floor(data.x) - 0.5, Math.floor(data.h));
-      this.ctx.lineTo(Math.floor(data.x) - 0.5, Math.floor(Math.min(data.o, data.c))); // Lower wick
-
-      this.ctx.moveTo(Math.floor(data.x) - 0.5, Math.floor(Math.max(data.o, data.c)));
-      this.ctx.lineTo(Math.floor(data.x) - 0.5, Math.floor(data.l));
-      this.ctx.stroke(); // Draw the body
-
-      if (data.w > 1.5) {
-        // Draw a body as a rectangle if it is thick (>1.5).
+      if (data.w > 2.5) {
+        //drawing is 27% faster with fillrect vs using beginpath with stroke
         var hollow = false;
         if (up_hollow && data.c <= data.o) hollow = true;
 
         if (hollow) {
-          this.ctx.strokeStyle = body_color;
-          this.ctx.lineWidth = line_width;
-          var s = data.c >= data.o ? 1 : -1;
-          this.ctx.translate(0.5, 0.5);
-          this.ctx.beginPath();
-          this.ctx.rect(Math.floor(data.x - halfwidth - line_width), Math.floor(data.o), Math.floor(halfwidth * 2 + line_width), Math.floor(s * Math.max(height, max_h)));
-          this.ctx.stroke();
-          this.ctx.translate(-0.5, -0.5);
+          this.ctx.fillStyle = body_color;
+          this.ctx.translate(-1, -1); //left
+
+          this.ctx.fillRect(x, top, lineWidth, height); //right
+
+          this.ctx.fillRect(x + w, top, lineWidth, height); //top
+
+          this.ctx.fillRect(x, top, w, lineWidth); //bottom
+
+          this.ctx.fillRect(x, top + height, w + 1, lineWidth); //
+
+          this.ctx.translate(1, 1);
         } else {
           this.ctx.fillStyle = body_color;
-
-          var _s = data.c >= data.o ? 1 : -1;
-
-          this.ctx.fillRect(Math.floor(data.x - halfwidth - line_width), Math.floor(data.o), Math.floor(halfwidth * 2 + line_width), Math.floor(_s * Math.max(height, max_h)));
+          this.ctx.fillRect(x - 1, top, w + 1, height);
         }
       } else {
-        // Draw a body as a line if it is too thin.
-        // The line will be drawn of wick_width.
-        this.ctx.strokeStyle = body_color;
-        this.ctx.beginPath();
-        this.ctx.moveTo(Math.floor(data.x) - 0.5, Math.floor(data.h));
-        this.ctx.lineTo(Math.floor(data.x) - 0.5, Math.floor(data.l));
-        this.ctx.stroke();
+        // zoom-out lines
+        this.ctx.fillStyle = wick_color;
+        this.ctx.fillRect(left - 1, top, wickWidth, Math.max(bottom - top, 1));
       }
     }
   }]);
