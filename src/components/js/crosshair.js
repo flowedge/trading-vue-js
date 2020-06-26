@@ -1,4 +1,3 @@
-
 export default class Crosshair {
 
     constructor(comp) {
@@ -36,15 +35,15 @@ export default class Crosshair {
         // H
         if (this.$p.cursor.grid_id === this.layout.id) {
             ctx.moveTo(0, this.y)
-            ctx.lineTo(this.layout.width, this.y)
+            ctx.lineTo(this.layout.width - 0.5, this.y)
         }
-		ctx.stroke()
-		ctx.restore()
-        // V
-		ctx.save()
-		ctx.beginPath()
-		ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)'
-		ctx.lineWidth = 5
+        ctx.stroke()
+        ctx.restore()
+            // V
+        ctx.save()
+        ctx.beginPath()
+        ctx.strokeStyle = 'rgba(255, 255, 255, 0.1)'
+        ctx.lineWidth = 3
         ctx.moveTo(this.x, 0)
         ctx.lineTo(this.x, this.layout.height)
         ctx.stroke()
