@@ -15,7 +15,7 @@ export default {
         const el = this.$refs['canvas']
         this.renderer = new Botbar(el, this)
         this.setup()
-        this.$nextTick(() => this.redraw())
+        this.redraw()        
     },
     render(h) {
         const sett = this.$props.layout.botbar

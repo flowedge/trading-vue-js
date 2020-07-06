@@ -75,8 +75,7 @@ export default {
     },
 
     // Copy layout in reactive way
-    copy_layout(obj, new_obj) {
-        this.doubleRaf(() => {
+    copy_layout(obj, new_obj) {        
             for (var k in obj) {
                 if (Array.isArray(obj[k])) {
                     // (some offchart indicators are added/removed)
@@ -91,8 +90,7 @@ export default {
                 } else {
                     Object.assign(obj[k], new_obj[k])
                 }
-            }
-        })
+            }        
     },
 
     // Checks if the ohlcv data is changed (given the new

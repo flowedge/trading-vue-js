@@ -97,7 +97,7 @@ function GridMaker(id, params, master_grid = null) {
         let lens = subn.map(x => x[1].toFixed(self.prec).length)
         lens.push(self.$_hi.toFixed(self.prec).length)
         lens.push(self.$_lo.toFixed(self.prec).length)
-        let str = '0'.repeat(Math.max(...lens)) + '      ' // Edit: Ray - We need more spaces here so that the sidebar doesnt look so compressed 
+        let str = '0'.repeat(Math.max(...lens)) + '    ' // Edit: Ray - We need more spaces here so that the sidebar doesnt look so compressed 
         self.sb = ctx.measureText(str).width
         self.sb = Math.max(Math.floor(self.sb), $p.config.SBMIN)
 

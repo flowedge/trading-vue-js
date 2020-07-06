@@ -16,7 +16,7 @@ export default {
         const el = this.$refs['canvas']
         this.renderer = new Sidebar(el, this)
         this.setup()
-        this.$nextTick(() => this.redraw())
+        this.redraw()
     },
     render(h) {
         const id = this.$props.grid_id

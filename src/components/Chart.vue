@@ -80,10 +80,10 @@ export default {
             this.$emit('range-changed', r)
         },
         goto(t) {
-            if (!this.haveMovedChart) {
+            //if (!this.haveMovedChart) {
                 const dt = this.range[1] - this.range[0]
                 this.range_changed([t - dt, t])
-            }
+            //}
         },
         setRange(t1, t2) {
             this.range_changed([t1, t2])

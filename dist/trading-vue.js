@@ -1,5 +1,5 @@
 /*!
- * TradingVue.JS - v0.5.0 - Fri Jun 26 2020
+ * TradingVue.JS - v0.5.0 - Mon Jul 06 2020
  *     https://github.com/tvjsx/trading-vue-js
  *     Copyright (c) 2019 C451 Code's All Right;
  *     Licensed under the MIT license
@@ -176,27 +176,22 @@ return /******/ (function(modules) { // webpackBootstrap
   },
   // Copy layout in reactive way
   copy_layout: function copy_layout(obj, new_obj) {
-    var _this = this;
-
-    this.doubleRaf(function () {
-      for (var k in obj) {
-        if (Array.isArray(obj[k])) {
-          // (some offchart indicators are added/removed)
-          // we need to update layout in a reactive way
-          if (obj[k].length !== new_obj[k].length) {
-            _this.overwrite(obj[k], new_obj[k]);
-
-            continue;
-          }
-
-          for (var m in obj[k]) {
-            Object.assign(obj[k][m], new_obj[k][m]);
-          }
-        } else {
-          Object.assign(obj[k], new_obj[k]);
+    for (var k in obj) {
+      if (Array.isArray(obj[k])) {
+        // (some offchart indicators are added/removed)
+        // we need to update layout in a reactive way
+        if (obj[k].length !== new_obj[k].length) {
+          this.overwrite(obj[k], new_obj[k]);
+          continue;
         }
+
+        for (var m in obj[k]) {
+          Object.assign(obj[k][m], new_obj[k][m]);
+        }
+      } else {
+        Object.assign(obj[k], new_obj[k]);
       }
-    });
+    }
   },
   // Checks if the ohlcv data is changed (given the new
   // and old dataset values)
@@ -6212,11 +6207,12 @@ var slicedToArray_default = /*#__PURE__*/__webpack_require__.n(slicedToArray);
 // Canvas context for text measurments
 function Context($p) {
   var el = document.createElement('canvas');
-  var ctx = el.getContext('2d', {
-    alpha: false,
-    desynchronized: true,
-    preserveDrawingBuffer: false
-  });
+  var ctx = el.getContext('2d');
+  ctx.mozImageSmoothingEnabled = false;
+  ctx.oImageSmoothingEnabled = false;
+  ctx.webkitImageSmoothingEnabled = false;
+  ctx.msImageSmoothingEnabled = false;
+  ctx.imageSmoothingEnabled = false;
   ctx.font = $p.font;
   return ctx;
 }
@@ -6548,7 +6544,7 @@ function GridMaker(id, params) {
     });
     lens.push(self.$_hi.toFixed(self.prec).length);
     lens.push(self.$_lo.toFixed(self.prec).length);
-    var str = '0'.repeat(Math.max.apply(Math, toConsumableArray_default()(lens))) + '      '; // Edit: Ray - We need more spaces here so that the sidebar doesnt look so compressed 
+    var str = '0'.repeat(Math.max.apply(Math, toConsumableArray_default()(lens))) + '    '; // Edit: Ray - We need more spaces here so that the sidebar doesnt look so compressed 
 
     self.sb = ctx.measureText(str).width;
     self.sb = Math.max(Math.floor(self.sb), $p.config.SBMIN);
@@ -7369,7 +7365,9 @@ var grid_Grid = /*#__PURE__*/function () {
     this.MIN_ZOOM = comp.config.MIN_ZOOM;
     this.MAX_ZOOM = comp.config.MAX_ZOOM;
     this.canvas = canvas;
-    this.ctx = canvas.getContext('2d');
+    this.ctx = canvas.getContext('2d', {
+      willReadFrequently: true
+    });
     this.ctx.mozImageSmoothingEnabled = false;
     this.ctx.oImageSmoothingEnabled = false;
     this.ctx.webkitImageSmoothingEnabled = false;
@@ -7562,7 +7560,7 @@ var grid_Grid = /*#__PURE__*/function () {
       this.layout = this.$p.layout.grids[this.id];
       this.interval = this.$p.interval;
       if (!this.layout) return;
-      utils["a" /* default */].doubleRaf(function () {
+      requestAnimationFrame(function () {
         //this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height)
         _this2.ctx.save();
 
@@ -7695,7 +7693,7 @@ var grid_Grid = /*#__PURE__*/function () {
 
       if (delta < 0 && this.data.length <= this.MIN_ZOOM) return;
       if (delta > 0 && this.data.length > this.MAX_ZOOM) return;
-      var k = this.interval / 1000;
+      var k = this.interval / 800;
       var diff = delta * k * this.data.length;
 
       if (event.originalEvent.ctrlKey) {
@@ -11817,14 +11815,10 @@ var sidebar_Sidebar = /*#__PURE__*/function () {
   props: ['sub', 'layout', 'range', 'interval', 'cursor', 'colors', 'font', 'width', 'height', 'grid_id', 'rerender', 'y_transform', 'tv_id', 'config', 'shaders'],
   mixins: [mixins_canvas],
   mounted: function mounted() {
-    var _this = this;
-
     var el = this.$refs['canvas'];
     this.renderer = new sidebar_Sidebar(el, this);
     this.setup();
-    this.$nextTick(function () {
-      return _this.redraw();
-    });
+    this.redraw();
   },
   render: function render(h) {
     var id = this.$props.grid_id;
@@ -11858,10 +11852,10 @@ var sidebar_Sidebar = /*#__PURE__*/function () {
       deep: true
     },
     rerender: function rerender() {
-      var _this2 = this;
+      var _this = this;
 
       this.$nextTick(function () {
-        return _this2.redraw();
+        return _this.redraw();
       });
     }
   }
@@ -12841,14 +12835,10 @@ var botbar_Botbar = /*#__PURE__*/function () {
   props: ['sub', 'layout', 'range', 'interval', 'cursor', 'colors', 'font', 'width', 'height', 'rerender', 'tv_id', 'config', 'shaders'],
   mixins: [mixins_canvas],
   mounted: function mounted() {
-    var _this = this;
-
     var el = this.$refs['canvas'];
     this.renderer = new botbar_Botbar(el, this);
     this.setup();
-    this.$nextTick(function () {
-      return _this.redraw();
-    });
+    this.redraw();
   },
   render: function render(h) {
     var sett = this.$props.layout.botbar;
@@ -12881,10 +12871,10 @@ var botbar_Botbar = /*#__PURE__*/function () {
       deep: true
     },
     rerender: function rerender() {
-      var _this2 = this;
+      var _this = this;
 
       this.$nextTick(function () {
-        return _this2.redraw();
+        return _this.redraw();
       });
     }
   }
@@ -13256,10 +13246,9 @@ var ti_mapping_TI = /*#__PURE__*/function () {
       this.$emit('range-changed', r);
     },
     "goto": function goto(t) {
-      if (!this.haveMovedChart) {
-        var dt = this.range[1] - this.range[0];
-        this.range_changed([t - dt, t]);
-      }
+      //if (!this.haveMovedChart) {
+      var dt = this.range[1] - this.range[0];
+      this.range_changed([t - dt, t]); //}
     },
     setRange: function setRange(t1, t2) {
       this.range_changed([t1, t2]);
@@ -14606,7 +14595,7 @@ var dc_core_DCCore = /*#__PURE__*/function (_DCEvents) {
 
                 this.loading = true;
                 _context.next = 9;
-                return utils["a" /* default */].pause(250);
+                return utils["a" /* default */].pause(1);
 
               case 9:
                 // Load bigger chunks
@@ -14731,7 +14720,7 @@ var dc_core_DCCore = /*#__PURE__*/function (_DCEvents) {
     key: "update_overlays",
     value: function update_overlays(data, t) {
       for (var k in data) {
-        if (k === 'price' || k === 'volume' || k === 'candle' || k === 'oi') {
+        if (k === 'price' || k === 'volume' || k === 'candle') {
           continue;
         }
 
@@ -15521,9 +15510,9 @@ var datacube_DataCube = /*#__PURE__*/function (_DCCore) {
       var _this2 = this;
 
       this.loader = callback;
-      setTimeout(function () {
+      requestAnimationFrame(function () {
         return _this2.tv.set_loader(callback ? _this2 : null);
-      }, 0);
+      });
     }
   }]);
 

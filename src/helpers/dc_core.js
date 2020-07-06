@@ -50,7 +50,7 @@ export default class DCCore extends DCEvents {
             let first = this.data.chart.data[0][0]
             if (range[0] < first) {
                 this.loading = true
-                await Utils.pause(250) // Load bigger chunks
+                await Utils.pause(1) // Load bigger chunks
                 range = range.slice()  // copy
                 range[0] = Math.floor(range[0])
                 range[1] = Math.floor(first)
@@ -119,7 +119,7 @@ export default class DCCore extends DCEvents {
     update_overlays(data, t) {
         for (var k in data) {
             if (k === 'price' || k === 'volume' ||
-                k === 'candle' || k === 'oi') {
+                k === 'candle' ) {
                 continue
             }
             if (!Array.isArray(data[k])) {

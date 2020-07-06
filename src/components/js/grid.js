@@ -17,7 +17,8 @@ export default class Grid {
         this.MAX_ZOOM = comp.config.MAX_ZOOM
 
         this.canvas = canvas
-        this.ctx = canvas.getContext('2d')
+        this.ctx = canvas.getContext('2d', { willReadFrequently: true })
+        
         this.ctx.mozImageSmoothingEnabled = false
         this.ctx.oImageSmoothingEnabled = false
         this.ctx.webkitImageSmoothingEnabled = false
@@ -195,14 +196,16 @@ export default class Grid {
 
         if (!this.layout) return
 
-        Utils.doubleRaf(() => {
+        requestAnimationFrame(() => {
             //this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height)
             this.ctx.save()
+            
             this.ctx.globalCompositeOperation = 'copy'
             this.ctx.fillStyle = 'transparent'
             this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height)
             this.ctx.restore()
-
+            
+            
             if (this.$p.colors.colorGrid !== 'transparent') {
                 //console.log('im a grid')
                 this.grid()
@@ -215,12 +218,12 @@ export default class Grid {
             // z-index sorting
             overlays.sort((l1, l2) => l1.z - l2.z)
 
-            for (let i = 0; i < overlays.length; i++) {
+            for (let i = 0; i < overlays.length; i++) {                
                 //console.log(overlays[i])
-                this.ctx.save()
+                this.ctx.save()                
                 let r = overlays[i].renderer
-                r.draw(this.ctx)
-                this.ctx.restore()
+                r.draw(this.ctx)            
+                this.ctx.restore()           
             }
 
             /*
@@ -237,8 +240,9 @@ export default class Grid {
                 this.ctx.restore()
             }) 
             */
-            if (this.crosshair) {                
-                this.crosshair.renderer.draw(this.ctx)                
+         
+            if (this.crosshair) {                             
+                this.crosshair.renderer.draw(this.ctx)            
             }
         })
     }
@@ -278,6 +282,7 @@ export default class Grid {
 
         event.deltaX = event.deltaX || Utils.get_deltaX(event)
         event.deltaY = event.deltaY || Utils.get_deltaY(event)
+        
 
         if (Math.abs(event.deltaX) > 0) {
             this.trackpad = true
@@ -297,7 +302,7 @@ export default class Grid {
         if (delta < 0 && this.data.length <= this.MIN_ZOOM) return
         if (delta > 0 && this.data.length > this.MAX_ZOOM) return
 
-        let k = this.interval / 1000
+        let k = this.interval / 800
         let diff = delta * k * this.data.length
         if (event.originalEvent.ctrlKey) {
             let offset = event.originalEvent.offsetX
