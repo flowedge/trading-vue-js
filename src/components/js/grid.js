@@ -196,10 +196,10 @@ export default class Grid {
 
         if (!this.layout) return
 
-        requestAnimationFrame(() => {
+        //requestAnimationFrame(() => {
             //this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height)
-            this.ctx.save()
             
+            this.ctx.save()            
             this.ctx.globalCompositeOperation = 'copy'
             this.ctx.fillStyle = 'transparent'
             this.ctx.fillRect(0, 0, this.canvas.width, this.canvas.height)
@@ -218,13 +218,13 @@ export default class Grid {
             // z-index sorting
             overlays.sort((l1, l2) => l1.z - l2.z)
 
+            this.ctx.save()
             for (let i = 0; i < overlays.length; i++) {                
-                //console.log(overlays[i])
-                this.ctx.save()                
+                //console.log(overlays[i])                
                 let r = overlays[i].renderer
-                r.draw(this.ctx)            
-                this.ctx.restore()           
+                r.draw(this.ctx)                                     
             }
+            this.ctx.restore()  
 
             /*
             // z-index sorting
@@ -244,7 +244,7 @@ export default class Grid {
             if (this.crosshair) {                             
                 this.crosshair.renderer.draw(this.ctx)            
             }
-        })
+        //})
     }
 
     // Actually draws the grid (for real)
@@ -394,7 +394,8 @@ export default class Grid {
         // Solution: we could try to calc the layout immediatly
         // somewhere here. Still will hurt the sidebar & bottombar
         //this.comp.$emit('range-changed', range)
-        this.comp.$emit('range-changed', [Math.round(range[0]), Math.round(range[1])])
+        //this.comp.$emit('range-changed', [Math.round(range[0]), Math.round(range[1])])
+        this.comp.$emit('range-changed', range)
     }
 
     // Propagate mouse event to overlays

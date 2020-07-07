@@ -234,18 +234,9 @@ export default class Sidebar {
             range[0] = range[0] + delta * zk
             range[1] = range[1] - delta * zk
         } else {
-
-            let px_mid = this.layout.height / 2
-            let new_hi = px_mid - px_mid * (1/z)
-            let new_lo = px_mid + px_mid * (1/z)
-
-            // Use old mapping to get a new range
-            let f = y => math.exp((y - this.drug.B) / this.drug.A)
-
             let copy = range.slice()
-            range[0] = f(new_hi)
-            range[1] = f(new_lo)
-
+            range[0] = range[0] + delta * zk
+            range[1] = math.re_range(copy, range[0], this.drug.mid)
         }
 
         return range

@@ -1,30 +1,31 @@
 <template>
-    <!-- Chart components combined together -->
-    <div class="trading-vue-chart" :style="styles">
-        <keyboard ref="keyboard"></keyboard>
-        <grid-section v-for="(grid, i) in this._layout.grids"
-            :key="grid.id"
-            v-bind:common="section_props(i)"
-            v-bind:grid_id="i"
-            v-on:register-kb-listener="register_kb"
-            v-on:remove-kb-listener="remove_kb"
-            v-on:range-changed="range_changed"
-            v-on:cursor-changed="cursor_changed"
-            v-on:cursor-locked="cursor_locked"
-            v-on:sidebar-transform="set_ytransform"
-            v-on:layer-meta-props="layer_meta_props"
-            v-on:custom-event="emit_custom_event"
-            v-on:legend-button-click="legend_button_click"
-            v-on:chart-panned="chart_panned"
-            >
-        </grid-section>
-        <botbar v-bind="botbar_props" :shaders="shaders">
-        </botbar>
-    </div>
+  <!-- Chart components combined together -->
+  <div class="trading-vue-chart" :style="styles" style="position: relative">
+    <keyboard ref="keyboard"></keyboard>
+    <grid-section
+      :legendView="legendView"
+      v-for="(grid, i) in this._layout.grids"
+      :key="grid.id"
+      v-bind:common="section_props(i)"
+      v-bind:grid_id="i"
+      v-on:register-kb-listener="register_kb"
+      v-on:remove-kb-listener="remove_kb"
+      v-on:range-changed="range_changed"
+      v-on:cursor-changed="cursor_changed"
+      v-on:cursor-locked="cursor_locked"
+      v-on:sidebar-transform="set_ytransform"
+      v-on:layer-meta-props="layer_meta_props"
+      v-on:custom-event="emit_custom_event"
+      v-on:legend-button-click="legend_button_click"
+      v-on:chart-panned="chart_panned"
+      v-on:chnIndicator="chnIndicator"
+      v-on:chnType="chnType"
+    ></grid-section>
+    <botbar v-bind="botbar_props" :shaders="shaders"></botbar>
+  </div>
 </template>
 
 <script>
-
 import Context from '../stuff/context.js'
 import Layout from './js/layout.js'
 import Utils from '../stuff/utils.js'
@@ -34,348 +35,411 @@ import Botbar from './Botbar.vue'
 import Keyboard from './Keyboard.vue'
 import Shaders from '../mixins/shaders.js'
 import TI from './js/ti_mapping.js'
-
+import DateFilter from "./DateFilter.vue";
+import Indicator from "./Indicator.vue";
 
 export default {
-    name: 'Chart',
-    props: [
-        'title_txt', 'data', 'width', 'height', 'font', 'colors',
-        'overlays', 'tv_id', 'config', 'buttons', 'toolbar', 'ib'
-    ],
-    mixins: [Shaders],
-    components: {
-        GridSection,
-        Botbar,
-        Keyboard
+  name: 'Chart',
+  props: [
+    'title_txt',
+    'data',
+    'width',
+    'height',
+    'font',
+    'colors',
+    'overlays',
+    'tv_id',
+    'config',
+    'buttons',
+    'toolbar',
+    'ib',
+    'legendView',
+  ],
+  mixins: [Shaders],
+  components: {
+    GridSection,
+    Botbar,
+    Keyboard,
+    DateFilter,
+    Indicator
+  },
+  created() {
+    // Context for text measurements
+    this.ctx = new Context(this.$props)
+
+    // Initial layout (All measurments for the chart)
+    this.init_range()
+    this.sub = this.subset()
+    Utils.overwrite(this.range, this.range) // Fix for IB mode
+    this._layout = new Layout(this)
+
+    // Updates current cursor values
+    this.updater = new CursorUpdater(this)
+
+    this.update_last_candle()
+  },
+  methods: {
+      chnType(val) {
+      this.$emit("chnType", val);
     },
-    created() {
-
-        // Context for text measurements
-        this.ctx = new Context(this.$props)
-
-        // Initial layout (All measurments for the chart)
-        this.init_range()
-        this.sub = this.subset()
-        Utils.overwrite(this.range, this.range) // Fix for IB mode
-        this._layout = new Layout(this)
-
-        // Updates current cursor values
-        this.updater = new CursorUpdater(this)
-
-        this.update_last_candle()
-
+    chnIndicator(val) {
+      this.$emit("chnIndicator", val);
     },
-    methods: {
-        chart_panned() {
-            this.haveMovedChart = true
-        },
-        range_changed(r) {
-            // Overwite & keep the original references
-            // Quick fix for IB mode (switch 2 next lines)
-            // TODO: wtf?
-            var sub = this.subset(r)
-            Utils.overwrite(this.range, r)
-            Utils.overwrite(this.sub, sub)
-            this.update_layout()
-            this.$emit('range-changed', r)
-        },
-        goto(t) {
-            //if (!this.haveMovedChart) {
-                const dt = this.range[1] - this.range[0]
-                this.range_changed([t - dt, t])
-            //}
-        },
-        setRange(t1, t2) {
-            this.range_changed([t1, t2])
-        },
-        cursor_changed(e) {
-            this.updater.sync(e)
-        },
-        cursor_locked(state) {
-            if (this.cursor.scroll_lock && state) return
-            this.cursor.locked = state
-        },
-        calc_interval() {
-            if (this.ohlcv.length < 2) return
-            let tf = Utils.parse_tf(this.chart.tf)
-            this.interval_ms = tf || Utils.detect_interval(this.ohlcv)
-            this.interval = this.$props.ib ? 1 : this.interval_ms
-        },
-        set_ytransform(s) {
-            let obj = this.y_transforms[s.grid_id] || {}
-            Object.assign(obj, s)
-            this.$set(this.y_transforms, s.grid_id, obj)
-            this.update_layout()
-            Utils.overwrite(this.range, this.range)
-        },
-        default_range() {
-            const dl = this.$props.config.DEFAULT_LEN
-            const ml = this.$props.config.MINIMUM_LEN + 0.5
-            const l = this.ohlcv.length - 1
-
-            if (this.ohlcv.length < 2) return
-            if (this.ohlcv.length <= dl) {
-                var s = 0, d = ml
-            } else {
-                s = l - dl, d = 0.5
-            }
-            if (!this.$props.ib) {
-                Utils.overwrite(this.range, [
-                    this.ohlcv[s][0] - this.interval * d,
-                    this.ohlcv[l][0] + this.interval * ml
-                ])
-            } else {
-                Utils.overwrite(this.range, [
-                    s - this.interval * d,
-                    l + this.interval * ml
-                ])
-            }
-        },
-        subset(range = this.range) {
-            var [res, index] = this.filter(
-                this.ohlcv,
-                range[0] - this.interval,
-                range[1]
-            )
-            this.ti_map = new TI()
-            if (res) {
-                this.sub_start = index
-                this.ti_map.init(this, res)
-                if (!this.$props.ib) return res || []
-                return this.ti_map.sub_i
-            }
-            return []
-        },
-        common_props() {
-            return {
-                title_txt: this.chart.name || this.$props.title_txt,
-                layout: this._layout,
-                sub: this.sub,
-                range: this.range,
-                interval: this.interval,
-                cursor: this.cursor,
-                colors: this.$props.colors,
-                font: this.$props.font,
-                y_ts: this.y_transforms,
-                tv_id: this.$props.tv_id,
-                config: this.$props.config,
-                buttons: this.$props.buttons,
-                meta: this.meta
-            }
-        },
-        overlay_subset(source) {
-            return source.map(d => ({
-                type: d.type,
-                name: d.name,
-                data: this.ti_map.parse(Utils.fast_filter(
-                    d.data,
-                    this.ti_map.i2t(this.range[0] - this.interval),
-                    this.ti_map.i2t(this.range[1])
-                )[0] || []),
-                settings: d.settings || this.settings_ov,
-                grid: d.grid || {},
-                tf: Utils.parse_tf(d.tf)
-            }))
-        },
-        section_props(i) {
-            return i === 0 ?
-                this.main_section : this.sub_section
-        },
-        init_range() {
-            this.calc_interval()
-            this.default_range()
-        },
-        layer_meta_props(d) {
-            // TODO: check reactivity when layout is changed
-            if (!(d.grid_id in this.layers_meta)) {
-                this.$set(this.layers_meta, d.grid_id, {})
-            }
-            this.$set(this.layers_meta[d.grid_id],
-                d.layer_id, d)
-
-            // Rerender
-            this.update_layout()
-        },
-        remove_meta_props(grid_id, layer_id) {
-            if (grid_id in this.layers_meta) {
-                this.$delete(this.layers_meta[grid_id],layer_id)
-            }
-        },
-        emit_custom_event(d) {
-            this.on_shader_event(d, 'botbar')
-            this.$emit('custom-event', d)
-            if (d.event === 'remove-layer-meta') {
-                this.remove_meta_props(...d.args)
-            }
-        },
-        update_layout(clac_tf) {
-            if (clac_tf) this.calc_interval()
-            const lay = new Layout(this)
-            Utils.copy_layout(this._layout, lay)
-        },
-        legend_button_click(event) {
-            this.$emit('legend-button-click', event)
-        },
-        register_kb(event) {
-            if (!this.$refs.keyboard) return
-            this.$refs.keyboard.register(event)
-        },
-        remove_kb(event) {
-            if (!this.$refs.keyboard) return
-            this.$refs.keyboard.remove(event)
-        },
-        update_last_candle() {
-            // TODO: add last values for all overlays
-            this.last_candle = this.ohlcv ?
-                this.ohlcv[this.ohlcv.length - 1] : undefined
-        }
+    setRangeDate(t1, t2) {
+      this.range_changed([t1, t2]);
+      this.interval = 1000 * 60 * 60 * 24 * 30;
+      this.$emit("interval-changed", 30);
     },
-    computed: {
-        // Component-specific props subsets:
-        main_section() {
-            let p = Object.assign({}, this.common_props())
-            p.data = this.overlay_subset(this.onchart)
-            p.data.push({
-                type: this.chart.type || 'Candles',
-                main: true,
-                data: this.sub,
-                settings: this.chart.settings || this.settings_ohlcv,
-                grid: this.chart.grid || {}
-            })
-            p.overlays = this.$props.overlays
-            return p
-        },
-        sub_section() {
-            let p = Object.assign({}, this.common_props())
-            p.data = this.overlay_subset(this.offchart)
-            p.overlays = this.$props.overlays
-            return p
-        },
-        botbar_props() {
-            let p = Object.assign({}, this.common_props())
-            p.width = p.layout.botbar.width
-            p.height = p.layout.botbar.height
-            p.rerender = this.rerender
-            return p
-        },
-        offsub() {
-             return this.overlay_subset(this.offchart)
-        },
-        // Datasets: candles, onchart, offchart indicators
-        ohlcv() {
-            return this.$props.data.ohlcv || this.chart.data || []
-        },
-        chart() {
-            return this.$props.data.chart || { grid: {} }
-        },
-        onchart() {
-            return this.$props.data.onchart || []
-        },
-        offchart() {
-            return this.$props.data.offchart || []
-        },
-        filter() {
-            return this.$props.ib ?
-                Utils.fast_filter_i : Utils.fast_filter
-        },
-        styles() {
-            let w = this.$props.toolbar ? this.$props.config.TOOLBAR : 0
-            return { 'margin-left': `${w}px` }
-        },
-        meta() {
-            return {
-                last: this.last_candle,
-                sub_start: this.sub_start
-            }
-        }
+    chnInterval(val) {
+      this.interval = 1000 * 60 * 60 * 24 * val;
+      this.$emit("interval-changed", val);
+      this.setRange(
+        this.range[1] - 60 * 60 * 1000 * 24 * val * 80,
+        this.range[1]
+      );
     },
-    data() {
-        return {
-            // Current data slice
-            sub: [],
-
-            // Time range
-            range: [],
-
-            // Candlestick interval
-            interval: 0,
-
-            // Crosshair states
-            cursor: {
-                x: null, y: null, t: null, y$: null,
-                grid_id: null, locked: false, values: {},
-                scroll_lock: false
-            },
-
-            // A trick to re-render botbar
-            rerender: 0,
-
-            // Layers meta-props (changing behaviour)
-            layers_meta: {},
-
-            // Y-transforms (for y-zoom and -shift)
-            y_transforms: {},
-
-            // Default OHLCV settings (when using DataStructure v1.0)
-            settings_ohlcv: {},
-
-            // Default overlay settings
-            settings_ov: {},
-
-            // Meta data
-            last_candle: [],
-            sub_start: undefined,
-            haveMovedChart: false 
-        }
+    chart_panned() {
+      this.haveMovedChart = true
     },
-    watch: {
-        width() {
-            this.update_layout()
-        },
-        height() {
-            this.update_layout()
-        },
-        ib(nw) {
-            if (!nw) {
-                // Change range index => time
-                let t1 = this.ti_map.i2t(this.range[0])
-                let t2 = this.ti_map.i2t(this.range[1])
-                Utils.overwrite(this.range, [t1, t2])
-                this.interval = this.interval_ms
-            } else {
-                this.init_range() // TODO: calc index range instead
-                Utils.overwrite(this.range, this.range)
-                this.interval = 1
-            }
-            let sub = this.subset()
-            Utils.overwrite(this.sub, sub)
-            this.update_layout()
-        },
-        colors() {
-            Utils.overwrite(this.range, this.range)
-        },
-        data: {
-            handler: function(n, p) {
-                if (!this.sub.length) this.init_range()
-                const sub = this.subset()
-                // Fix Infinite loop warn, when the subset is empty
-                // TODO: Consider removing 'sub' from data entirely
-                if (this.sub.length || sub.length) {
-                    Utils.overwrite(this.sub, sub)
-                }
-                this.update_layout(Utils.data_changed(n, p))
-                Utils.overwrite(this.range, this.range)
-                this.cursor.scroll_lock = !!n.scrollLock
-                if (n.scrollLock && this.cursor.locked) {
-                    this.cursor.locked = false
-                }
-                this.update_last_candle()
-                // TODO: update legend values for overalys
-                this.rerender++
-            },
-            deep: true
-        }
+    range_changed(r) {
+      // Overwite & keep the original references
+      // Quick fix for IB mode (switch 2 next lines)
+      // TODO: wtf?
+      var sub = this.subset(r)
+      Utils.overwrite(this.range, r)
+      Utils.overwrite(this.sub, sub)
+      this.update_layout()
+      this.$emit('range-changed', r)
+    },
+    goto(t) {
+      const dt = this.range[1] - this.range[0]
+      this.range_changed([t - dt, t])
+    },
+    setRange(t1, t2) {
+      this.range_changed([t1, t2])
+    },
+    cursor_changed(e) {
+      this.updater.sync(e)
+    },
+    cursor_locked(state) {
+      if (this.cursor.scroll_lock && state) return
+      this.cursor.locked = state
+    },
+    calc_interval() {
+      if (this.ohlcv.length < 2) return
+      let tf = Utils.parse_tf(this.chart.tf)
+      this.interval_ms = tf || Utils.detect_interval(this.ohlcv)
+      this.interval = this.$props.ib ? 1 : this.interval_ms
+    },
+    set_ytransform(s) {
+      let obj = this.y_transforms[s.grid_id] || {}
+      Object.assign(obj, s)
+      this.$set(this.y_transforms, s.grid_id, obj)
+      this.update_layout()
+      Utils.overwrite(this.range, this.range)
+    },
+    default_range() {
+      const dl = this.$props.config.DEFAULT_LEN
+      const ml = this.$props.config.MINIMUM_LEN + 0.5
+      const l = this.ohlcv.length - 1
+
+      if (this.ohlcv.length < 2) return
+      if (this.ohlcv.length <= dl) {
+        var s = 0,
+          d = ml
+      } else {
+        ;(s = l - dl), (d = 0.5)
+      }
+      if (!this.$props.ib) {
+        Utils.overwrite(this.range, [
+          this.ohlcv[s][0] - this.interval * d,
+          this.ohlcv[l][0] + this.interval * ml,
+        ])
+      } else {
+        Utils.overwrite(this.range, [
+          s - this.interval * d,
+          l + this.interval * ml,
+        ])
+      }
+    },
+    subset(range = this.range) {
+      var [res, index] = this.filter(
+        this.ohlcv,
+        range[0] - this.interval,
+        range[1]
+      )
+      this.ti_map = new TI()
+      if (res) {
+        this.sub_start = index
+        this.ti_map.init(this, res)
+        if (!this.$props.ib) return res || []
+        return this.ti_map.sub_i
+      }
+      return []
+    },
+    common_props() {
+      return {
+        title_txt: this.chart.name || this.$props.title_txt,
+        layout: this._layout,
+        sub: this.sub,
+        range: this.range,
+        interval: this.interval,
+        cursor: this.cursor,
+        colors: this.$props.colors,
+        font: this.$props.font,
+        y_ts: this.y_transforms,
+        tv_id: this.$props.tv_id,
+        config: this.$props.config,
+        buttons: this.$props.buttons,
+        meta: this.meta,
+      }
+    },
+    overlay_subset(source) {
+      return source.map(d => ({
+        type: d.type,
+        name: d.name,
+        data: this.ti_map.parse(
+          Utils.fast_filter(
+            d.data,
+            this.ti_map.i2t(this.range[0] - this.interval),
+            this.ti_map.i2t(this.range[1])
+          )[0] || []
+        ),
+        settings: d.settings || this.settings_ov,
+        grid: d.grid || {},
+        tf: Utils.parse_tf(d.tf),
+      }))
+    },
+    section_props(i) {
+      return i === 0 ? this.main_section : this.sub_section
+    },
+    init_range() {
+      this.calc_interval()
+      this.default_range()
+    },
+    layer_meta_props(d) {
+      // TODO: check reactivity when layout is changed
+      if (!(d.grid_id in this.layers_meta)) {
+        this.$set(this.layers_meta, d.grid_id, {})
+      }
+      this.$set(this.layers_meta[d.grid_id], d.layer_id, d)
+
+      // Rerender
+      this.update_layout()
+    },
+    remove_meta_props(grid_id, layer_id) {
+      if (grid_id in this.layers_meta) {
+        this.$delete(this.layers_meta[grid_id], layer_id)
+      }
+    },
+    emit_custom_event(d) {
+      this.on_shader_event(d, 'botbar')
+      this.$emit('custom-event', d)
+      if (d.event === 'remove-layer-meta') {
+        this.remove_meta_props(...d.args)
+      }
+    },
+    update_layout(clac_tf) {
+      if (clac_tf) this.calc_interval()
+      const lay = new Layout(this)
+      Utils.copy_layout(this._layout, lay)
+    },
+    legend_button_click(event) {
+      this.$emit('legend-button-click', event)
+    },
+    register_kb(event) {
+      if (!this.$refs.keyboard) return
+      this.$refs.keyboard.register(event)
+    },
+    remove_kb(event) {
+      if (!this.$refs.keyboard) return
+      this.$refs.keyboard.remove(event)
+    },
+    update_last_candle() {
+      // TODO: add last values for all overlays
+      this.last_candle = this.ohlcv
+        ? this.ohlcv[this.ohlcv.length - 1]
+        : undefined
+    },
+  },
+  computed: {
+      indicators() {
+      var temp = [];
+      if (this.$props.data.onchart !== undefined) {
+        this.$props.data.onchart.map(item => {
+          temp.push({
+            name: item.name,
+            disp:
+              item.settings === undefined || item.settings.display === undefined
+                ? true
+                : item.settings.display,
+            type: "onchart"
+          });
+        });
+      }
+      if (this.$props.data.offchart !== undefined) {
+        this.$props.data.offchart.map(item => {
+          temp.push({
+            name: item.name,
+            disp:
+              item.settings === undefined || item.settings.display === undefined
+                ? true
+                : item.settings.display,
+            type: "offchart"
+          });
+        });
+      }
+      return temp;
+    },
+    // Component-specific props subsets:
+    main_section() {
+      let p = Object.assign({}, this.common_props())
+      p.data = this.overlay_subset(this.onchart)
+      p.data.push({
+        type: this.chart.type || 'Candles',
+        main: true,
+        data: this.sub,
+        settings: this.chart.settings || this.settings_ohlcv,
+        grid: this.chart.grid || {},
+      })
+      p.overlays = this.$props.overlays
+      return p
+    },
+    sub_section() {
+      let p = Object.assign({}, this.common_props())
+      p.data = this.overlay_subset(this.offchart)
+      p.overlays = this.$props.overlays
+      return p
+    },
+    botbar_props() {
+      let p = Object.assign({}, this.common_props())
+      p.width = p.layout.botbar.width
+      p.height = p.layout.botbar.height
+      p.rerender = this.rerender
+      return p
+    },
+    offsub() {
+      return this.overlay_subset(this.offchart)
+    },
+    // Datasets: candles, onchart, offchart indicators
+    ohlcv() {
+      return this.$props.data.ohlcv || this.chart.data || []
+    },
+    chart() {
+      return this.$props.data.chart || { grid: {} }
+    },
+    onchart() {
+      return this.$props.data.onchart || []
+    },
+    offchart() {
+      return this.$props.data.offchart || []
+    },
+    filter() {
+      return this.$props.ib ? Utils.fast_filter_i : Utils.fast_filter
+    },
+    styles() {
+      let w = this.$props.toolbar ? this.$props.config.TOOLBAR : 0
+      return { 'padding-left': `${w}px`, 'padding-top': `${w}px` }
+      //return { 'margin-left': `${w}px` }
+    },
+    meta() {
+      return {
+        last: this.last_candle,
+        sub_start: this.sub_start,
+      }
+    },
+  },
+  data() {
+    return {
+      // Current data slice
+      sub: [],
+
+      // Time range
+      range: [],
+
+      // Candlestick interval
+      interval: 0,
+
+      // Crosshair states
+      cursor: {
+        x: null,
+        y: null,
+        t: null,
+        y$: null,
+        grid_id: null,
+        locked: false,
+        values: {},
+        scroll_lock: false,
+      },
+
+      // A trick to re-render botbar
+      rerender: 0,
+
+      // Layers meta-props (changing behaviour)
+      layers_meta: {},
+
+      // Y-transforms (for y-zoom and -shift)
+      y_transforms: {},
+
+      // Default OHLCV settings (when using DataStructure v1.0)
+      settings_ohlcv: {},
+
+      // Default overlay settings
+      settings_ov: {},
+
+      // Meta data
+      last_candle: [],
+      sub_start: undefined,
+      haveMovedChart: false,
     }
+  },
+  watch: {
+    width() {
+      this.update_layout()
+    },
+    height() {
+      this.update_layout()
+    },
+    ib(nw) {
+      if (!nw) {
+        // Change range index => time
+        let t1 = this.ti_map.i2t(this.range[0])
+        let t2 = this.ti_map.i2t(this.range[1])
+        Utils.overwrite(this.range, [t1, t2])
+        this.interval = this.interval_ms
+      } else {
+        this.init_range() // TODO: calc index range instead
+        Utils.overwrite(this.range, this.range)
+        this.interval = 1
+      }
+      let sub = this.subset()
+      Utils.overwrite(this.sub, sub)
+      this.update_layout()
+    },
+    colors() {
+      Utils.overwrite(this.range, this.range)
+    },
+    data: {
+      handler: function(n, p) {
+        if (!this.sub.length) this.init_range()
+        const sub = this.subset()
+        // Fix Infinite loop warn, when the subset is empty
+        // TODO: Consider removing 'sub' from data entirely
+        if (this.sub.length || sub.length) {
+          Utils.overwrite(this.sub, sub)
+        }
+        this.update_layout(Utils.data_changed(n, p))
+        Utils.overwrite(this.range, this.range)
+        this.cursor.scroll_lock = !!n.scrollLock
+        if (n.scrollLock && this.cursor.locked) {
+          this.cursor.locked = false
+        }
+        this.update_last_candle()
+        // TODO: update legend values for overalys
+        this.rerender++
+      },
+      deep: true,
+    },
+  },
 }
-
 </script>

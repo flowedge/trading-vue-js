@@ -1,161 +1,163 @@
 <template>
-    <!-- Horizontal section: (grid + sidebar) -->
-    <div class="trading-vue-section">
-        <chart-legend
-            v-bind:values="section_values"
-            v-bind:grid_id="grid_id"
-            v-bind:common="legend_props"
-            v-bind:meta_props="get_meta_props"
-            v-on:legend-button-click="button_click">
-        </chart-legend>
-        <grid v-bind="grid_props" v-bind:grid_id="grid_id"
-             v-on:register-kb-listener="register_kb"
-             v-on:remove-kb-listener="remove_kb"
-             v-on:range-changed="range_changed"
-             v-on:cursor-changed="cursor_changed"
-             v-on:cursor-locked="cursor_locked"
-             v-on:layer-meta-props="emit_meta_props"
-             v-on:custom-event="emit_custom_event"
-             v-on:sidebar-transform="sidebar_transform"
-             v-on:chart-panned="chart_panned">
-        </grid>
-        <sidebar
-            v-bind="sidebar_props"
-            v-bind:grid_id="grid_id"
-            v-bind:rerender="rerender"
-            v-bind:shaders="shaders"
-            v-on:sidebar-transform="sidebar_transform">
-        </sidebar>
-    </div>
+  <!-- Horizontal section: (grid + sidebar) -->
+  <div class="trading-vue-section">
+    <chart-legend
+      v-if="legendView"
+      v-bind:values="section_values"
+      v-bind:grid_id="grid_id"
+      v-bind:common="legend_props"
+      v-bind:meta_props="get_meta_props"
+      v-on:legend-button-click="button_click"
+    ></chart-legend>
+    <grid
+      v-bind="grid_props"
+      v-bind:grid_id="grid_id"
+      v-on:register-kb-listener="register_kb"
+      v-on:remove-kb-listener="remove_kb"
+      v-on:range-changed="range_changed"
+      v-on:cursor-changed="cursor_changed"
+      v-on:cursor-locked="cursor_locked"
+      v-on:layer-meta-props="emit_meta_props"
+      v-on:custom-event="emit_custom_event"
+      v-on:sidebar-transform="sidebar_transform"
+      v-on:chart-panned="chart_panned"
+    >
+      ></grid
+    >
+    <sidebar
+      v-bind="sidebar_props"
+      v-bind:grid_id="grid_id"
+      v-bind:rerender="rerender"
+      v-bind:shaders="shaders"
+      v-on:sidebar-transform="sidebar_transform"
+    ></sidebar>
+  </div>
 </template>
 
 <script>
-
 import Grid from './Grid.vue'
 import Sidebar from './Sidebar.vue'
 import ChartLegend from './Legend.vue'
 import Shaders from '../mixins/shaders.js'
 
 export default {
-    name: 'GridSection',
-    props: ['common', 'grid_id'],
-    mixins: [Shaders],
-    components: {
-        Grid,
-        Sidebar,
-        ChartLegend
+  name: 'GridSection',
+  props: ['common', 'grid_id', 'legendView'],
+  mixins: [Shaders],
+  components: {
+    Grid,
+    Sidebar,
+    ChartLegend,
+  },
+  methods: {
+    chart_panned() {
+      this.$emit('chart-panned')
     },
-    methods: {
-		chart_panned() {
-            this.$emit('chart-panned')
-        },
-        range_changed(r) {
-            this.$emit('range-changed', r)
-        },
-        cursor_changed(c) {
-            c.grid_id = this.$props.grid_id
-            this.$emit('cursor-changed', c)
-        },
-        cursor_locked(state) {
-            this.$emit('cursor-locked', state)
-        },
-        sidebar_transform(s) {
-            this.$emit('sidebar-transform', s)
-        },
-        emit_meta_props(d) {
-            this.$set(this.meta_props, d.layer_id, d)
-            this.$emit('layer-meta-props', d)
-        },
-        emit_custom_event(d) {
-            this.on_shader_event(d, 'sidebar')
-            this.$emit('custom-event', d)
-        },
-        button_click(event) {
-            this.$emit('legend-button-click', event)
-        },
-        register_kb(event) {
-            this.$emit('register-kb-listener', event)
-        },
-        remove_kb(event) {
-            this.$emit('remove-kb-listener', event)
-        }
+    range_changed(r) {
+      this.$emit('range-changed', r)
     },
-    computed: {
-        // Component-specific props subsets:
-        grid_props() {
-            const id = this.$props.grid_id
-            let p = Object.assign({}, this.$props.common)
+    cursor_changed(c) {
+      c.grid_id = this.$props.grid_id
+      this.$emit('cursor-changed', c)
+    },
+    cursor_locked(state) {
+      this.$emit('cursor-locked', state)
+    },
+    sidebar_transform(s) {
+      this.$emit('sidebar-transform', s)
+    },
+    emit_meta_props(d) {
+      this.$set(this.meta_props, d.layer_id, d)
+      this.$emit('layer-meta-props', d)
+    },
+    emit_custom_event(d) {
+      this.on_shader_event(d, 'sidebar')
+      this.$emit('custom-event', d)
+    },
+    button_click(event) {
+      this.$emit('legend-button-click', event)
+    },
+    register_kb(event) {
+      this.$emit('register-kb-listener', event)
+    },
+    remove_kb(event) {
+      this.$emit('remove-kb-listener', event)
+    },
+  },
+  computed: {
+    // Component-specific props subsets:
+    grid_props() {
+      const id = this.$props.grid_id
+      let p = Object.assign({}, this.$props.common)
 
-            // Split offchart data between offchart grids
-            if (id > 0) {
-                let all = p.data
-                p.data = [p.data[id - 1]]
-                // Merge offchart overlays with custom ids with
-                // the existing onse (by comparing the grid ids)
-                p.data.push(...all.filter(
-                    x => x.grid && x.grid.id === id))
-            }
+      // Split offchart data between offchart grids
+      if (id > 0) {
+        let all = p.data
+        p.data = [p.data[id - 1]]
+        // Merge offchart overlays with custom ids with
+        // the existing onse (by comparing the grid ids)
+        p.data.push(...all.filter(x => x.grid && x.grid.id === id))
+      }
 
-            p.width = p.layout.grids[id].width
-            p.height = p.layout.grids[id].height
-            p.y_transform = p.y_ts[id]
-            return p
-        },
-        sidebar_props() {
-            const id = this.$props.grid_id
-            let p = Object.assign({}, this.$props.common)
-            p.width = p.layout.grids[id].sb
-            p.height = p.layout.grids[id].height
-            p.y_transform = p.y_ts[id]
-            return p
-        },
-        section_values() {
-            const id = this.$props.grid_id
-            let p = Object.assign({}, this.$props.common)
-            p.width = p.layout.grids[id].width
-            return p.cursor.values[id]
-        },
-        legend_props() {
-            const id = this.$props.grid_id
-            let p = Object.assign({}, this.$props.common)
+      p.width = p.layout.grids[id].width
+      p.height = p.layout.grids[id].height
+      p.y_transform = p.y_ts[id]
+      return p
+    },
+    sidebar_props() {
+      const id = this.$props.grid_id
+      let p = Object.assign({}, this.$props.common)
+      p.width = p.layout.grids[id].sb
+      p.height = p.layout.grids[id].height
+      p.y_transform = p.y_ts[id]
+      return p
+    },
+    section_values() {
+      const id = this.$props.grid_id
+      let p = Object.assign({}, this.$props.common)
+      p.width = p.layout.grids[id].width
+      return p.cursor.values[id]
+    },
+    legend_props() {
+      const id = this.$props.grid_id
+      let p = Object.assign({}, this.$props.common)
 
-            // Split offchart data between offchart grids
-            if (id > 0) {
-                let all = p.data
-                p.data = [p.data[id - 1]]
-                // TODO: show correct legend values
-                p.data.push(...all.filter(
-                    x => x.grid && x.grid.id === id))
-            }
-            return p
-        },
-        get_meta_props() {
-            return this.meta_props
-        }
+      // Split offchart data between offchart grids
+      if (id > 0) {
+        let all = p.data
+        p.data = [p.data[id - 1]]
+        // TODO: show correct legend values
+        p.data.push(...all.filter(x => x.grid && x.grid.id === id))
+      }
+      return p
     },
-    watch: {
-        common: {
-            handler: function (val, old_val) {
-                if(val.data.length !== old_val.data.length) {
-                    // Look at this nasty trick!
-                    this.rerender++
-                }
-            },
-            deep: true
-        }
+    get_meta_props() {
+      return this.meta_props
     },
-    data() {
-        return {
-            meta_props: {},
-            shaders: [],
-            rerender: 0
+  },
+  watch: {
+    common: {
+      handler: function(val, old_val) {
+        if (val.data.length !== old_val.data.length) {
+          // Look at this nasty trick!
+          this.rerender++
         }
+      },
+      deep: true,
+    },
+  },
+  data() {
+    return {
+      meta_props: {},
+      shaders: [],
+      rerender: 0,
     }
+  },
 }
 </script>
 <style>
 .trading-vue-section {
-    height: 0;
-    position: absolute;
+  height: 0;
+  position: absolute;
 }
 </style>

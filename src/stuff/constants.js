@@ -80,7 +80,7 @@ const MAP_UNIT = {
   "1H": HOUR,
   "2H": HOUR * 2,
   "3H": HOUR * 3,
-  "4H": HOUR4,
+  "4H": HOUR * 4,
   "12H": HOUR12,
   "1D": DAY,
   "1W": WEEK,
