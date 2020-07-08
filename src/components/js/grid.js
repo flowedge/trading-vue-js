@@ -220,6 +220,7 @@ export default class Grid {
 
             for (let i = 0; i < overlays.length; i++) {                
                 //console.log(overlays[i])
+                if (!overlays[i].display) continue
                 this.ctx.save()                
                 let r = overlays[i].renderer
                 r.draw(this.ctx)            
